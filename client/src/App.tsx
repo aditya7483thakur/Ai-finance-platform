@@ -1,12 +1,23 @@
-import { Button } from "@/components/ui/button";
-
-import "./App.css";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Home from "./pages/Home";
+import ProtectedRoute from "./ProtectedRoute";
+import DashboardLayout from "./layout/DashboardLayout";
+import Navbar from "./components/custom/Navbar";
 
 function App() {
   return (
-    <>
-      <Button className="hover:cursor-pointer bg-amber-400">Button</Button>
-    </>
+    <Router>
+      <Navbar />
+      <div className="pt-16">
+        <Routes>
+          <Route path="/" element={<Home />} />
+
+          <Route element={<ProtectedRoute />}>
+            <Route path="/dashboard" element={<DashboardLayout />} />
+          </Route>
+        </Routes>
+      </div>
+    </Router>
   );
 }
 
