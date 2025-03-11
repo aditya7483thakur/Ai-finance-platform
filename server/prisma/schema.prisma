@@ -51,12 +51,10 @@ model Transaction {
   description      String?
   date             DateTime
   category         String           
-  receiptUrl       String?
+  receiptUrl       String?          // will check it later 
   isRecurring      Boolean           @default(false)
   recurringInterval RecurringInterval? // Only used if isRecurring is true
   nextRecurringDate DateTime?         // Next date for recurring transaction
-  lastProcessed    DateTime?         // Last time this recurring transaction was processed
-  status           TransactionStatus  @default(COMPLETED)
   userId           String
   user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   accountId        String
@@ -91,12 +89,6 @@ enum TransactionType {
 enum AccountType {
   CURRENT
   SAVINGS
-}
-
-enum TransactionStatus {
-  PENDING
-  COMPLETED
-  FAILED
 }
 
 enum RecurringInterval {

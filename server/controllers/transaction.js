@@ -1,6 +1,9 @@
 import { PrismaClient } from "@prisma/client";
+import { addDays, addWeeks, addMonths, addYears } from "date-fns";
+
 const prisma = new PrismaClient();
 
+//cron job is needed to setup for this
 export const createTransaction = async (req, res) => {
   try {
     const {
@@ -24,6 +27,25 @@ export const createTransaction = async (req, res) => {
       return res.status(404).json({ message: "Account not found!" });
     }
 
+    // Calculate nextRecurringDate if it's a recurring transaction
+    let nextRecurringDate = null;
+    if (isRecurring && recurringInterval) {
+      const transactionDate = new Date(date);
+      switch (recurringInterval) {
+        case "DAILY":
+          nextRecurringDate = addDays(transactionDate, 1);
+          break;
+        case "WEEKLY":
+          nextRecurringDate = addWeeks(transactionDate, 1);
+          break;
+        case "MONTHLY":
+          nextRecurringDate = addMonths(transactionDate, 1);
+          break;
+        case "YEARLY":
+          nextRecurringDate = addYears(transactionDate, 1);
+      }
+    }
+
     // Create transaction
     const transaction = await prisma.transaction.create({
       data: {
@@ -36,10 +58,11 @@ export const createTransaction = async (req, res) => {
         userId,
         isRecurring: isRecurring || false,
         recurringInterval: isRecurring ? recurringInterval : null,
+        nextRecurringDate,
       },
     });
 
-    // Update account balance if it's an expense or income
+    // Update account balance
     let newBalance = account.balance;
     if (type === "INCOME") {
       newBalance = account.balance + amount;
@@ -54,7 +77,7 @@ export const createTransaction = async (req, res) => {
 
     return res.status(201).json({
       message: "Transaction created successfully!",
-      transaction,
+      data: transaction,
     });
   } catch (error) {
     console.error("Error creating transaction:", error);
