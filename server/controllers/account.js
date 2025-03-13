@@ -69,16 +69,19 @@ export const getAllAccounts = async (req, res) => {
 
 export const updateAccount = async (req, res) => {
   const { id } = req.params;
-  const { name } = req.body; // Extract only 'name'
+  const { name, budget } = req.body;
 
-  if (!name) {
-    return res.status(400).json({ error: "Name is required for update" });
+  if (!name && !budget) {
+    return res.status(400).json({ error: "Required fields are missing" });
   }
 
   try {
     const updatedAccount = await prisma.account.update({
       where: { id },
-      data: { name }, // Only updating name
+      data: {
+        ...(name !== undefined && { name }), // Update name if provided
+        ...(budget !== undefined && { budget }), // Update budget if provided
+      },
     });
 
     res.json({ message: "Account name updated successfully", updatedAccount });

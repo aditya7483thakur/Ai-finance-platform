@@ -46,33 +46,32 @@ export const createTransaction = async (req, res) => {
       }
     }
 
-    // Create transaction
-    const transaction = await prisma.transaction.create({
-      data: {
-        type,
-        amount,
-        description,
-        date: new Date(date),
-        category,
-        accountId,
-        userId,
-        isRecurring: isRecurring || false,
-        recurringInterval: isRecurring ? recurringInterval : null,
-        nextRecurringDate,
-      },
-    });
+    const transaction = await prisma.$transaction(async (prisma) => {
+      const newTransaction = await prisma.transaction.create({
+        data: {
+          type,
+          amount,
+          description,
+          date: new Date(date),
+          category,
+          accountId,
+          userId,
+          isRecurring: Boolean(isRecurring),
+          recurringInterval: isRecurring ? recurringInterval : null,
+          nextRecurringDate,
+        },
+      });
 
-    // Update account balance
-    let newBalance = account.balance;
-    if (type === "INCOME") {
-      newBalance = account.balance + amount;
-    } else if (type === "EXPENSE") {
-      newBalance = account.balance - amount;
-    }
+      let newBalance = Number(account.balance);
+      newBalance =
+        type === "INCOME" ? newBalance + amount : newBalance - amount;
 
-    await prisma.account.update({
-      where: { id: accountId },
-      data: { balance: newBalance },
+      await prisma.account.update({
+        where: { id: accountId },
+        data: { balance: newBalance },
+      });
+
+      return newTransaction;
     });
 
     return res.status(201).json({
