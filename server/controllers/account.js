@@ -1,20 +1,15 @@
-import { PrismaClient, AccountType } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
 export const createAccount = async (req, res) => {
   try {
-    const { userId, name, type, initialBalance, isDefault } = req.body;
+    const { userId, name, balance, budget } = req.body;
     console.log(req.body);
 
     // Validate required fields
-    if (!userId || !name || !type) {
+    if (!userId || !name) {
       return res.status(400).json({ error: "Missing required fields" });
-    }
-
-    // Validate AccountType (Ensure type is one of the defined enums)
-    if (!Object.values(AccountType).includes(type)) {
-      return res.status(400).json({ error: "Invalid account type" });
     }
 
     // Check if user exists
@@ -24,21 +19,13 @@ export const createAccount = async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // If isDefault is true, make other accounts non-default
-    if (isDefault) {
-      await prisma.account.updateMany({
-        where: { userId },
-        data: { isDefault: false },
-      });
-    }
-
     // Create the new account
     const newAccount = await prisma.account.create({
       data: {
         name,
-        type,
-        balance: initialBalance || 0,
-        isDefault: isDefault || false,
+        balance: balance || 0,
+        budget: budget || null,
+        usedAmount: 0,
         userId,
       },
     });
