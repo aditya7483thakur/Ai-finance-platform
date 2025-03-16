@@ -236,3 +236,122 @@ export const getAccountTransactions = async (req, res) => {
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };
+
+export const deleteTransaction = async (req, res) => {
+  try {
+    const { transactionId } = req.params;
+
+    if (!transactionId) {
+      return res.status(400).json({ message: "Transaction ID is required" });
+    }
+
+    const transaction = await prisma.transaction.findUnique({
+      where: { id: transactionId },
+    });
+
+    if (!transaction) {
+      return res.status(404).json({ message: "Transaction not found" });
+    }
+
+    // Get account details
+    const account = await prisma.account.findUnique({
+      where: { id: transaction.accountId },
+    });
+
+    if (!account) {
+      return res.status(404).json({ message: "Account not found" });
+    }
+
+    // Adjust balance
+    let newBalance = Number(account.balance);
+    if (transaction.type === "INCOME") {
+      newBalance -= transaction.amount; // Deduct income
+    } else {
+      newBalance += transaction.amount; // Add back expense
+    }
+
+    // Perform transaction deletion and balance update atomically
+    await prisma.$transaction([
+      // Step 1: Delete the transaction
+      prisma.transaction.delete({
+        where: { id: transactionId },
+      }),
+
+      // Step 2: Update the account balance
+      prisma.account.update({
+        where: { id: transaction.accountId },
+        data: {
+          balance: newBalance, // Update balance after transaction removal
+        },
+      }),
+    ]);
+
+    return res
+      .status(200)
+      .json({ message: "Transaction deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting transaction:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const deleteMultipleTransactions = async (req, res) => {
+  try {
+    const { transactionIds } = req.body;
+
+    if (!Array.isArray(transactionIds) || transactionIds.length === 0) {
+      return res.status(400).json({
+        message: "Invalid request. Provide an array of transaction IDs.",
+      });
+    }
+
+    // Fetch all transactions to be deleted
+    const transactions = await prisma.transaction.findMany({
+      where: { id: { in: transactionIds } },
+    });
+
+    if (transactions.length !== transactionIds.length) {
+      return res.status(404).json({ message: "Some transactions not found" });
+    }
+
+    // Compute balance updates per account
+    const accountUpdates = {};
+    transactions.forEach((txn) => {
+      if (!accountUpdates[txn.accountId]) {
+        accountUpdates[txn.accountId] = 0;
+      }
+      // Reverse the transaction effect on balance
+      accountUpdates[txn.accountId] +=
+        txn.type === "INCOME" ? -txn.amount : txn.amount;
+    });
+
+    // Convert updates to Prisma queries
+    const accountUpdatesArray = Object.keys(accountUpdates).map(
+      (accountId) => ({
+        where: { id: accountId },
+        data: { balance: { increment: accountUpdates[accountId] } },
+      })
+    );
+
+    // Execute deletion and balance update in a single Prisma transaction
+    await prisma.$transaction(async (prisma) => {
+      // Delete all transactions
+      await prisma.transaction.deleteMany({
+        where: { id: { in: transactionIds } },
+      });
+
+      // Update all affected accounts
+      for (const update of accountUpdatesArray) {
+        await prisma.account.update(update);
+      }
+    });
+
+    return res.status(200).json({
+      message: "Transactions deleted successfully",
+      deletedCount: transactionIds.length,
+    });
+  } catch (error) {
+    console.error("Error deleting transactions:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
