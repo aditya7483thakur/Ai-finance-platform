@@ -1,22 +1,24 @@
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import ProtectedRoute from "./ProtectedRoute";
-import DashboardLayout from "./layout/DashboardLayout";
-import Navbar from "./components/custom/Navbar";
+import Dashboard from "./pages/Dashboard";
+import DashBoardLayout from "./layout/DashboardLayout";
+import Transaction from "./pages/Transaction";
+import AddTransaction from "./pages/AddTransaction";
 
 function App() {
   return (
     <Router>
-      <Navbar />
-      <div className="pt-16">
-        <Routes>
-          <Route path="/" element={<Home />} />
-
-          <Route element={<ProtectedRoute />}>
-            <Route path="/dashboard" element={<DashboardLayout />} />
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route element={<ProtectedRoute />}>
+          <Route path="/dashboard" element={<DashBoardLayout />}>
+            <Route index element={<Dashboard />} />
+            <Route path="transactions" element={<Transaction />} />
+            <Route path="add-transaction" element={<AddTransaction />} />
           </Route>
-        </Routes>
-      </div>
+        </Route>
+      </Routes>
     </Router>
   );
 }

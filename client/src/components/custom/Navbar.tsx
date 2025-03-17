@@ -44,6 +44,7 @@ const Navbar = () => {
             <li className="hover:text-blue-500 cursor-pointer">Dashboard</li>
             <li className="hover:text-blue-500 cursor-pointer">Reports</li>
             <li className="hover:text-blue-500 cursor-pointer">Settings</li>
+            <Header />
           </ul>
         </motion.div>
       )}
