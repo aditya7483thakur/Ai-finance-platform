@@ -1,8 +1,14 @@
 import express from "express";
-import { clerkUser } from "../controllers/user.js";
+import {
+  createClerkUser,
+  deleteClerkUser,
+  updateClerkUser,
+} from "../controllers/user.js";
 
 const router = express.Router();
 
-router.post("/clerk-webhook", clerkUser);
+router.post("/create-user", createClerkUser);
+router.post("/update-user", updateClerkUser);
+router.post("/delete-user", deleteClerkUser);
 
 export default router;

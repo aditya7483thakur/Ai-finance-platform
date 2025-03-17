@@ -187,56 +187,6 @@ export const editTransaction = async (req, res) => {
   }
 };
 
-//pagination pending
-export const getAccountTransactions = async (req, res) => {
-  try {
-    const { accountId } = req.params;
-    const page = Number(req.query.page) || 1;
-    const limit = Number(req.query.limit) || 10;
-
-    if (!accountId) {
-      return res.status(400).json({ message: "Account Id is required" });
-    }
-
-    const account = await prisma.account.findUnique({
-      where: { id: accountId },
-    });
-
-    if (!account) {
-      return res.status(404).json({ message: "Account not found" });
-    }
-
-    const totalCount = await prisma.transaction.count({
-      where: { accountId },
-    });
-
-    const offset = (page - 1) * limit;
-
-    const transactions = await prisma.transaction.findMany({
-      where: { accountId },
-      orderBy: { date: "desc" },
-      skip: offset,
-      take: limit,
-    });
-
-    return res.status(200).json({
-      message: "Transactions fetched successfully",
-      data: transactions,
-      pagination: {
-        currentPage: page,
-        pageSize: limit,
-        totalTransactions: totalCount,
-        totalPages: Math.ceil(totalCount / limit),
-        hasNextPage: page * limit < totalCount, // Check if there's a next page
-        hasPrevPage: page > 1, // Check if there's a previous page
-      },
-    });
-  } catch (error) {
-    console.error("Error fetching transactions:", error);
-    return res.status(500).json({ message: "Internal Server Error" });
-  }
-};
-
 export const deleteTransaction = async (req, res) => {
   try {
     const { transactionId } = req.params;
@@ -352,6 +302,66 @@ export const deleteMultipleTransactions = async (req, res) => {
     });
   } catch (error) {
     console.error("Error deleting transactions:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const getFilteredTransactions = async (req, res) => {
+  try {
+    let {
+      category,
+      type,
+      isRecurring,
+      description,
+      accountId,
+      page = 1,
+      limit = 10,
+    } = req.query;
+
+    // Convert pagination values to numbers
+    page = Number(page);
+    limit = Number(limit);
+
+    if (isNaN(page) || page < 1) page = 1;
+    if (isNaN(limit) || limit < 1) limit = 10;
+
+    // Build the filters object dynamically
+    let filters = {};
+    if (category) filters.category = category;
+    if (type) filters.type = type;
+    if (isRecurring) filters.isRecurring = isRecurring === "true"; // Convert string to boolean
+    if (description)
+      filters.description = { contains: description, mode: "insensitive" };
+    if (accountId) filters.accountId = accountId; // Ensure only transactions for a specific account are fetched
+
+    // Get total transaction count for pagination
+    const totalCount = await prisma.transaction.count({ where: filters });
+
+    // Calculate offset for pagination
+    const offset = (page - 1) * limit;
+
+    // Fetch transactions with applied filters and pagination
+    const transactions = await prisma.transaction.findMany({
+      where: filters,
+      orderBy: { date: "desc" },
+      skip: offset,
+      take: limit,
+    });
+
+    return res.status(200).json({
+      message: "Filtered transactions fetched successfully",
+      data: transactions,
+      pagination: {
+        currentPage: page,
+        pageSize: limit,
+        totalTransactions: totalCount,
+        totalPages: Math.ceil(totalCount / limit),
+        hasNextPage: page * limit < totalCount,
+        hasPrevPage: page > 1,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching filtered transactions:", error);
     return res.status(500).json({ message: "Internal Server Error" });
   }
 };

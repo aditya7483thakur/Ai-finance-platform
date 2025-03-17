@@ -4,15 +4,15 @@ import {
   deleteMultipleTransactions,
   deleteTransaction,
   editTransaction,
-  getAccountTransactions,
+  getFilteredTransactions,
 } from "../controllers/transaction.js";
 
 const router = express.Router();
 
 router.post("/create-transaction", createTransaction);
 router.patch("/update-transaction/:transactionId", editTransaction);
-router.get("/get-account-transactions/:accountId", getAccountTransactions);
 router.delete("/delete-transaction/:transactionId", deleteTransaction);
 router.delete("/delete-transactions", deleteMultipleTransactions);
+router.get("/filter", getFilteredTransactions);
 
 export default router;
