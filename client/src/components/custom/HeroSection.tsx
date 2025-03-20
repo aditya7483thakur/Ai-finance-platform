@@ -2,7 +2,7 @@ const HeroSection = () => {
   return (
     <>
       {/* Hero Section */}
-      <section className="text-center py-12 px-4">
+      <section className="text-center py-12 px-4 md:px-20 lg:px-40">
         <div className="mb-4">
           <span className="inline-block bg-gray-100 rounded-full px-3 py-1 text-sm">
             The Smarter Way to Manage Money!
