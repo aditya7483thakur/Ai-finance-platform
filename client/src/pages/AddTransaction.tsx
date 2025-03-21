@@ -46,8 +46,9 @@ const AddTransaction = () => {
 
   return (
     <div className="max-w-lg mx-auto p-6 bg-white rounded-lg">
-      <h1 className="text-3xl font-bold text-blue-600 mb-6">Add Transaction</h1>
-
+      <h1 className="text-3xl font-bold  text-blue-600 mb-6">
+        Add Transaction
+      </h1>
       {/* AI Receipt Scanner Button */}
       <Button className="w-full bg-pink-500 hover:bg-pink-600 mb-6 flex items-center justify-center gap-2 text-white">
         <Calendar className="h-4 w-4" />

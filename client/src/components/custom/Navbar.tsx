@@ -22,13 +22,13 @@ const Navbar = () => {
 
   return (
     <nav
-      className={`fixed top-0 left-0 w-full z-50 h-16 transition-all duration-300 ${
+      className={`fixed top-0 left-0 w-full z-50 h-16 transition-all duration-300 px-4 md:px-20 lg:px-40 ${
         isScrolled ? "bg-white/70 backdrop-blur-md shadow-md" : "bg-transparent"
       }`}
     >
       {/* Navbar for Large Screens */}
       <div className="max-w-7xl mx-auto flex justify-between items-center p-4">
-        <h1 className="text-xl font-bold">FinanceAI</h1>
+        <span className="font-bold text-2xl text-primary">💸Budgetly</span>
         <ul className="hidden lg:flex space-x-6">
           <li className="hover:text-blue-500 cursor-pointer">Home</li>
           <li className="hover:text-blue-500 cursor-pointer">Dashboard</li>
