@@ -24,6 +24,11 @@ const items = [
     url: "/dashboard/add-transaction",
     icon: Inbox,
   },
+  {
+    title: "Generate report",
+    url: "/dashboard/add-transaction",
+    icon: Inbox,
+  },
 ];
 
 export function AppSidebar() {
