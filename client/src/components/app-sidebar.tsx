@@ -36,7 +36,7 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="font-bold text-3xl mt-3 text-primary">
+          <SidebarGroupLabel className="font-bold text-primary text-3xl mt-3">
             💸Budgetly
           </SidebarGroupLabel>
           <SidebarGroupContent>

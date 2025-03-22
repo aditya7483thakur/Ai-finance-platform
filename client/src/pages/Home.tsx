@@ -11,7 +11,6 @@ const Home = () => {
       <div className="min-h-screen bg-gradient-to-r from-white to-sky-100 font-sans pt-16">
         <HeroSection />
         <Features />
-
         <Testimonials />
         <Footer />
       </div>

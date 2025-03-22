@@ -12,9 +12,7 @@ import {
 import {
   Select,
   SelectContent,
-  SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -47,7 +45,7 @@ const AddTransaction = () => {
   };
 
   return (
-    <div className=" flex justify-center p-4 px-20 bg-white rounded-lg">
+    <div className=" flex justify-center p-4 px-20 bg-white">
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
@@ -70,7 +68,7 @@ const AddTransaction = () => {
                   defaultValue={field.value}
                 >
                   <FormControl>
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
                   </FormControl>
@@ -83,22 +81,6 @@ const AddTransaction = () => {
               </FormItem>
             )}
           />
-
-          <Select>
-            <SelectTrigger className="w-[180px]">
-              <SelectValue placeholder="Select a fruit" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectLabel>Fruits</SelectLabel>
-                <SelectItem value="apple">Apple</SelectItem>
-                <SelectItem value="banana">Banana</SelectItem>
-                <SelectItem value="blueberry">Blueberry</SelectItem>
-                <SelectItem value="grapes">Grapes</SelectItem>
-                <SelectItem value="pineapple">Pineapple</SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select>
 
           {/* Amount and Account (2-column layout) */}
           <div className="grid grid-cols-2 gap-4">
@@ -126,7 +108,7 @@ const AddTransaction = () => {
                     defaultValue={field.value}
                   >
                     <FormControl>
-                      <SelectTrigger>
+                      <SelectTrigger className="w-full">
                         <SelectValue placeholder="Select account" />
                       </SelectTrigger>
                     </FormControl>
@@ -155,7 +137,7 @@ const AddTransaction = () => {
                   defaultValue={field.value}
                 >
                   <FormControl>
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                   </FormControl>

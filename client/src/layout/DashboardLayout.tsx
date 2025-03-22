@@ -24,7 +24,7 @@ export default function Page() {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <header className="sticky top-0 z-50 bg-white flex h-16 shrink-0 items-center gap-1  border-b border-black/40 px-4">
+        <header className="sticky top-0 z-50 bg-white flex h-16 shrink-0 items-center gap-1  border-b border-border px-4">
           <SidebarTrigger className="-ml-1" />
           {/* <Separator orientation="vertical" className="mr-2 h-4" /> */}
           <span className="font-bold text-3xl text-primary">
