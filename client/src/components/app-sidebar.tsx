@@ -26,7 +26,7 @@ const items = [
   },
   {
     title: "Generate report",
-    url: "/dashboard/add-transaction",
+    url: "/dashboard/add",
     icon: Inbox,
   },
 ];

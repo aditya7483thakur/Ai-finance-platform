@@ -12,7 +12,9 @@ import {
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
@@ -45,19 +47,18 @@ const AddTransaction = () => {
   };
 
   return (
-    <div className="max-w-lg mx-auto p-6 bg-white rounded-lg">
-      <h1 className="text-3xl font-bold  text-blue-600 mb-6">
-        Add Transaction
-      </h1>
-      {/* AI Receipt Scanner Button */}
-      <Button className="w-full bg-pink-500 hover:bg-pink-600 mb-6 flex items-center justify-center gap-2 text-white">
-        <Calendar className="h-4 w-4" />
-        Scan Receipt with AI
-      </Button>
-
+    <div className=" flex justify-center p-4 px-20 bg-white rounded-lg">
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          {/* Type */}
+        <form
+          onSubmit={form.handleSubmit(onSubmit)}
+          className="space-y-6 w-1/2"
+        >
+          <label className="w-full bg-pink-500 hover:bg-pink-600 mb-6 flex items-center justify-center gap-2 text-white py-2 rounded-md cursor-pointer">
+            <Calendar className="h-4 w-4" />
+            <span>Scan Receipt with AI</span>
+            <input type="file" accept="image/*" className="hidden" />
+          </label>
+
           <FormField
             control={form.control}
             name="type"
@@ -82,6 +83,22 @@ const AddTransaction = () => {
               </FormItem>
             )}
           />
+
+          <Select>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Select a fruit" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectLabel>Fruits</SelectLabel>
+                <SelectItem value="apple">Apple</SelectItem>
+                <SelectItem value="banana">Banana</SelectItem>
+                <SelectItem value="blueberry">Blueberry</SelectItem>
+                <SelectItem value="grapes">Grapes</SelectItem>
+                <SelectItem value="pineapple">Pineapple</SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
 
           {/* Amount and Account (2-column layout) */}
           <div className="grid grid-cols-2 gap-4">

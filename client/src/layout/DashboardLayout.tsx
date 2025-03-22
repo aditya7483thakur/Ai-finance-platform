@@ -13,7 +13,7 @@ export default function Page() {
   // Define route-to-title mapping
   const pageTitles: Record<string, string> = {
     "/dashboard": "Dashboard",
-    "/dashboard/add-transaction": "Transaction",
+    "/dashboard/add-transaction": "Add Transaction",
     "/dashboard/transactions": "Transactions",
   };
 

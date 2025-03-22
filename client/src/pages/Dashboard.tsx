@@ -5,8 +5,6 @@ import ExpenseBreakdown from "@/components/custom/ExpenseBreakdown";
 import Accounts from "@/components/custom/Accounts";
 
 const Dashboard = () => {
-  // Sample data
-
   return (
     <div className="bg-gray-50 min-h-screen">
       <div className="max-w-7xl mx-auto px-4 py-8">
