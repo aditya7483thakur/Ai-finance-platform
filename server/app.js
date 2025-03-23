@@ -1,19 +1,25 @@
 import express from "express";
 import dotenv from "dotenv";
-import { PrismaClient } from "@prisma/client";
+import cors from "cors";
 import userRouter from "./routes/user.js";
 import transactionRouter from "./routes/transaction.js";
 import accountRouter from "./routes/account.js";
 
 // Load environment variables
 dotenv.config();
-console.log(process.env.CLERK_SECRET_KEY);
 
 // Initialize Express
 const app = express();
 
 // Middleware
 app.use(express.json());
+app.use(
+  cors({
+    origin: process.env.FRONTEND_DOMAIN,
+    methods: "GET,POST,PUT,DELETE,PATCH",
+    credentials: true,
+  })
+);
 
 // Sample Route
 app.get("/", (req, res) => {

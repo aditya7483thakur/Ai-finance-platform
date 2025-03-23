@@ -327,9 +327,10 @@ export const getFilteredTransactions = async (req, res) => {
 
     // Build the filters object dynamically
     let filters = {};
-    if (category) filters.category = category;
-    if (type) filters.type = type;
-    if (isRecurring) filters.isRecurring = isRecurring === "true"; // Convert string to boolean
+    if (category && category !== "ALL") filters.category = category;
+    if (type && type !== "ALL") filters.type = type;
+    if (isRecurring && isRecurring !== "ALL")
+      filters.isRecurring = isRecurring === "true";
     if (description)
       filters.description = { contains: description, mode: "insensitive" };
     if (accountId) filters.accountId = accountId; // Ensure only transactions for a specific account are fetched
