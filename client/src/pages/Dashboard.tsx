@@ -3,8 +3,13 @@ import { Progress } from "@/components/ui/progress";
 import RecentTransactions from "@/components/custom/RecentTransactions";
 import ExpenseBreakdown from "@/components/custom/ExpenseBreakdown";
 import Accounts from "@/components/custom/Accounts";
+import { useUserContext } from "@/contexts/userContext";
+import { usegetAllAccounts } from "@/services/accounts/query";
 
 const Dashboard = () => {
+  const { userId } = useUserContext();
+  const { data } = usegetAllAccounts(userId);
+  console.log(data);
   return (
     <div className="bg-gray-50 min-h-screen">
       <div className="max-w-7xl mx-auto px-4 py-8">
