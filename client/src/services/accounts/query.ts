@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { getAllAccounts } from "./api";
 
-export function usegetAllAccounts(userId: string | null) {
+export function useGetAllAccounts(userId: string | null) {
   return useQuery({
     queryKey: ["getAllAccounts", userId],
     queryFn: () => getAllAccounts(userId as string),

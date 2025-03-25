@@ -1,5 +1,5 @@
 import { useUserContext } from "@/contexts/userContext";
-import { usegetAllAccounts } from "@/services/accounts/query";
+import { useGetAllAccounts } from "@/services/accounts/query";
 import { Wallet } from "lucide-react";
 
 const accountData = [
@@ -24,7 +24,7 @@ const accountData = [
 ];
 const Accounts = () => {
   const { userId } = useUserContext();
-  const {} = usegetAllAccounts(userId);
+  const {} = useGetAllAccounts(userId);
   return (
     <>
       <div className="mb-8 mt-6">

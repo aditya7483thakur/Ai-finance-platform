@@ -106,3 +106,17 @@ export const deleteClerkUser = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
+export const getClerkUser = async (req, res) => {
+  const { clerkUserId } = req.params;
+  if (!clerkUserId)
+    return res.status(400).json({ message: "Transaction ID is required" });
+
+  const userData = await prisma.user.findUnique({
+    where: { clerkUserId },
+  });
+
+  if (!userData) return res.status(404).json({ message: "No user found" });
+
+  return res.status(200).json({ message: "User found", data: userData.id });
+};

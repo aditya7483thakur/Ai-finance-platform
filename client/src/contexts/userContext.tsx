@@ -1,5 +1,6 @@
 import { createContext, useContext, ReactNode } from "react";
 import { useAuth } from "@clerk/clerk-react";
+import { useGetUserId } from "@/services/users/query";
 
 // Define context type
 interface UserContextType {
@@ -7,13 +8,14 @@ interface UserContextType {
 }
 
 // Create context
-const UserContext = createContext<UserContextType | undefined>(undefined);
+const UserContext = createContext<UserContextType | null>(null);
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
-  // const { userId } = useAuth();
-  const userId = "59da1140-6735-45c7-8f9d-65dca84e5072";
+  const { userId } = useAuth();
+  const { data } = useGetUserId(userId ?? "");
+
   return (
-    <UserContext.Provider value={{ userId: userId ?? null }}>
+    <UserContext.Provider value={{ userId: data?.data ?? null }}>
       {children}
     </UserContext.Provider>
   );

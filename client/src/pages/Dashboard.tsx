@@ -4,11 +4,11 @@ import RecentTransactions from "@/components/custom/RecentTransactions";
 import ExpenseBreakdown from "@/components/custom/ExpenseBreakdown";
 import Accounts from "@/components/custom/Accounts";
 import { useUserContext } from "@/contexts/userContext";
-import { usegetAllAccounts } from "@/services/accounts/query";
+import { useGetAllAccounts } from "@/services/accounts/query";
 
 const Dashboard = () => {
   const { userId } = useUserContext();
-  const { data } = usegetAllAccounts(userId);
+  const { data } = useGetAllAccounts(userId);
   console.log(data);
   return (
     <div className="bg-gray-50 min-h-screen">
