@@ -11,8 +11,21 @@ interface UserContextType {
 const UserContext = createContext<UserContextType | null>(null);
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
-  const { userId } = useAuth();
-  const { data } = useGetUserId(userId ?? "");
+  const { userId, isLoaded: isAuthLoaded } = useAuth();
+  const { data, isLoading: isUserLoading } = useGetUserId(userId ?? "");
+
+  // Show a loader while waiting for Clerk or Backend
+  if (!isAuthLoaded || isUserLoading) {
+    return (
+      <div className="flex flex-col justify-center items-center h-screen">
+        <div className="flex flex-row gap-2">
+          <div className="w-5 h-5 rounded-full bg-blue-700 animate-bounce"></div>
+          <div className="w-5 h-5  rounded-full bg-blue-700 animate-bounce [animation-delay:-.3s]"></div>
+          <div className="w-5 h-5  rounded-full bg-blue-700 animate-bounce  [animation-delay:-.5s]"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <UserContext.Provider value={{ userId: data?.data ?? null }}>

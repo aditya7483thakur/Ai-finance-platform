@@ -1,5 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 import { addDays, addWeeks, addMonths, addYears } from "date-fns";
+import { Prisma } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -18,7 +19,17 @@ export const createTransaction = async (req, res) => {
       recurringInterval,
     } = req.body;
 
-    // Check if account exists
+    // ✅ Validate required fields
+    if (!type || !amount || !date || !accountId || !userId) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    // ✅ Ensure amount is positive
+    if (amount <= 0) {
+      return res.status(400).json({ message: "Amount must be greater than 0" });
+    }
+
+    // ✅ Check if account exists
     const account = await prisma.account.findUnique({
       where: { id: accountId },
     });
@@ -27,7 +38,7 @@ export const createTransaction = async (req, res) => {
       return res.status(404).json({ message: "Account not found!" });
     }
 
-    // Calculate nextRecurringDate if it's a recurring transaction
+    // ✅ Calculate nextRecurringDate only if transaction is recurring
     let nextRecurringDate = null;
     if (isRecurring && recurringInterval) {
       const transactionDate = new Date(date);
@@ -43,15 +54,16 @@ export const createTransaction = async (req, res) => {
           break;
         case "YEARLY":
           nextRecurringDate = addYears(transactionDate, 1);
+          break;
       }
     }
 
-    // ensures both operations succeed or fail together (atomicity)
+    // ✅ Ensure atomicity using Prisma transaction
     const transaction = await prisma.$transaction(async (prisma) => {
       const newTransaction = await prisma.transaction.create({
         data: {
           type,
-          amount,
+          amount: new Prisma.Decimal(amount), // Ensuring decimal precision
           description,
           date: new Date(date),
           category,
@@ -63,13 +75,23 @@ export const createTransaction = async (req, res) => {
         },
       });
 
-      let newBalance = Number(account.balance);
-      newBalance =
-        type === "INCOME" ? newBalance + amount : newBalance - amount;
+      // ✅ Update balance and usedAmount correctly
+      let newBalance = new Prisma.Decimal(account.balance);
+      let newUsedAmount = new Prisma.Decimal(account.usedAmount);
+
+      if (type === "INCOME") {
+        newBalance = newBalance.plus(amount);
+      } else {
+        newBalance = newBalance.minus(amount);
+        newUsedAmount = newUsedAmount.plus(amount);
+      }
 
       await prisma.account.update({
         where: { id: accountId },
-        data: { balance: newBalance },
+        data: {
+          balance: newBalance,
+          usedAmount: newUsedAmount, // ✅ Updating usedAmount for expenses
+        },
       });
 
       return newTransaction;
@@ -117,20 +139,32 @@ export const editTransaction = async (req, res) => {
       where: { id: existingTransaction.accountId },
     });
 
+    if (!account) {
+      return res.status(404).json({ message: "Account not found" });
+    }
+
     // Adjust balance if amount or type has changed
     let newBalance = Number(account.balance);
+    let newUsedAmount = Number(account.usedAmount);
 
+    // Revert old transaction effect
     if (existingTransaction.type === "INCOME") {
       newBalance -= Number(existingTransaction.amount);
     } else {
       newBalance += Number(existingTransaction.amount);
+      newUsedAmount -= Number(existingTransaction.amount); // Reduce old expense from usedAmount
     }
 
+    // Apply new transaction effect
     if (type === "INCOME") {
       newBalance += Number(amount);
     } else {
       newBalance -= Number(amount);
+      newUsedAmount += Number(amount); // Increase new expense in usedAmount
     }
+
+    // Ensure `usedAmount` doesn't go negative
+    newUsedAmount = Math.max(newUsedAmount, 0);
 
     // Calculate nextRecurringDate if it's a recurring transaction
     let nextRecurringDate = existingTransaction.nextRecurringDate;
@@ -153,7 +187,7 @@ export const editTransaction = async (req, res) => {
       nextRecurringDate = null; // If not recurring, reset
     }
 
-    // Perform atomic transaction to update both the transaction and account balance
+    // Perform atomic transaction to update both the transaction and account
     const updatedTransaction = await prisma.$transaction(async (prisma) => {
       const transactionUpdate = await prisma.transaction.update({
         where: { id: transactionId },
@@ -171,7 +205,7 @@ export const editTransaction = async (req, res) => {
 
       await prisma.account.update({
         where: { id: existingTransaction.accountId },
-        data: { balance: newBalance },
+        data: { balance: newBalance, usedAmount: newUsedAmount },
       });
 
       return transactionUpdate;
@@ -195,6 +229,7 @@ export const deleteTransaction = async (req, res) => {
       return res.status(400).json({ message: "Transaction ID is required" });
     }
 
+    // Fetch the transaction
     const transaction = await prisma.transaction.findUnique({
       where: { id: transactionId },
     });
@@ -203,7 +238,7 @@ export const deleteTransaction = async (req, res) => {
       return res.status(404).json({ message: "Transaction not found" });
     }
 
-    // Get account details
+    // Fetch the associated account
     const account = await prisma.account.findUnique({
       where: { id: transaction.accountId },
     });
@@ -212,26 +247,33 @@ export const deleteTransaction = async (req, res) => {
       return res.status(404).json({ message: "Account not found" });
     }
 
-    // Adjust balance
+    // Adjust balance and usedAmount
     let newBalance = Number(account.balance);
+    let newUsedAmount = Number(account.usedAmount);
+
     if (transaction.type === "INCOME") {
-      newBalance -= transaction.amount; // Deduct income
+      newBalance -= Number(transaction.amount); // Deduct income from balance
     } else {
-      newBalance += transaction.amount; // Add back expense
+      newBalance += Number(transaction.amount); // Add back expense
+      newUsedAmount -= Number(transaction.amount); // Reduce usedAmount
     }
 
-    // Perform transaction deletion and balance update atomically
+    // Ensure `usedAmount` is not negative
+    newUsedAmount = Math.max(newUsedAmount, 0);
+
+    // Perform transaction deletion and account update atomically
     await prisma.$transaction([
       // Step 1: Delete the transaction
       prisma.transaction.delete({
         where: { id: transactionId },
       }),
 
-      // Step 2: Update the account balance
+      // Step 2: Update the account balance and usedAmount
       prisma.account.update({
         where: { id: transaction.accountId },
         data: {
-          balance: newBalance, // Update balance after transaction removal
+          balance: newBalance, // Update balance after deletion
+          usedAmount: newUsedAmount, // Update usedAmount for expenses
         },
       }),
     ]);
@@ -264,23 +306,45 @@ export const deleteMultipleTransactions = async (req, res) => {
       return res.status(404).json({ message: "Some transactions not found" });
     }
 
-    // Compute balance updates per account
+    // Compute balance & usedAmount updates per account
     const accountUpdates = {};
+
     transactions.forEach((txn) => {
       if (!accountUpdates[txn.accountId]) {
-        accountUpdates[txn.accountId] = 0;
+        accountUpdates[txn.accountId] = { balance: 0, usedAmount: 0 };
       }
-      // Reverse the transaction effect on balance
-      accountUpdates[txn.accountId] +=
-        txn.type === "INCOME" ? -txn.amount : txn.amount;
+
+      if (txn.type === "INCOME") {
+        accountUpdates[txn.accountId].balance -= Number(txn.amount); // Deduct income from balance
+      } else {
+        accountUpdates[txn.accountId].balance += Number(txn.amount); // Add back expense
+        accountUpdates[txn.accountId].usedAmount -= Number(txn.amount); // Reduce usedAmount
+      }
     });
 
     // Convert updates to Prisma queries
     const accountUpdatesArray = Object.keys(accountUpdates).map(
-      (accountId) => ({
-        where: { id: accountId },
-        data: { balance: { increment: accountUpdates[accountId] } },
-      })
+      async (accountId) => {
+        const { balance, usedAmount } = accountUpdates[accountId];
+
+        // Ensure usedAmount doesn't go negative
+        const account = await prisma.account.findUnique({
+          where: { id: accountId },
+        });
+
+        const newUsedAmount = Math.max(
+          Number(account.usedAmount) + usedAmount,
+          0
+        );
+
+        return prisma.account.update({
+          where: { id: accountId },
+          data: {
+            balance: { increment: balance }, // Update balance
+            usedAmount: newUsedAmount, // Update usedAmount
+          },
+        });
+      }
     );
 
     // Execute deletion and balance update in a single Prisma transaction
@@ -291,9 +355,7 @@ export const deleteMultipleTransactions = async (req, res) => {
       });
 
       // Update all affected accounts
-      for (const update of accountUpdatesArray) {
-        await prisma.account.update(update);
-      }
+      await Promise.all(accountUpdatesArray);
     });
 
     return res.status(200).json({

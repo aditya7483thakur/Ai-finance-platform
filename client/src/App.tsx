@@ -14,7 +14,7 @@ function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<DashBoardLayout />}>
             <Route index element={<Dashboard />} />
-            <Route path="transactions" element={<Transaction />} />
+            <Route path="transactions/:accountId" element={<Transaction />} />
             <Route path="add-transaction" element={<AddTransaction />} />
           </Route>
         </Route>
