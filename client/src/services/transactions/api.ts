@@ -8,3 +8,10 @@ export const fetchFilteredTransactions = async (
   });
   return data;
 };
+
+export const deleteTransaction = async (transactionId: string) => {
+  const res = await backend.delete(
+    `/transactions/delete-transaction/${transactionId}`
+  );
+  return res.data;
+};

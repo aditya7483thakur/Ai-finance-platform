@@ -30,7 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Search } from "lucide-react";
+import { Loader2, MoreVertical, Search } from "lucide-react";
 import { useFilteredTransactions } from "@/services/transactions/query";
 import { useParams } from "react-router-dom";
 import { Transaction } from "@/types";
@@ -42,6 +42,15 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import { useState } from "react";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { useDeleteTransaction } from "@/services/transactions/mutation";
 
 const TransactionCategory = [
   "ALL",
@@ -94,7 +103,13 @@ const AccountTransaction = () => {
       isRecurring: "ALL",
     },
   });
-
+  const { mutate: deleteTransaction, isPending } = useDeleteTransaction();
+  const [open, setOpen] = useState(false);
+  const handleDelete = (transactionId: string) => {
+    deleteTransaction(transactionId, {
+      onSuccess: () => setOpen(false), // Close dialog after success
+    });
+  };
   // Function to handle page change
   const handlePageChange = (newPage: number) => {
     setFilters((prev) => ({
@@ -107,7 +122,8 @@ const AccountTransaction = () => {
 
   const [filters, setFilters] = useState({ accountId, page: 1 });
 
-  const { data: transactionData, isPending } = useFilteredTransactions(filters);
+  const { data: transactionData, isPending: deleting } =
+    useFilteredTransactions(filters);
 
   console.log(transactionData);
 
@@ -245,8 +261,10 @@ const AccountTransaction = () => {
               <TableHead>Date</TableHead>
               <TableHead>Description</TableHead>
               <TableHead>Category</TableHead>
+              <TableHead>Type</TableHead>
               <TableHead>Amount</TableHead>
               <TableHead>Recurring</TableHead>
+              <TableHead className="text-center">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -272,11 +290,51 @@ const AccountTransaction = () => {
                     {getCategoryIcon(transaction.category)}{" "}
                     {transaction.category}
                   </TableCell>
+                  <TableCell>{transaction.type}</TableCell>
                   <TableCell>${transaction.amount}</TableCell>
                   <TableCell>
                     {transaction.isRecurring
                       ? transaction.recurringInterval
                       : "One time"}
+                  </TableCell>
+                  <TableCell className="flex justify-center">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <MoreVertical className="w-4 h-4 text-gray-500 cursor-pointer" />
+                      </PopoverTrigger>
+                      <PopoverContent className="w-20 p-3">
+                        <div className="text-center">Edit</div>
+                        <Dialog open={open} onOpenChange={setOpen}>
+                          <DialogTrigger asChild>
+                            <div className="text-center text-red-500 cursor-pointer">
+                              Delete
+                            </div>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Are you sure?</DialogTitle>
+                              <DialogDescription>
+                                This action cannot be undone. This will
+                                permanently delete the transaction.
+                              </DialogDescription>
+                            </DialogHeader>
+                            <div className="flex justify-end space-x-2">
+                              <Button variant="outline">Cancel</Button>
+                              <Button
+                                variant="destructive"
+                                onClick={() => handleDelete(transaction.id)}
+                                disabled={deleting}
+                              >
+                                {deleting && (
+                                  <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                                )}
+                                {deleting ? "Deleting..." : "Delete"}
+                              </Button>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      </PopoverContent>
+                    </Popover>
                   </TableCell>
                 </TableRow>
               ))
