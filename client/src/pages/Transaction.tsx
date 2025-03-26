@@ -1,10 +1,7 @@
 import AccountTransaction from "@/components/custom/AccountTransaction";
 import TransactionGraph from "@/components/custom/TransactionGraph";
-import { useGetUserId } from "@/services/users/query";
 
 const Transaction = () => {
-  const { data } = useGetUserId("user_2tXcApHYZi9XtCxeC26zEbllBxZ");
-  console.log(data);
   return (
     <div className="bg-gray-50  px-4 py-8 min-h-screen">
       {/* Header */}

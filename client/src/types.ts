@@ -25,7 +25,7 @@ export interface Transaction {
   type: TransactionType;
   amount: number;
   description?: string;
-  date: Date;
+  date: string;
   category: TransactionCategory;
   receiptUrl?: string;
   isRecurring: boolean;

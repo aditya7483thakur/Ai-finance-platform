@@ -58,7 +58,7 @@ const Accounts = ({ accounts, accountsLoading, onAccountClick }: props) => {
                     <h3 className="font-medium text-gray-800">
                       {account.name}
                     </h3>
-                    <p className="text-xs text-gray-500">{account.userId}</p>
+                    <p className="text-xs text-gray-500">{account.id}</p>
                   </div>
                 </div>
               </div>
