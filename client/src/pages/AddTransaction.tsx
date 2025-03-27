@@ -25,23 +25,73 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { format } from "date-fns";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+
+export const formSchema = z
+  .object({
+    type: z.enum(["INCOME", "EXPENSE"], {
+      required_error: "Type is required",
+    }),
+    amount: z
+      .number({
+        required_error: "Amount is required",
+        invalid_type_error: "Amount must be a number",
+      })
+      .positive("Amount must be greater than zero"),
+
+    category: z.enum(
+      [
+        "SALARY",
+        "INVESTMENTS",
+        "FOOD",
+        "TRANSPORT",
+        "HOUSING",
+        "ENTERTAINMENT",
+        "TRAVEL",
+        "HEALTH",
+        "SHOPPING",
+        "MISCELLANEOUS",
+      ],
+      { required_error: "Category is required" }
+    ),
+
+    isRecurring: z.boolean(),
+    recurringInterval: z
+      .enum(["DAILY", "WEEKLY", "MONTHLY", "YEARLY"])
+      .optional(),
+    date: z.string().nonempty("Date is required"),
+    description: z.string().optional(),
+    account: z.string({
+      required_error: "Please select an email to display.",
+    }),
+  })
+  .superRefine((data, ctx) => {
+    if (data.isRecurring && !data.recurringInterval) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Recurring interval is required for recurring transactions",
+        path: ["recurringInterval"],
+      });
+    }
+  });
 
 const AddTransaction = () => {
   const form = useForm({
+    resolver: zodResolver(formSchema),
     defaultValues: {
-      type: "expense",
-      amount: "",
-      account: "personal ($152124.40)",
-      category: "",
-      date: new Date(),
       description: "",
       isRecurring: false,
     },
   });
 
   const onSubmit = (data: any) => {
-    console.log(data);
-    // Handle form submission logic here
+    const formattedValues = {
+      ...data,
+      date: data.date ? data.date.toISOString() : null, // Convert Date to ISO string
+    };
+
+    console.log(formattedValues);
   };
 
   return (
@@ -56,31 +106,6 @@ const AddTransaction = () => {
             <span>Scan Receipt with AI</span>
             <input type="file" accept="image/*" className="hidden" />
           </label>
-
-          <FormField
-            control={form.control}
-            name="type"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Type</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select type" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="expense">Expense</SelectItem>
-                    <SelectItem value="income">Income</SelectItem>
-                    <SelectItem value="transfer">Transfer</SelectItem>
-                  </SelectContent>
-                </Select>
-              </FormItem>
-            )}
-          />
 
           {/* Amount and Account (2-column layout) */}
           <div className="grid grid-cols-2 gap-4">
@@ -125,34 +150,70 @@ const AddTransaction = () => {
             />
           </div>
 
-          {/* Category */}
-          <FormField
-            control={form.control}
-            name="category"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Category</FormLabel>
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
-                  <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="food">Food & Dining</SelectItem>
-                    <SelectItem value="entertainment">Entertainment</SelectItem>
-                    <SelectItem value="utilities">Utilities</SelectItem>
-                    <SelectItem value="transport">Transportation</SelectItem>
-                    <SelectItem value="shopping">Shopping</SelectItem>
-                    <SelectItem value="healthcare">Healthcare</SelectItem>
-                  </SelectContent>
-                </Select>
-              </FormItem>
-            )}
-          />
+          <div className="grid grid-cols-2 gap-4">
+            {/* Category */}
+            <FormField
+              control={form.control}
+              name="category"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Category</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {[
+                        "SALARY",
+                        "INVESTMENTS",
+                        "FOOD",
+                        "TRANSPORT",
+                        "HOUSING",
+                        "ENTERTAINMENT",
+                        "TRAVEL",
+                        "HEALTH",
+                        "SHOPPING",
+                        "MISCELLANEOUS",
+                      ].map((item) => (
+                        <SelectItem key={item} value={item}>
+                          {item}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Type</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="INCOME">INCOME</SelectItem>
+                      <SelectItem value="EXPENSE">EXPENSE</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </FormItem>
+              )}
+            />
+          </div>
 
           {/* Date */}
           <FormField
@@ -180,8 +241,10 @@ const AddTransaction = () => {
                   <PopoverContent className="w-auto p-0" align="start">
                     <CalendarComponent
                       mode="single"
-                      selected={field.value}
-                      onSelect={field.onChange}
+                      selected={field.value ? new Date(field.value) : undefined} // Convert string to Date for `selected`
+                      onSelect={(date) =>
+                        field.onChange(date ? date.toISOString() : "")
+                      }
                       initialFocus
                     />
                   </PopoverContent>
@@ -203,6 +266,38 @@ const AddTransaction = () => {
               </FormItem>
             )}
           />
+
+          {/* Recurring Interval */}
+          {true && (
+            <FormField
+              control={form.control}
+              name="recurringInterval"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Recurring Interval</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger
+                        className="w-full"
+                        disabled={!form.watch("isRecurring")}
+                      >
+                        <SelectValue placeholder="Select recurring interval" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="DAILY">DAILY</SelectItem>
+                      <SelectItem value="WEEKLY">WEEKLY</SelectItem>
+                      <SelectItem value="MONTHLY">MONTHLY</SelectItem>
+                      <SelectItem value="YEARLY">YEARLY</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </FormItem>
+              )}
+            />
+          )}
 
           {/* Recurring Transaction */}
           <FormField

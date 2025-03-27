@@ -11,12 +11,16 @@ export type AccountType = {
 
 export type TransactionType = "INCOME" | "EXPENSE";
 export type TransactionCategory =
-  | "FOOD"
-  | "RENT"
-  | "TRANSPORT"
   | "SALARY"
-  | "INVESTMENT"
-  | "OTHER";
+  | "INVESTMENTS"
+  | "FOOD"
+  | "TRANSPORT"
+  | "HOUSING"
+  | "ENTERTAINMENT"
+  | "TRAVEL"
+  | "HEALTH"
+  | "SHOPPING"
+  | "MISCELLANEOUS";
 
 export type RecurringInterval = "DAILY" | "WEEKLY" | "MONTHLY" | "YEARLY";
 
