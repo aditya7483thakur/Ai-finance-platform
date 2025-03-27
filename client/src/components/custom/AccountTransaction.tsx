@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/popover";
 import { z } from "zod";
 
-import { Loader2, MoreVertical } from "lucide-react";
+import { Loader2, MoreVertical, Trash2 } from "lucide-react";
 import { useFilteredTransactions } from "@/services/transactions/query";
 import { useParams } from "react-router-dom";
 import { Transaction } from "@/types";
@@ -34,8 +34,12 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { useDeleteTransaction } from "@/services/transactions/mutation";
+import {
+  useDeleteBulkTransactions,
+  useDeleteTransaction,
+} from "@/services/transactions/mutation";
 import TransactionFilteration, { formSchema } from "./TransactionFilteration";
+import { Checkbox } from "../ui/checkbox";
 
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
@@ -58,13 +62,35 @@ const getCategoryIcon = (category: string) => {
 };
 
 const AccountTransaction = () => {
-  const { mutate: deleteTransaction, isPending } = useDeleteTransaction();
-  const [open, setOpen] = useState(false);
+  const { accountId } = useParams();
+
+  const [open, setOpen] = useState<boolean>(false);
+  const [filters, setFilters] = useState({ accountId, page: 1 });
+  const [selectedTransactions, setSelectedTransactions] = useState<Set<string>>(
+    new Set()
+  );
+
+  const { mutate: deleteTransaction, isPending: deleting } =
+    useDeleteTransaction();
+  const { data: transactionData, isPending } = useFilteredTransactions(filters);
+  const { mutate: bulkDelete, isPending: bulkDeleting } =
+    useDeleteBulkTransactions();
+
   const handleDelete = (transactionId: string) => {
     deleteTransaction(transactionId, {
-      onSuccess: () => setOpen(false), // Close dialog after success
+      onSuccess: () => setOpen(false),
     });
   };
+
+  const handleBulkDelete = () => {
+    if (selectedTransactions.size === 0) return;
+    bulkDelete(Array.from(selectedTransactions), {
+      onSuccess: () => {
+        setSelectedTransactions(new Set());
+      },
+    });
+  };
+
   // Function to handle page change
   const handlePageChange = (newPage: number) => {
     setFilters((prev) => ({
@@ -73,14 +99,13 @@ const AccountTransaction = () => {
     }));
   };
 
-  const { accountId } = useParams();
-
-  const [filters, setFilters] = useState({ accountId, page: 1 });
-
-  const { data: transactionData, isPending: deleting } =
-    useFilteredTransactions(filters);
-
-  console.log(transactionData);
+  const handleCheckboxChange = (id: string, checked: boolean) => {
+    setSelectedTransactions((prev) => {
+      const newSet = new Set(prev);
+      checked ? newSet.add(id) : newSet.delete(id);
+      return newSet;
+    });
+  };
 
   function handleFilterSubmit(values: z.infer<typeof formSchema>) {
     console.log("search", values);
@@ -93,13 +118,28 @@ const AccountTransaction = () => {
 
   return (
     <div className="max-w-7xl mx-auto mt-6 bg-white p-6 rounded-lg shadow-sm mb-8">
-      <div className=" mb-4">
+      <div className=" mb-3">
         <TransactionFilteration onSubmit={handleFilterSubmit} />
+        <div className="flex justify-center">
+          <Button
+            variant="destructive"
+            onClick={handleBulkDelete}
+            className={`items-center ${
+              selectedTransactions.size > 0 ? "flex" : "hidden"
+            } mt-3`}
+            disabled={bulkDeleting}
+          >
+            {bulkDeleting && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
+            <Trash2 className="mr-2 h-4 w-4" />
+            Delete Selected Transactions
+          </Button>
+        </div>
       </div>
       <div>
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead></TableHead>
               <TableHead>Date</TableHead>
               <TableHead>Description</TableHead>
               <TableHead>Category</TableHead>
@@ -120,8 +160,19 @@ const AccountTransaction = () => {
               transactionData?.data?.map((transaction: Transaction) => (
                 <TableRow key={transaction.id}>
                   <TableCell className="font-medium">
+                    <Checkbox
+                      className="border-black/70"
+                      id={transaction.id}
+                      checked={selectedTransactions.has(transaction.id)}
+                      onCheckedChange={(checked) =>
+                        handleCheckboxChange(transaction.id, checked as boolean)
+                      }
+                    />
+                  </TableCell>
+                  <TableCell className="font-medium">
                     {formatDate(transaction.date)}
                   </TableCell>
+
                   <TableCell>
                     {transaction.description &&
                     transaction.description.length > 20

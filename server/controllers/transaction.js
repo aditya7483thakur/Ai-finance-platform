@@ -290,7 +290,6 @@ export const deleteTransaction = async (req, res) => {
 export const deleteMultipleTransactions = async (req, res) => {
   try {
     const { transactionIds } = req.body;
-
     if (!Array.isArray(transactionIds) || transactionIds.length === 0) {
       return res.status(400).json({
         message: "Invalid request. Provide an array of transaction IDs.",
