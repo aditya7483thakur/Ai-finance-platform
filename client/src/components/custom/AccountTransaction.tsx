@@ -6,31 +6,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Loader2, MoreVertical, Search } from "lucide-react";
+import { z } from "zod";
+
+import { Loader2, MoreVertical } from "lucide-react";
 import { useFilteredTransactions } from "@/services/transactions/query";
 import { useParams } from "react-router-dom";
 import { Transaction } from "@/types";
@@ -51,27 +35,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { useDeleteTransaction } from "@/services/transactions/mutation";
-
-const TransactionCategory = [
-  "ALL",
-  "SALARY",
-  "INVESTMENTS",
-  "FOOD",
-  "TRANSPORT",
-  "HOUSING",
-  "ENTERTAINMENT",
-  "TRAVEL",
-  "HEALTH",
-  "SHOPPING",
-  "MISCELLANEOUS",
-] as const;
-
-const formSchema = z.object({
-  description: z.string().optional(),
-  type: z.enum(["ALL", "INCOME", "EXPENSE"]),
-  category: z.enum(TransactionCategory),
-  isRecurring: z.enum(["ALL", "true", "false"]),
-});
+import TransactionFilteration, { formSchema } from "./TransactionFilteration";
 
 const formatDate = (dateString: string) => {
   const date = new Date(dateString);
@@ -94,15 +58,6 @@ const getCategoryIcon = (category: string) => {
 };
 
 const AccountTransaction = () => {
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      description: "", // Matches schema
-      type: "ALL", // Ensure it matches `z.enum`
-      category: "ALL", // Must be a valid category
-      isRecurring: "ALL",
-    },
-  });
   const { mutate: deleteTransaction, isPending } = useDeleteTransaction();
   const [open, setOpen] = useState(false);
   const handleDelete = (transactionId: string) => {
@@ -127,132 +82,19 @@ const AccountTransaction = () => {
 
   console.log(transactionData);
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  function handleFilterSubmit(values: z.infer<typeof formSchema>) {
     console.log("search", values);
-
-    // Update the filters to trigger a new fetch
     setFilters((prev) => ({
       ...prev,
-      ...values, // Merge form values into filters
-      page: 1, // Reset to first page when applying filters
+      ...values,
+      page: 1,
     }));
   }
 
   return (
     <div className="max-w-7xl mx-auto mt-6 bg-white p-6 rounded-lg shadow-sm mb-8">
       <div className=" mb-4">
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="gap-2 flex justify-between flex-wrap"
-          >
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem className="flex-1 min-w-96 relative">
-                  <FormControl>
-                    <div className="relative">
-                      {/* Search Icon */}
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5" />
-
-                      {/* Input Field */}
-                      <Input
-                        placeholder="Search here..."
-                        {...field}
-                        className="pl-10" // Add left padding for icon
-                      />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="type"
-              render={({ field }) => (
-                <FormItem>
-                  {/* <FormLabel>Email</FormLabel> */}
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="w-44">
-                        <SelectValue placeholder="Select Type" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="ALL">BOTH</SelectItem>
-                      <SelectItem value="INCOME">INCOME</SelectItem>
-                      <SelectItem value="EXPENSE">EXPENSE</SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="category"
-              render={({ field }) => (
-                <FormItem>
-                  {/* <FormLabel>Email</FormLabel> */}
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="w-44">
-                        <SelectValue placeholder="Select Category" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {TransactionCategory.map((item: string) => (
-                        <SelectItem key={item} value={item}>
-                          {item}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="isRecurring"
-              render={({ field }) => (
-                <FormItem>
-                  {/* <FormLabel>Email</FormLabel> */}
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="w-44">
-                        <SelectValue placeholder="Select Recurrence" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="ALL">BOTH</SelectItem>
-                      <SelectItem value="true">RECURRING</SelectItem>
-                      <SelectItem value="false">NON-RECURRING</SelectItem>
-                    </SelectContent>
-                  </Select>
-
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <Button type="submit">Search</Button>
-          </form>
-        </Form>
+        <TransactionFilteration onSubmit={handleFilterSubmit} />
       </div>
       <div>
         <Table>
