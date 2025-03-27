@@ -4,6 +4,7 @@ import {
   createAccount,
   deleteAccount,
   getAllAccounts,
+  getSingleAccount,
   updateAccount,
 } from "../controllers/account.js";
 
@@ -13,5 +14,6 @@ router.post("/create-account", createAccount);
 router.get("/get-all-accounts/:userId", getAllAccounts);
 router.patch("/update-account/:id", updateAccount);
 router.delete("/delete-account/:id", deleteAccount);
+router.get("/get-account/:accountId", getSingleAccount);
 
 export default router;

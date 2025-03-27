@@ -25,7 +25,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogTrigger,
@@ -61,7 +61,11 @@ const getCategoryIcon = (category: string) => {
   }
 };
 
-const AccountTransaction = () => {
+const AccountTransaction = ({
+  setTotalTransactions,
+}: {
+  setTotalTransactions: (count: number) => void;
+}) => {
   const { accountId } = useParams();
 
   const [open, setOpen] = useState<boolean>(false);
@@ -75,6 +79,12 @@ const AccountTransaction = () => {
   const { data: transactionData, isPending } = useFilteredTransactions(filters);
   const { mutate: bulkDelete, isPending: bulkDeleting } =
     useDeleteBulkTransactions();
+
+  useEffect(() => {
+    if (transactionData?.pagination.totalTransactions) {
+      setTotalTransactions(transactionData?.pagination.totalTransactions);
+    }
+  }, [transactionData]);
 
   const handleDelete = (transactionId: string) => {
     deleteTransaction(transactionId, {

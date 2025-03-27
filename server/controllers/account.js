@@ -40,6 +40,21 @@ export const createAccount = async (req, res) => {
   }
 };
 
+export const getSingleAccount = async (req, res) => {
+  const { accountId } = req.params;
+  if (!accountId) {
+    return res.status(400).json({ error: "Account ID is required" });
+  }
+  const account = await prisma.account.findUnique({ where: { id: accountId } });
+  if (!account) {
+    return res.status(404).json({ message: "User not found" });
+  }
+  return res.status(200).json({
+    message: "Account fetched successfully",
+    data: account,
+  });
+};
+
 export const getAllAccounts = async (req, res) => {
   try {
     const { userId } = req.params;
