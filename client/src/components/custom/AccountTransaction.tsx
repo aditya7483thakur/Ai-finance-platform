@@ -169,8 +169,8 @@ const AccountTransaction = ({
                   Loading...
                 </TableCell>
               </TableRow>
-            ) : (
-              transactionData?.data?.map((transaction: Transaction) => (
+            ) : transactionData?.data?.length > 0 ? (
+              transactionData.data.map((transaction: Transaction) => (
                 <TableRow key={transaction.id}>
                   <TableCell className="font-medium">
                     <Checkbox
@@ -244,6 +244,15 @@ const AccountTransaction = ({
                   </TableCell>
                 </TableRow>
               ))
+            ) : (
+              <TableRow>
+                <TableCell
+                  colSpan={8}
+                  className="text-center py-4 text-gray-500"
+                >
+                  No transactions found.
+                </TableCell>
+              </TableRow>
             )}
           </TableBody>
         </Table>

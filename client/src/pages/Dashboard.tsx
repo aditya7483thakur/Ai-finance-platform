@@ -57,7 +57,10 @@ const Dashboard = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <ExpenseBreakdown />
-          <RecentTransactions />
+          <RecentTransactions
+            accounts={accounts?.data}
+            accountsLoading={accountsLoading}
+          />
         </div>
         <Accounts
           accounts={accounts?.data}

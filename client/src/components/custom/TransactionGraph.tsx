@@ -50,7 +50,9 @@ const TransactionGraph = () => {
               <SelectContent>
                 <SelectGroup>
                   {range.map((item) => (
-                    <SelectItem value={item.key}>{item.label}</SelectItem>
+                    <SelectItem key={item.key} value={item.key}>
+                      {item.label}
+                    </SelectItem>
                   ))}
                 </SelectGroup>
               </SelectContent>

@@ -1,40 +1,34 @@
-import { ArrowDownLeft, ArrowUpRight, ChevronRight } from "lucide-react";
-const transactionData = [
-  {
-    id: 1,
-    name: "Stripe",
-    amount: "$15,000",
-    category: "Income",
-    date: "Mar 15",
-    type: "credit",
-  },
-  {
-    id: 2,
-    name: "Airbnb",
-    amount: "$2,500",
-    category: "Expense",
-    date: "Mar 14",
-    type: "debit",
-  },
-  {
-    id: 3,
-    name: "DoorDash",
-    amount: "$80",
-    category: "Food",
-    date: "Mar 13",
-    type: "debit",
-  },
-  {
-    id: 4,
-    name: "Slack",
-    amount: "$25",
-    category: "Software",
-    date: "Mar 12",
-    type: "debit",
-  },
-];
+import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { AccountType, Transaction } from "@/types";
+import { useEffect, useState } from "react";
+import { useFilteredTransactions } from "@/services/transactions/query";
+import { Skeleton } from "../ui/skeleton";
 
-const RecentTransactions = () => {
+interface props {
+  accounts: AccountType[];
+  accountsLoading: boolean;
+}
+const RecentTransactions = ({ accounts, accountsLoading }: props) => {
+  const [filters, setFilters] = useState({
+    accountId: accounts ? accounts[0].id : "",
+    page: 1,
+    limit: 5,
+  });
+  useEffect(() => {
+    if (accounts && accounts.length > 0 && !filters.accountId) {
+      setFilters((prev) => ({ ...prev, accountId: accounts[0].id }));
+    }
+  }, [accounts]);
+  console.log(filters);
+  const { data: transactionData, isPending } = useFilteredTransactions(filters);
   return (
     <>
       {/* Recent Transactions */}
@@ -43,63 +37,81 @@ const RecentTransactions = () => {
           <h2 className="text-xl font-semibold text-gray-800">
             Recent Transactions
           </h2>
-          <button className="text-blue-500 hover:text-blue-600 text-sm font-medium flex items-center">
-            View all <ChevronRight className="h-4 w-4 ml-1" />
-          </button>
+          <Select
+            value={filters.accountId}
+            onValueChange={(value) =>
+              setFilters((prev) => ({ ...prev, accountId: value }))
+            }
+          >
+            <SelectTrigger className="w-[180px]" disabled={accountsLoading}>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                {accounts?.map((item) => (
+                  <SelectItem key={item.id} value={item.id}>
+                    {item.name}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
         </div>
         <div className="space-y-4">
-          {transactionData.map((transaction) => (
-            <div
-              key={transaction.id}
-              className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-md"
-            >
-              <div className="flex items-center">
-                <div
-                  className={`p-2 rounded-md mr-3 ${
-                    transaction.type === "credit"
-                      ? "bg-green-100"
-                      : "bg-red-100"
+          {isPending ? (
+            <>
+              <Skeleton className="h-8 w-full"></Skeleton>
+              <Skeleton className="h-8 w-full"></Skeleton>
+              <Skeleton className="h-8 w-full"></Skeleton>
+              <Skeleton className="h-8 w-full"></Skeleton>
+              <Skeleton className="h-8 w-full"></Skeleton>
+            </>
+          ) : transactionData?.data?.length > 0 ? (
+            transactionData.data.map((transaction: Transaction) => (
+              <div
+                key={transaction.id}
+                className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-md"
+              >
+                <div className="flex items-center">
+                  <div
+                    className={`p-2 rounded-md mr-3 ${
+                      transaction.type === "INCOME"
+                        ? "bg-green-100"
+                        : "bg-red-100"
+                    }`}
+                  >
+                    {transaction.type === "INCOME" ? (
+                      <ArrowUpRight className="h-5 w-5 text-green-500" />
+                    ) : (
+                      <ArrowDownLeft className="h-5 w-5 text-red-500" />
+                    )}
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-800">
+                      {transaction.category}
+                    </p>
+                    {/* <p className="text-xs text-gray-500">
+                      {transaction.date} · {transaction.category}
+                    </p> */}
+                  </div>
+                </div>
+                <p
+                  className={`font-medium ${
+                    transaction.type === "INCOME"
+                      ? "text-green-600"
+                      : "text-red-600"
                   }`}
                 >
-                  {transaction.type === "credit" ? (
-                    <ArrowUpRight
-                      className={`h-5 w-5 ${
-                        transaction.type === "credit"
-                          ? "text-green-500"
-                          : "text-red-500"
-                      }`}
-                    />
-                  ) : (
-                    <ArrowDownLeft
-                      className={`h-5 w-5 ${
-                        transaction.type === "credit"
-                          ? "text-green-500"
-                          : "text-red-500"
-                      }`}
-                    />
-                  )}
-                </div>
-                <div>
-                  <p className="font-medium text-gray-800">
-                    {transaction.name}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {transaction.date} · {transaction.category}
-                  </p>
-                </div>
+                  {transaction.type === "INCOME" ? "+" : "-"}
+                  {transaction.amount}
+                </p>
               </div>
-              <p
-                className={`font-medium ${
-                  transaction.type === "credit"
-                    ? "text-green-600"
-                    : "text-red-600"
-                }`}
-              >
-                {transaction.type === "credit" ? "+" : "-"}
-                {transaction.amount}
-              </p>
-            </div>
-          ))}
+            ))
+          ) : (
+            <p className="text-gray-500 text-center py-4">
+              No recent transactions.
+            </p>
+          )}
         </div>
       </div>
     </>

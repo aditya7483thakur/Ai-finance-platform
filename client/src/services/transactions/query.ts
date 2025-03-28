@@ -5,5 +5,6 @@ export const useFilteredTransactions = (filters: Record<string, any>) => {
   return useQuery({
     queryKey: ["transactions", filters],
     queryFn: () => fetchFilteredTransactions(filters),
+    enabled: !!filters.accountId,
   });
 };
