@@ -122,3 +122,65 @@ export const getTransactionSummary = async (req, res) => {
     });
   }
 };
+
+export const getCurrentMonthCategoryExpenses = async (req, res) => {
+  try {
+    const { userId } = req.query;
+    // console.log(user);
+    // Validate accountId
+    if (!userId || typeof userId !== "string") {
+      return res.status(400).json({ error: "Valid userId is required" });
+    }
+
+    // Get current month's start and end dates
+    const now = new Date();
+    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    lastDayOfMonth.setHours(23, 59, 59, 999);
+
+    // Fetch and aggregate transactions
+    const categoryExpenses = await prisma.transaction.groupBy({
+      by: ["category"],
+      where: {
+        userId,
+        type: "EXPENSE", // Only count expenses
+        date: {
+          gte: firstDayOfMonth,
+          lte: lastDayOfMonth,
+        },
+      },
+      _sum: {
+        amount: true,
+      },
+      orderBy: {
+        _sum: {
+          amount: "desc", // Order by highest expenses first
+        },
+      },
+    });
+
+    // Format the response
+    const formattedData = categoryExpenses.map((item) => ({
+      name: item.category,
+      value: Number(item._sum.amount), // Convert Decimal to number
+    }));
+
+    return res.status(200).json({
+      success: true,
+      data: formattedData,
+      meta: {
+        month: now.toLocaleString("default", { month: "long" }),
+        year: now.getFullYear(),
+        userId,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching category expenses:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Internal server error",
+      message:
+        process.env.NODE_ENV === "development" ? error.message : undefined,
+    });
+  }
+};

@@ -6,3 +6,10 @@ export const fetchTransactionGraph = async (filters: Record<string, any>) => {
   });
   return data;
 };
+
+export const fetchExpenseBreakdown = async (filters: Record<string, any>) => {
+  const { data } = await backend.get("/graphs/expense-summary", {
+    params: filters,
+  });
+  return data;
+};
