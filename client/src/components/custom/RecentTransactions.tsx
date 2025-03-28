@@ -70,7 +70,7 @@ const RecentTransactions = ({ accounts, accountsLoading }: props) => {
             transactionData.data.map((transaction: Transaction) => (
               <div
                 key={transaction.id}
-                className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-md"
+                className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-md"
               >
                 <div className="flex items-center">
                   <div
@@ -81,9 +81,9 @@ const RecentTransactions = ({ accounts, accountsLoading }: props) => {
                     }`}
                   >
                     {transaction.type === "INCOME" ? (
-                      <ArrowUpRight className="h-5 w-5 text-green-500" />
+                      <ArrowUpRight className="h-3 w-3 text-green-500" />
                     ) : (
-                      <ArrowDownLeft className="h-5 w-5 text-red-500" />
+                      <ArrowDownLeft className="h-3 w-3 text-red-500" />
                     )}
                   </div>
                   <div>
