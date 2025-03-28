@@ -27,6 +27,7 @@ import { format } from "date-fns";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { TransactionSchema } from "@/lib/schema";
 
 export const formSchema = z
   .object({
@@ -34,11 +35,9 @@ export const formSchema = z
       required_error: "Type is required",
     }),
     amount: z
-      .number({
-        required_error: "Amount is required",
-        invalid_type_error: "Amount must be a number",
-      })
-      .positive("Amount must be greater than zero"),
+      .string()
+      .regex(/^\d+(\.\d{1,2})?$/, "Must be a valid monetary amount")
+      .transform(Number),
 
     category: z.enum(
       [
@@ -62,7 +61,7 @@ export const formSchema = z
       .optional(),
     date: z.string().nonempty("Date is required"),
     description: z.string().optional(),
-    account: z.string({
+    accountId: z.string({
       required_error: "Please select an email to display.",
     }),
   })
@@ -77,21 +76,16 @@ export const formSchema = z
   });
 
 const AddTransaction = () => {
-  const form = useForm({
+  const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      description: "",
       isRecurring: false,
     },
   });
 
   const onSubmit = (data: any) => {
-    const formattedValues = {
-      ...data,
-      date: data.date ? data.date.toISOString() : null, // Convert Date to ISO string
-    };
-
-    console.log(formattedValues);
+    console.log(data);
+    console.log(data);
   };
 
   return (
@@ -116,7 +110,7 @@ const AddTransaction = () => {
                 <FormItem>
                   <FormLabel>Amount</FormLabel>
                   <FormControl>
-                    <Input placeholder="0.00" {...field} />
+                    <Input placeholder="0.00" {...field} type="number" />
                   </FormControl>
                 </FormItem>
               )}
@@ -124,7 +118,7 @@ const AddTransaction = () => {
 
             <FormField
               control={form.control}
-              name="account"
+              name="accountId"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Account</FormLabel>
@@ -268,7 +262,7 @@ const AddTransaction = () => {
           />
 
           {/* Recurring Interval */}
-          {true && (
+          {form.watch("isRecurring") && (
             <FormField
               control={form.control}
               name="recurringInterval"
