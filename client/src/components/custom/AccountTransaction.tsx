@@ -129,7 +129,10 @@ const AccountTransaction = ({
   return (
     <div className="max-w-7xl mx-auto mt-6 bg-white p-6 rounded-lg shadow-sm mb-8">
       <div className=" mb-3">
-        <TransactionFilteration onSubmit={handleFilterSubmit} />
+        <TransactionFilteration
+          searching={isPending}
+          onSubmit={handleFilterSubmit}
+        />
         <div className="flex justify-center">
           <Button
             variant="destructive"

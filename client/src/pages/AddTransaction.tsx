@@ -1,4 +1,4 @@
-import { Calendar } from "lucide-react";
+import { Calendar, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import {
@@ -27,7 +27,11 @@ import { format } from "date-fns";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { TransactionSchema } from "@/lib/schema";
+import { useCreateTransaction } from "@/services/transactions/mutation";
+import { useUserContext } from "@/contexts/userContext";
+import { useNavigate } from "react-router-dom";
+import { useGetAllAccounts } from "@/services/accounts/query";
+import { AccountType } from "@/types";
 
 export const formSchema = z
   .object({
@@ -76,16 +80,31 @@ export const formSchema = z
   });
 
 const AddTransaction = () => {
+  const { userId } = useUserContext();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       isRecurring: false,
     },
   });
-
+  const {
+    data: accounts,
+    isPending: accountsLoading,
+    isError,
+  } = useGetAllAccounts(userId);
+  const { mutate: createTransaction, isPending: creatingTransaction } =
+    useCreateTransaction();
+  const navigate = useNavigate();
   const onSubmit = (data: any) => {
-    console.log(data);
-    console.log(data);
+    console.log({ ...data, userId });
+    createTransaction(
+      { ...data, userId },
+      {
+        onSuccess: () => {
+          navigate("/dashboard");
+        },
+      }
+    );
   };
 
   return (
@@ -127,16 +146,27 @@ const AddTransaction = () => {
                     defaultValue={field.value}
                   >
                     <FormControl>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select account" />
+                      <SelectTrigger
+                        className="w-full"
+                        disabled={accountsLoading || isError}
+                      >
+                        <SelectValue
+                          placeholder={
+                            accountsLoading
+                              ? "Loading accounts..."
+                              : isError
+                              ? "Failed to load accounts"
+                              : "Select account"
+                          }
+                        />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="personal ($152124.40)">
-                        personal ($152124.40)
-                      </SelectItem>
-                      <SelectItem value="savings">Savings</SelectItem>
-                      <SelectItem value="checking">Checking</SelectItem>
+                      {accounts?.data?.map((item: AccountType) => (
+                        <SelectItem key={item.id} value={item.id}>
+                          {item.name}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </FormItem>
@@ -325,7 +355,11 @@ const AddTransaction = () => {
             <Button
               type="submit"
               className="bg-black text-white hover:bg-gray-800"
+              disabled={creatingTransaction}
             >
+              {creatingTransaction && (
+                <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+              )}
               Create Transaction
             </Button>
           </div>

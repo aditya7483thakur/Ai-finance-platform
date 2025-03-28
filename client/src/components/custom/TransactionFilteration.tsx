@@ -17,7 +17,7 @@ import { Button } from "../ui/button";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { Search } from "lucide-react";
+import { Loader2, Search } from "lucide-react";
 
 const TransactionCategory = [
   "ALL",
@@ -44,8 +44,10 @@ type TransactionFilterData = z.infer<typeof formSchema>;
 
 const TransactionFilteration = ({
   onSubmit,
+  searching,
 }: {
   onSubmit: (data: TransactionFilterData) => void;
+  searching: boolean;
 }) => {
   const form = useForm<TransactionFilterData>({
     resolver: zodResolver(formSchema),
@@ -167,7 +169,10 @@ const TransactionFilteration = ({
             )}
           />
 
-          <Button type="submit">Search</Button>
+          <Button type="submit" disabled={searching}>
+            {searching && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
+            Search
+          </Button>
         </form>
       </Form>
     </>
