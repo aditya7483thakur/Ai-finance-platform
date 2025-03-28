@@ -94,7 +94,9 @@ const AddTransaction = () => {
   } = useGetAllAccounts(userId);
   const { mutate: createTransaction, isPending: creatingTransaction } =
     useCreateTransaction();
+
   const navigate = useNavigate();
+
   const onSubmit = (data: any) => {
     console.log({ ...data, userId });
     createTransaction(

@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import userRouter from "./routes/user.js";
 import transactionRouter from "./routes/transaction.js";
+import graphRouter from "./routes/graph.js";
 import accountRouter from "./routes/account.js";
 
 // Load environment variables
@@ -30,6 +31,7 @@ app.get("/", (req, res) => {
 app.use("/users", userRouter);
 app.use("/accounts", accountRouter);
 app.use("/transactions", transactionRouter);
+app.use("/graphs", graphRouter);
 
 // Start Server
 const PORT = process.env.PORT || 5000;

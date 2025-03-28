@@ -1,3 +1,5 @@
+import { useFetchTransactionGraph } from "@/services/graphs/query";
+import { useParams } from "react-router-dom";
 import {
   BarChart,
   Bar,
@@ -7,47 +9,52 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useState } from "react";
+
 const TransactionGraph = () => {
-  const chartData = [
-    { date: "Nov 15", income: 5000, expense: 2000 },
-    { date: "Nov 16", income: 2000, expense: 2500 },
-    { date: "Nov 17", income: 3000, expense: 1000 },
-    { date: "Nov 18", income: 0, expense: 3000 },
-    { date: "Nov 19", income: 5000, expense: 0 },
-    { date: "Nov 20", income: 2000, expense: 1500 },
-    { date: "Nov 21", income: 0, expense: 2000 },
-    { date: "Nov 22", income: 3000, expense: 1000 },
-    { date: "Nov 23", income: 1000, expense: 2000 },
-    { date: "Nov 24", income: 0, expense: 0 },
-    { date: "Nov 25", income: 5000, expense: 3000 },
-    { date: "Nov 26", income: 2000, expense: 2000 },
-    { date: "Nov 27", income: 6500, expense: 3000 },
-    { date: "Nov 28", income: 6000, expense: 5000 },
-    { date: "Nov 29", income: 8000, expense: 4000 },
-    { date: "Nov 30", income: 0, expense: 800 },
-    { date: "Dec 01", income: 2000, expense: 0 },
-    { date: "Dec 02", income: 3500, expense: 3000 },
-    { date: "Dec 03", income: 0, expense: 0 },
-    { date: "Dec 04", income: 6000, expense: 0 },
-    { date: "Dec 05", income: 0, expense: 1000 },
-    { date: "Dec 06", income: 5500, expense: 0 },
-    { date: "Dec 09", income: 0, expense: 3000 },
+  const { accountId } = useParams();
+  const [selectedRange, setSelectedRange] = useState("last_7_days");
+
+  const { data, isPending } = useFetchTransactionGraph({
+    accountId,
+    filter: selectedRange,
+  });
+  console.log(data);
+  const range: { key: string; label: string }[] = [
+    { key: "last_7_days", label: "Last 7 days" },
+    { key: "last_month", label: "Last month" },
+    { key: "last_6_months", label: "Last 6 months" },
   ];
 
   return (
     <>
-      {/* Transaction Overview */}
       <div className="max-w-7xl mx-auto mt-6 bg-white p-6 rounded-lg shadow-sm">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold">Transaction Overview</h2>
           <div className="relative">
-            <select className="p-2 pr-8 border rounded-md appearance-none bg-white">
-              <option>Last Month</option>
-              <option>Last 7 Days</option>
-              <option>Last 3 Months</option>
-              <option>Last 6 Months</option>
-              <option>All Time</option>
-            </select>
+            <Select
+              defaultValue="last_7_days"
+              onValueChange={(value) => setSelectedRange(value)}
+            >
+              <SelectTrigger className="w-[180px]" disabled={isPending}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectGroup>
+                  {range.map((item) => (
+                    <SelectItem value={item.key}>{item.label}</SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
@@ -71,7 +78,7 @@ const TransactionGraph = () => {
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
-              data={chartData}
+              data={data?.data}
               margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
             >
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
