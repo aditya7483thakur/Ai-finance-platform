@@ -1,4 +1,5 @@
 import backend from "@/axios-instance";
+import { CreateAccountData } from "@/types";
 
 export const getAllAccounts = async (userId: string) => {
   const res = await backend.get(`/accounts/get-all-accounts/${userId}`);
@@ -7,5 +8,10 @@ export const getAllAccounts = async (userId: string) => {
 
 export const getSingleAccount = async (accountId: string) => {
   const res = await backend.get(`/accounts/get-account/${accountId}`);
+  return res.data;
+};
+
+export const createAccount = async (data: CreateAccountData) => {
+  const res = await backend.post("/accounts/create-account", data);
   return res.data;
 };

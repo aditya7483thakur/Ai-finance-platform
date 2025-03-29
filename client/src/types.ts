@@ -40,3 +40,10 @@ export interface Transaction {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export type CreateAccountData = {
+  name: string;
+  balance: string;
+  budget?: string;
+  userId: string;
+};

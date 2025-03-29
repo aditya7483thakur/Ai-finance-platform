@@ -1,16 +1,75 @@
 import { AccountType } from "@/types";
-import { Plus, Wallet } from "lucide-react";
+import { Loader2, Plus, Wallet } from "lucide-react";
 import { Skeleton } from "../ui/skeleton";
-import { Button } from "../ui/button";
 import { useNavigate } from "react-router-dom";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+
+import { Button } from "@/components/ui/button";
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerFooter,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
+import { useUserContext } from "@/contexts/userContext";
+import { useCreateAccount } from "@/services/accounts/mutation";
 
 interface props {
   accounts: AccountType[];
   accountsLoading: boolean;
   onAccountClick: (account: AccountType) => void;
 }
+
+const formSchema = z.object({
+  name: z.string().min(3, {
+    message: "Account name must be at least 3 characters.",
+  }),
+  balance: z.string().min(1, {
+    message: "Balance can't be empty.",
+  }),
+  budget: z.string().optional(),
+});
+
 const Accounts = ({ accounts, accountsLoading, onAccountClick }: props) => {
   const navigate = useNavigate();
+  const { userId } = useUserContext();
+  const { mutate: createAccount, isPending: creatingAccount } =
+    useCreateAccount();
+  console.log(accounts);
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "",
+      balance: "",
+      budget: "",
+    },
+  });
+
+  // 2. Define a submit handler.
+  function onSubmit(values: z.infer<typeof formSchema>) {
+    createAccount(
+      { ...values, userId: userId as string },
+      {
+        onSuccess: () => {
+          navigate("/dashboard");
+          form.reset();
+        },
+      }
+    );
+  }
+
   if (accountsLoading) {
     return (
       <div className="mb-8 mt-6">
@@ -44,10 +103,90 @@ const Accounts = ({ accounts, accountsLoading, onAccountClick }: props) => {
     <>
       <div className="mb-8 mt-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white rounded-xl p-5 shadow-sm hover:cursor-pointer border flex flex-col justify-center items-center border-gray-200 hover:shadow-md transition-shadow duration-200">
-            <Plus className="h-10 w-10 text-slate-600" />
-            <span className="text-slate-600 mt-2">Add account</span>
-          </div>
+          <Drawer>
+            <DrawerTrigger asChild>
+              <div className="bg-white rounded-xl p-5 shadow-sm hover:cursor-pointer border flex flex-col justify-center items-center border-gray-200 hover:shadow-md transition-shadow duration-200">
+                <Plus className="h-10 w-10 text-slate-600" />
+                <span className="text-slate-600 mt-2">Add account</span>
+              </div>
+            </DrawerTrigger>
+            <DrawerContent className="px-6">
+              <Form {...form}>
+                <form
+                  onSubmit={form.handleSubmit(onSubmit)}
+                  className="space-y-3"
+                >
+                  <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Account name</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Enter your account name"
+                            {...field}
+                            className="border border-black/40"
+                          />
+                        </FormControl>
+
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="balance"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Balance</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Enter your account balance"
+                            {...field}
+                            className="border border-black/40"
+                            type="number"
+                          />
+                        </FormControl>
+
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="budget"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Budget</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Enter your budget"
+                            {...field}
+                            className="border border-black/40"
+                            type="number"
+                          />
+                        </FormControl>
+
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <DrawerFooter className="px-0 flex">
+                    <Button type="submit" disabled={creatingAccount}>
+                      {creatingAccount && (
+                        <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                      )}
+                      {creatingAccount ? "Creating..." : " Create Account"}
+                    </Button>
+                    <DrawerClose asChild>
+                      <Button variant="outline">Cancel</Button>
+                    </DrawerClose>
+                  </DrawerFooter>
+                </form>
+              </Form>
+            </DrawerContent>
+          </Drawer>
 
           {accounts?.map((account) => (
             <>

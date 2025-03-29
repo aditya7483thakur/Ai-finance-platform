@@ -5,7 +5,6 @@ const prisma = new PrismaClient();
 export const createAccount = async (req, res) => {
   try {
     const { userId, name, balance, budget } = req.body;
-    console.log(req.body);
 
     // Validate required fields
     if (!userId || !name) {
