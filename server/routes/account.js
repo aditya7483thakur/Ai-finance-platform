@@ -12,7 +12,7 @@ const router = express.Router();
 
 router.post("/create-account", createAccount);
 router.get("/get-all-accounts/:userId", getAllAccounts);
-router.patch("/update-account/:id", updateAccount);
+router.patch("/update-account", updateAccount);
 router.delete("/delete-account/:id", deleteAccount);
 router.get("/get-account/:accountId", getSingleAccount);
 

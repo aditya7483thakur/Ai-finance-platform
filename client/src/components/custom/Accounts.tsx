@@ -63,7 +63,6 @@ const Accounts = ({ accounts, accountsLoading, onAccountClick }: props) => {
       { ...values, userId: userId as string },
       {
         onSuccess: () => {
-          navigate("/dashboard");
           form.reset();
         },
       }

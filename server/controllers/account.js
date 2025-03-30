@@ -82,8 +82,8 @@ export const getAllAccounts = async (req, res) => {
 };
 
 export const updateAccount = async (req, res) => {
-  const { id } = req.params;
-  const { name, budget } = req.body;
+  const { name, budget, id } = req.body;
+  console.log(req.body);
 
   if (!name && !budget) {
     return res.status(400).json({ error: "Required fields are missing" });
@@ -94,12 +94,14 @@ export const updateAccount = async (req, res) => {
       where: { id },
       data: {
         ...(name !== undefined && { name }), // Update name if provided
-        ...(budget !== undefined && { budget }), // Update budget if provided
+        ...(budget !== undefined &&
+          budget !== "" && { budget: Number(budget) }),
       },
     });
 
     res.json({ message: "Account name updated successfully", updatedAccount });
   } catch (error) {
+    console.log(error);
     res.status(400).json({ error: "Account update failed" });
   }
 };

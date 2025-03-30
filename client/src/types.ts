@@ -47,3 +47,7 @@ export type CreateAccountData = {
   budget?: string;
   userId: string;
 };
+
+export type updateAccountData = {
+  id: string;
+} & ({ name: string; budget?: string } | { name?: string; budget: string });
