@@ -27,11 +27,15 @@ import { format } from "date-fns";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useCreateTransaction } from "@/services/transactions/mutation";
+import {
+  useCreateTransaction,
+  useScanReceipt,
+} from "@/services/transactions/mutation";
 import { useUserContext } from "@/contexts/userContext";
 import { useNavigate } from "react-router-dom";
 import { useGetAllAccounts } from "@/services/accounts/query";
 import { AccountType } from "@/types";
+import { useRef } from "react";
 
 export const formSchema = z
   .object({
@@ -92,6 +96,8 @@ const AddTransaction = () => {
     isPending: accountsLoading,
     isError,
   } = useGetAllAccounts(userId);
+
+  const { mutate: scanReceipt, isPending: isScanning } = useScanReceipt();
   const { mutate: createTransaction, isPending: creatingTransaction } =
     useCreateTransaction();
 
@@ -109,6 +115,24 @@ const AddTransaction = () => {
     );
   };
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    scanReceipt(file, {
+      onSuccess: (data) => {
+        console.log("Parsed receipt data:", data);
+        if (data.amount) form.setValue("amount", data.amount);
+        if (data.type) form.setValue("type", data.type);
+        if (data.category) form.setValue("category", data.category);
+        if (data.date) form.setValue("date", data.date);
+        if (data.description) form.setValue("description", data.description);
+      },
+    });
+  };
+
   return (
     <div className=" flex justify-center p-4 px-20 bg-white">
       <Form {...form}>
@@ -116,10 +140,34 @@ const AddTransaction = () => {
           onSubmit={form.handleSubmit(onSubmit)}
           className="space-y-6 w-1/2"
         >
-          <label className="w-full bg-pink-500 hover:bg-pink-600 mb-6 flex items-center justify-center gap-2 text-white py-2 rounded-md cursor-pointer">
-            <Calendar className="h-4 w-4" />
-            <span>Scan Receipt with AI</span>
-            <input type="file" accept="image/*" className="hidden" />
+          <label
+            className={`w-full mb-6 flex items-center justify-center gap-2 text-white py-2 rounded-md transition-colors duration-200
+    ${
+      isScanning
+        ? "bg-pink-400 cursor-not-allowed"
+        : "bg-pink-500 hover:bg-pink-600 cursor-pointer"
+    }`}
+          >
+            {isScanning ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                <span>Scanning Receipt...</span>
+              </>
+            ) : (
+              <>
+                <Calendar className="h-4 w-4" />
+                <span>Scan Receipt with AI</span>
+              </>
+            )}
+
+            <input
+              type="file"
+              accept="image/*"
+              ref={fileInputRef}
+              onChange={handleFileChange}
+              className="hidden"
+              disabled={isScanning}
+            />
           </label>
 
           {/* Amount and Account (2-column layout) */}
@@ -184,10 +232,7 @@ const AddTransaction = () => {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Category</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="Select category" />
@@ -222,10 +267,7 @@ const AddTransaction = () => {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Type</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                  >
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="Select type" />

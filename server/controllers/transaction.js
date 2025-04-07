@@ -1,6 +1,10 @@
 import { PrismaClient } from "@prisma/client";
 import { addDays, addWeeks, addMonths, addYears } from "date-fns";
 import { Prisma } from "@prisma/client";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import fs from "fs/promises";
+
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API);
 
 const prisma = new PrismaClient();
 
@@ -425,5 +429,58 @@ export const getFilteredTransactions = async (req, res) => {
   } catch (error) {
     console.error("Error fetching filtered transactions:", error);
     return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const AiFormReceipt = async (req, res) => {
+  const { path: filePath, mimetype } = req.file;
+
+  try {
+    const fileBuffer = await fs.readFile(filePath);
+    const base64Image = fileBuffer.toString("base64");
+
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
+    const prompt = `
+      You're a smart assistant that extracts fields from receipts.
+      From the uploaded image, return this object:
+      {
+        "type": "INCOME" or "EXPENSE",
+        "amount": "number as string",
+        "category": "One of: SALARY, INVESTMENTS, FOOD, TRANSPORT, HOUSING, ENTERTAINMENT, TRAVEL, HEALTH, SHOPPING, MISCELLANEOUS",
+        "date": "yyyy-mm-dd",
+        "description": "short merchant or transaction description"
+      }
+      If it's not a receipt, return an empty object {}
+    `;
+
+    const result = await model.generateContent({
+      contents: [
+        {
+          parts: [
+            { text: prompt },
+            {
+              inlineData: {
+                mimeType: mimetype,
+                data: base64Image,
+              },
+            },
+          ],
+          role: "user",
+        },
+      ],
+    });
+
+    const rawText = result.response.text().trim();
+    const cleanText = rawText.replace(/```(json)?/g, "").trim();
+    const parsed = JSON.parse(cleanText);
+
+    await fs.unlink(filePath); // delete file after use
+
+    res.status(200).json(parsed);
+  } catch (err) {
+    console.error("Gemini Error:", err);
+    await fs.unlink(filePath);
+    res.status(500).json({ error: "Failed to parse receipt" });
   }
 };

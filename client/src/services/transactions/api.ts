@@ -28,3 +28,11 @@ export const createTransaction = async (data: any) => {
   const res = await backend.post("/transactions/create-transaction", data);
   return res.data;
 };
+
+export const scanReceipt = async (file: File) => {
+  const formData = new FormData();
+  formData.append("receipt", file);
+
+  const res = await backend.post("/transactions/ai-receipt", formData);
+  return res.data;
+};

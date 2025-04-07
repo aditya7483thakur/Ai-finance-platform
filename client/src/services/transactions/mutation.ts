@@ -3,6 +3,7 @@ import {
   createTransaction,
   deleteBulkTransactions,
   deleteTransaction,
+  scanReceipt,
 } from "./api";
 import { toast } from "sonner";
 
@@ -38,6 +39,15 @@ export const useCreateTransaction = () => {
       console.log(data);
       toast.success(data.message);
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
+    },
+  });
+};
+
+export const useScanReceipt = () => {
+  return useMutation({
+    mutationFn: (file: File) => scanReceipt(file),
+    onError: (err) => {
+      console.error("Receipt scan failed", err);
     },
   });
 };

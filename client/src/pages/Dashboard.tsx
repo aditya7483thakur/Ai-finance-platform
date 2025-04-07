@@ -72,76 +72,10 @@ const Dashboard = () => {
     <div className="bg-gray-50 min-h-screen">
       <div className="max-w-7xl mx-auto px-4 py-8">
         {/* Budget Section */}
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button variant="outline">Edit Profile</Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Edit profile</DialogTitle>
-              <DialogDescription>
-                Make changes to your profile here. Click save when you're done.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <Form {...form}>
-                <form
-                  onSubmit={form.handleSubmit(onSubmit)}
-                  className="space-y-3"
-                >
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Account name</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Enter your account name"
-                            {...field}
-                            className="border border-black/40"
-                          />
-                        </FormControl>
-
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="budget"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Budget</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Enter your budget"
-                            {...field}
-                            className="border border-black/40"
-                            type="number"
-                          />
-                        </FormControl>
-
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <Button type="submit" disabled={updatingAccount}>
-                    {updatingAccount && (
-                      <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-                    )}
-                    {updatingAccount ? "Creating..." : " Create Account"}
-                  </Button>
-                </form>
-              </Form>
-            </div>
-            <DialogFooter>
-              {/* <Button type="submit">Save changes</Button> */}
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
         <div className="bg-white mb-6 p-3 shadow-md rounded-md">
-          <span className="block text-lg font-medium">Account Budget</span>
+          <span className="block text-lg font-medium">
+            {selectedAccount && `Account name: ${selectedAccount.name}`}
+          </span>
           {selectedAccount ? (
             <>
               <div className="flex gap-2 items-center mb-2">
@@ -149,7 +83,77 @@ const Dashboard = () => {
                   ${selectedAccount.usedAmount}/
                   {selectedAccount.budget ?? "Not Set"} spent
                 </span>
-                <Pencil size={18} />
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Pencil size={18} className="hover:cursor-pointer" />
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                      <DialogTitle>Edit profile</DialogTitle>
+                      <DialogDescription>
+                        Make changes to your profile here. Click save when
+                        you're done.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                      <Form {...form}>
+                        <form
+                          onSubmit={form.handleSubmit(onSubmit)}
+                          className="space-y-3"
+                        >
+                          <FormField
+                            control={form.control}
+                            name="name"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Account name</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    placeholder="Enter your account name"
+                                    {...field}
+                                    className="border border-black/40"
+                                  />
+                                </FormControl>
+
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="budget"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Budget</FormLabel>
+                                <FormControl>
+                                  <Input
+                                    placeholder="Enter your budget"
+                                    {...field}
+                                    className="border border-black/40"
+                                    type="number"
+                                  />
+                                </FormControl>
+
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <Button type="submit" disabled={updatingAccount}>
+                            {updatingAccount && (
+                              <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                            )}
+                            {updatingAccount
+                              ? "Creating..."
+                              : " Create Account"}
+                          </Button>
+                        </form>
+                      </Form>
+                    </div>
+                    <DialogFooter>
+                      {/* <Button type="submit">Save changes</Button> */}
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
               </div>
               <Progress
                 value={

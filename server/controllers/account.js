@@ -83,7 +83,6 @@ export const getAllAccounts = async (req, res) => {
 
 export const updateAccount = async (req, res) => {
   const { name, budget, id } = req.body;
-  console.log(req.body);
 
   if (!name && !budget) {
     return res.status(400).json({ error: "Required fields are missing" });
