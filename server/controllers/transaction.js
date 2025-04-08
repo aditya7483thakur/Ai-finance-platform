@@ -1,12 +1,10 @@
-import { PrismaClient } from "@prisma/client";
+import prisma from "../utils/prisma.js";
 import { addDays, addWeeks, addMonths, addYears } from "date-fns";
 import { Prisma } from "@prisma/client";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import fs from "fs/promises";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API);
-
-const prisma = new PrismaClient();
 
 //cron job is needed to setup for this
 export const createTransaction = async (req, res) => {

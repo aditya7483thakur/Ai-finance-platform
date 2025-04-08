@@ -5,6 +5,7 @@ import userRouter from "./routes/user.js";
 import transactionRouter from "./routes/transaction.js";
 import graphRouter from "./routes/graph.js";
 import accountRouter from "./routes/account.js";
+import cronRoutes from "./routes/cron.js";
 
 // Load environment variables
 dotenv.config();
@@ -32,6 +33,7 @@ app.use("/users", userRouter);
 app.use("/accounts", accountRouter);
 app.use("/transactions", transactionRouter);
 app.use("/graphs", graphRouter);
+app.use("/cron", cronRoutes);
 
 // Start Server
 const PORT = process.env.PORT || 5000;
