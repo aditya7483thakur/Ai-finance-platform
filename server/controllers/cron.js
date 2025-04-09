@@ -2,6 +2,9 @@ import { addDays, addWeeks, addMonths, addYears, isBefore } from "date-fns";
 import prisma from "../utils/prisma.js";
 import { Prisma } from "@prisma/client";
 import checkAndSendBudgetAlert from "../utils/checkAndSendBudgetAlert.js";
+import { getMonthlyCategoryExpenses } from "../utils/getMonthlyCategoryExpenses.js";
+import { generateFinancialTip } from "../utils/generateFinancialTip.js";
+import { sendEmail } from "../utils/sendEmail.js";
 
 export const runRecurringTransactions = async (req, res) => {
   try {
@@ -113,5 +116,59 @@ export const runRecurringTransactions = async (req, res) => {
     res
       .status(500)
       .json({ message: "Failed to process recurring transactions" });
+  }
+};
+
+export const sendMonthlySummaries = async () => {
+  const users = await prisma.user.findMany({
+    include: {
+      accounts: true,
+    },
+  });
+  console.log(users);
+  for (const user of users) {
+    if (!user.email || user.email.trim() === "") continue; // Skip if email is blank (just in case)
+
+    try {
+      const { formatted, month, year } = await getMonthlyCategoryExpenses(
+        user.id
+      );
+
+      console.log(formatted, month, year);
+      if (!formatted || formatted.length === 0) {
+        console.log(`ℹ️ No expenses for ${user.email}, skipping email.`);
+        continue;
+      }
+
+      const tip = await generateFinancialTip(formatted);
+
+      const html = `
+        <h2>Your ${month} ${year} Expense Summary</h2>
+        <ul>
+          ${formatted
+            .map(
+              (item) =>
+                `<li><strong>${item.name}</strong>: ₹${item.value.toFixed(
+                  2
+                )}</li>`
+            )
+            .join("")}
+        </ul>
+        <h3>💡 Smart Tip:</h3>
+        <p>${tip}</p>
+        <br/>
+        <em>Stay financially wise with Budgetly 🧠</em>
+      `;
+
+      await sendEmail({
+        to: user.email,
+        subject: `📊 Your ${month} Summary + Tip from Budgetly`,
+        html,
+      });
+
+      console.log(`✅ Sent monthly summary to ${user.email}`);
+    } catch (err) {
+      console.error(`❌ Failed to send summary to ${user.email}:`, err);
+    }
   }
 };
