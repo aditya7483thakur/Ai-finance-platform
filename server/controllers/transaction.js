@@ -3,10 +3,10 @@ import { addDays, addWeeks, addMonths, addYears } from "date-fns";
 import { Prisma } from "@prisma/client";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import fs from "fs/promises";
+import checkAndSendBudgetAlert from "../utils/checkAndSendBudgetAlert.js";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API);
 
-//cron job is needed to setup for this
 export const createTransaction = async (req, res) => {
   try {
     const {
@@ -34,6 +34,7 @@ export const createTransaction = async (req, res) => {
     // ✅ Check if account exists
     const account = await prisma.account.findUnique({
       where: { id: accountId },
+      include: { user: true },
     });
 
     if (!account) {
@@ -59,7 +60,7 @@ export const createTransaction = async (req, res) => {
           break;
       }
     }
-
+    let newUsedAmount = new Prisma.Decimal(account.usedAmount);
     // ✅ Ensure atomicity using Prisma transaction
     const transaction = await prisma.$transaction(async (prisma) => {
       const newTransaction = await prisma.transaction.create({
@@ -79,7 +80,7 @@ export const createTransaction = async (req, res) => {
 
       // ✅ Update balance and usedAmount correctly
       let newBalance = new Prisma.Decimal(account.balance);
-      let newUsedAmount = new Prisma.Decimal(account.usedAmount);
+      newUsedAmount = new Prisma.Decimal(account.usedAmount);
 
       if (type === "INCOME") {
         newBalance = newBalance.plus(amount);
@@ -97,6 +98,14 @@ export const createTransaction = async (req, res) => {
       });
 
       return newTransaction;
+    });
+
+    await checkAndSendBudgetAlert({
+      account,
+      userId,
+      accountId,
+      newUsedAmount,
+      type,
     });
 
     return res.status(201).json({
@@ -139,6 +148,7 @@ export const editTransaction = async (req, res) => {
     // Fetch the related account
     const account = await prisma.account.findUnique({
       where: { id: existingTransaction.accountId },
+      include: { user: true },
     });
 
     if (!account) {
@@ -197,7 +207,7 @@ export const editTransaction = async (req, res) => {
           type,
           amount: Number(amount),
           description,
-          date: new Date(date),
+          date: date ? new Date(date) : new Date(),
           category,
           isRecurring: Boolean(isRecurring),
           recurringInterval: isRecurring ? recurringInterval : null,
@@ -211,6 +221,14 @@ export const editTransaction = async (req, res) => {
       });
 
       return transactionUpdate;
+    });
+
+    await checkAndSendBudgetAlert({
+      account,
+      userId: existingTransaction.userId,
+      accountId: existingTransaction.accountId,
+      newUsedAmount: new Prisma.Decimal(newUsedAmount),
+      type: type ? type : existingTransaction.type,
     });
 
     return res.status(200).json({

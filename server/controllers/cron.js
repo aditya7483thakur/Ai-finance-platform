@@ -1,6 +1,7 @@
 import { addDays, addWeeks, addMonths, addYears, isBefore } from "date-fns";
 import prisma from "../utils/prisma.js";
 import { Prisma } from "@prisma/client";
+import checkAndSendBudgetAlert from "../utils/checkAndSendBudgetAlert.js";
 
 export const runRecurringTransactions = async (req, res) => {
   try {
@@ -16,6 +17,8 @@ export const runRecurringTransactions = async (req, res) => {
     });
 
     for (const txn of dueTransactions) {
+      let newUsedAmount = new Prisma.Decimal(0); // declare here to use later
+
       await prisma.$transaction(async (prisma) => {
         // 1. Create the new transaction
         const newTransaction = await prisma.transaction.create({
@@ -39,7 +42,7 @@ export const runRecurringTransactions = async (req, res) => {
 
         if (account) {
           let newBalance = new Prisma.Decimal(account.balance);
-          let newUsedAmount = new Prisma.Decimal(account.usedAmount);
+          newUsedAmount = new Prisma.Decimal(account.usedAmount); // update outer variable here
 
           if (txn.type === "INCOME") {
             newBalance = newBalance.plus(txn.amount);
@@ -84,7 +87,24 @@ export const runRecurringTransactions = async (req, res) => {
           data: { nextRecurringDate: nextDate },
         });
       });
+
+      // ✅ Outside transaction: safely access newUsedAmount and call budget alert
+      const accountWithUser = await prisma.account.findUnique({
+        where: { id: txn.accountId },
+        include: { user: true },
+      });
+
+      if (accountWithUser) {
+        await checkAndSendBudgetAlert({
+          account: accountWithUser,
+          userId: txn.userId,
+          accountId: txn.accountId,
+          newUsedAmount,
+          type: txn.type,
+        });
+      }
     }
+
     res
       .status(200)
       .json({ message: "Recurring transactions processed successfully" });
