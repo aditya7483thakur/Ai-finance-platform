@@ -174,7 +174,7 @@ const Dashboard = () => {
               </div>
             </>
           ) : (
-            <div className="text-gray-500 text-sm">
+            <div className="text-gray-500 text-base p-2 text-center">
               Click on an account to see budget details
             </div>
           )}

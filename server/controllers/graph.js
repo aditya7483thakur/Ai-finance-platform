@@ -73,11 +73,13 @@ export const getTransactionSummary = async (req, res) => {
         dailySummary[dateKey] = { income: 0, expense: 0 };
       }
       if (type === "INCOME") {
-        dailySummary[dateKey].income += _sum.amount || 0;
+        dailySummary[dateKey].income += Number(_sum.amount) || 0;
       } else {
-        dailySummary[dateKey].expense += _sum.amount || 0;
+        dailySummary[dateKey].expense += Number(_sum.amount) || 0;
       }
     });
+
+    console.log("hw", dailySummary);
 
     // Generate complete date series (only for bounded ranges)
     let result = [];

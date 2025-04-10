@@ -44,7 +44,7 @@ export function AppSidebar() {
               {items.map((item) => (
                 <SidebarMenuItem
                   key={item.title}
-                  className="bg-primary text-white border rounded-xl p-2"
+                  className="bg-primary text-white border rounded-xl p-2 "
                 >
                   <SidebarMenuButton asChild>
                     <Link to={item.url} className=" w-full">
