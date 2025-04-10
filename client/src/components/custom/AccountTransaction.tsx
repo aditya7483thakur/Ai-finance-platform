@@ -16,7 +16,7 @@ import { z } from "zod";
 
 import { Loader2, MoreVertical, Trash2 } from "lucide-react";
 import { useFilteredTransactions } from "@/services/transactions/query";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Transaction } from "@/types";
 import {
   Pagination,
@@ -67,6 +67,7 @@ const AccountTransaction = ({
   setTotalTransactions: (count: number) => void;
 }) => {
   const { accountId } = useParams();
+  const navigate = useNavigate();
 
   const [open, setOpen] = useState<boolean>(false);
   const [filters, setFilters] = useState({ accountId, page: 1 });
@@ -209,7 +210,16 @@ const AccountTransaction = ({
                         <MoreVertical className="w-4 h-4 text-gray-500 cursor-pointer" />
                       </PopoverTrigger>
                       <PopoverContent className="w-20 p-3">
-                        <div className="text-center">Edit</div>
+                        <div
+                          className="text-center"
+                          onClick={() =>
+                            navigate("/dashboard/add-transaction", {
+                              state: { mode: "edit", transaction },
+                            })
+                          }
+                        >
+                          Edit
+                        </div>
                         <Dialog open={open} onOpenChange={setOpen}>
                           <DialogTrigger asChild>
                             <div className="text-center text-red-500 cursor-pointer">

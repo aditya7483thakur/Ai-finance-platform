@@ -29,13 +29,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import {
   useCreateTransaction,
+  useEditTransaction,
   useScanReceipt,
 } from "@/services/transactions/mutation";
 import { useUserContext } from "@/contexts/userContext";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useGetAllAccounts } from "@/services/accounts/query";
 import { AccountType } from "@/types";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 
 export const formSchema = z
   .object({
@@ -84,6 +85,9 @@ export const formSchema = z
   });
 
 const AddTransaction = () => {
+  const location = useLocation();
+  const isEdit = location.state?.mode === "edit";
+  const transaction = location.state?.transaction;
   const { userId } = useUserContext();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -100,19 +104,32 @@ const AddTransaction = () => {
   const { mutate: scanReceipt, isPending: isScanning } = useScanReceipt();
   const { mutate: createTransaction, isPending: creatingTransaction } =
     useCreateTransaction();
+  const { mutate: editTransaction, isPending: editingTransaction } =
+    useEditTransaction();
 
   const navigate = useNavigate();
 
   const onSubmit = (data: any) => {
-    console.log({ ...data, userId });
-    createTransaction(
-      { ...data, userId },
-      {
-        onSuccess: () => {
-          navigate("/dashboard");
-        },
-      }
-    );
+    if (isEdit) {
+      console.log({ ...data, userId });
+      editTransaction(
+        { ...data, userId, transactionId: transaction.id },
+        {
+          onSuccess: () => {
+            navigate("/dashboard");
+          },
+        }
+      );
+    } else {
+      createTransaction(
+        { ...data, userId },
+        {
+          onSuccess: () => {
+            navigate("/dashboard");
+          },
+        }
+      );
+    }
   };
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -133,6 +150,23 @@ const AddTransaction = () => {
     });
   };
 
+  useEffect(() => {
+    if (!transaction) return;
+
+    // Wait for form to initialize fully before setting
+    setTimeout(() => {
+      form.setValue("amount", transaction.amount || "");
+      form.setValue("type", transaction.type || "");
+      form.setValue("category", transaction.category || "");
+      form.setValue("date", transaction.date || "");
+      form.setValue("description", transaction.description || "");
+      if (transaction.recurringInterval)
+        form.setValue("recurringInterval", transaction.recurringInterval);
+      form.setValue("isRecurring", transaction.isRecurring || false);
+      form.setValue("accountId", transaction.accountId || "");
+    }, 0);
+  }, [isEdit, transaction]);
+
   return (
     <div className=" flex justify-center p-4 px-20 bg-white">
       <Form {...form}>
@@ -143,7 +177,7 @@ const AddTransaction = () => {
           <label
             className={`w-full mb-6 flex items-center justify-center gap-2 text-white py-2 rounded-md transition-colors duration-200
     ${
-      isScanning
+      isScanning || isEdit
         ? "bg-pink-400 cursor-not-allowed"
         : "bg-pink-500 hover:bg-pink-600 cursor-pointer"
     }`}
@@ -166,7 +200,7 @@ const AddTransaction = () => {
               ref={fileInputRef}
               onChange={handleFileChange}
               className="hidden"
-              disabled={isScanning}
+              disabled={isScanning || isEdit}
             />
           </label>
 
@@ -198,7 +232,8 @@ const AddTransaction = () => {
                     <FormControl>
                       <SelectTrigger
                         className="w-full"
-                        disabled={accountsLoading || isError}
+                        disabled={accountsLoading || isError || isEdit}
+                        value={field.value}
                       >
                         <SelectValue
                           placeholder={
@@ -232,7 +267,11 @@ const AddTransaction = () => {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Category</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <Select
+                    onValueChange={field.onChange}
+                    value={field.value}
+                    defaultValue={field.value}
+                  >
                     <FormControl>
                       <SelectTrigger className="w-full">
                         <SelectValue placeholder="Select category" />
@@ -399,12 +438,13 @@ const AddTransaction = () => {
             <Button
               type="submit"
               className="bg-black text-white hover:bg-gray-800"
-              disabled={creatingTransaction}
+              disabled={creatingTransaction || editingTransaction}
             >
-              {creatingTransaction && (
-                <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-              )}
-              Create Transaction
+              {creatingTransaction ||
+                (editingTransaction && (
+                  <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                ))}
+              {isEdit ? "Update" : "Create"} Transaction
             </Button>
           </div>
         </form>

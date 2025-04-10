@@ -3,6 +3,7 @@ import {
   createTransaction,
   deleteBulkTransactions,
   deleteTransaction,
+  editTransaction,
   scanReceipt,
 } from "./api";
 import { toast } from "sonner";
@@ -35,6 +36,18 @@ export const useCreateTransaction = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data) => createTransaction(data),
+    onSuccess: (data) => {
+      console.log(data);
+      toast.success(data.message);
+      queryClient.invalidateQueries({ queryKey: ["transactions"] });
+    },
+  });
+};
+
+export const useEditTransaction = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data) => editTransaction(data),
     onSuccess: (data) => {
       console.log(data);
       toast.success(data.message);

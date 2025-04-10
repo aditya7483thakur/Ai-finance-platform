@@ -29,6 +29,15 @@ export const createTransaction = async (data: any) => {
   return res.data;
 };
 
+export const editTransaction = async (data: any) => {
+  console.log(data);
+  const res = await backend.patch(
+    `/transactions/update-transaction/${data.transactionId}`,
+    data
+  );
+  return res.data;
+};
+
 export const scanReceipt = async (file: File) => {
   const formData = new FormData();
   formData.append("receipt", file);
