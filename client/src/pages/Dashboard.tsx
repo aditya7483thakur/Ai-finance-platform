@@ -5,14 +5,13 @@ import ExpenseBreakdown from "@/components/custom/ExpenseBreakdown";
 import Accounts from "@/components/custom/Accounts";
 import { useUserContext } from "@/contexts/userContext";
 import { useGetAllAccounts } from "@/services/accounts/query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AccountType } from "@/types";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -47,6 +46,7 @@ const Dashboard = () => {
   const [selectedAccount, setSelectedAccount] = useState<AccountType | null>(
     null
   );
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -56,6 +56,23 @@ const Dashboard = () => {
     },
   });
 
+  useEffect(() => {
+    if (selectedAccount) {
+      form.setValue("name", selectedAccount.name);
+      form.setValue("budget", String(selectedAccount.budget));
+    }
+  }, [selectedAccount]);
+  useEffect(() => {
+    if (selectedAccount && accounts) {
+      const updated = accounts.data.find(
+        (acc: any) => acc.id === selectedAccount.id
+      );
+      if (updated) {
+        setSelectedAccount(updated);
+      }
+    }
+  }, [accounts]);
+
   // 2. Define a submit handler.
   function onSubmit(values: z.infer<typeof formSchema>) {
     console.log("VALUE", values);
@@ -63,7 +80,7 @@ const Dashboard = () => {
       { ...values, id: selectedAccount?.id as string },
       {
         onSuccess: () => {
-          form.reset();
+          setDialogOpen(false);
         },
       }
     );
@@ -83,15 +100,15 @@ const Dashboard = () => {
                   ${selectedAccount.usedAmount}/
                   {selectedAccount.budget ?? "Not Set"} spent
                 </span>
-                <Dialog>
+                <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                   <DialogTrigger asChild>
                     <Pencil size={18} className="hover:cursor-pointer" />
                   </DialogTrigger>
                   <DialogContent className="sm:max-w-[425px]">
                     <DialogHeader>
-                      <DialogTitle>Edit profile</DialogTitle>
+                      <DialogTitle>Update Account Details</DialogTitle>
                       <DialogDescription>
-                        Make changes to your profile here. Click save when
+                        Make changes to your account here. Click save when
                         you're done.
                       </DialogDescription>
                     </DialogHeader>
@@ -143,15 +160,12 @@ const Dashboard = () => {
                               <Loader2 className="mr-1 h-4 w-4 animate-spin" />
                             )}
                             {updatingAccount
-                              ? "Creating..."
-                              : " Create Account"}
+                              ? "Updating..."
+                              : " Update Account"}
                           </Button>
                         </form>
                       </Form>
                     </div>
-                    <DialogFooter>
-                      {/* <Button type="submit">Save changes</Button> */}
-                    </DialogFooter>
                   </DialogContent>
                 </Dialog>
               </div>

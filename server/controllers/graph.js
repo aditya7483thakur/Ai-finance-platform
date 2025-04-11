@@ -79,8 +79,6 @@ export const getTransactionSummary = async (req, res) => {
       }
     });
 
-    console.log("hw", dailySummary);
-
     // Generate complete date series (only for bounded ranges)
     let result = [];
 
@@ -105,6 +103,16 @@ export const getTransactionSummary = async (req, res) => {
         .sort((a, b) => a.date.localeCompare(b.date));
     }
 
+    let totalIncome = 0;
+    let totalExpense = 0;
+
+    result.forEach((day) => {
+      totalIncome += day.income;
+      totalExpense += day.expense;
+    });
+
+    const net = totalIncome - totalExpense;
+
     return res.status(200).json({
       success: true,
       data: result,
@@ -112,6 +120,9 @@ export const getTransactionSummary = async (req, res) => {
         startDate: startDate?.toISOString(),
         endDate: endDate?.toISOString(),
         count: result.length,
+        totalIncome,
+        totalExpense,
+        net,
       },
     });
   } catch (error) {
@@ -127,7 +138,6 @@ export const getTransactionSummary = async (req, res) => {
 export const getCurrentMonthCategoryExpenses = async (req, res) => {
   try {
     const { userId } = req.query;
-    // console.log(user);
     // Validate accountId
     if (!userId || typeof userId !== "string") {
       return res.status(400).json({ error: "Valid userId is required" });

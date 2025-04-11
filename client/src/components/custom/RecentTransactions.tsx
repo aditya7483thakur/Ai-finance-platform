@@ -27,7 +27,6 @@ const RecentTransactions = ({ accounts, accountsLoading }: props) => {
       setFilters((prev) => ({ ...prev, accountId: accounts[0].id }));
     }
   }, [accounts]);
-  console.log(filters);
   const { data: transactionData, isPending } = useFilteredTransactions(filters);
   return (
     <>
@@ -70,7 +69,7 @@ const RecentTransactions = ({ accounts, accountsLoading }: props) => {
             transactionData.data.map((transaction: Transaction) => (
               <div
                 key={transaction.id}
-                className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-md"
+                className="flex items-center justify-between p-0 hover:bg-gray-50 rounded-md"
               >
                 <div className="flex items-center">
                   <div
@@ -87,12 +86,17 @@ const RecentTransactions = ({ accounts, accountsLoading }: props) => {
                     )}
                   </div>
                   <div>
-                    <p className="font-medium text-gray-800">
+                    <p className="font-semibold text-sm text-gray-800">
                       {transaction.category}
                     </p>
-                    {/* <p className="text-xs text-gray-500">
-                      {transaction.date} · {transaction.category}
-                    </p> */}
+                    <p className="text-xs text-gray-500">
+                      {" "}
+                      {new Date(transaction.date).toLocaleDateString("en-GB", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                    </p>
                   </div>
                 </div>
                 <p
@@ -103,7 +107,7 @@ const RecentTransactions = ({ accounts, accountsLoading }: props) => {
                   }`}
                 >
                   {transaction.type === "INCOME" ? "+" : "-"}
-                  {transaction.amount}
+                  {transaction.amount}$
                 </p>
               </div>
             ))

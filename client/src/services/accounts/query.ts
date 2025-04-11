@@ -4,7 +4,10 @@ import { getAllAccounts, getSingleAccount } from "./api";
 export function useGetAllAccounts(userId: string | null) {
   return useQuery({
     queryKey: ["getAllAccounts", userId],
-    queryFn: () => getAllAccounts(userId as string),
+    queryFn: () => {
+      console.log("✅ Fetching accounts for userId:", userId); // Debug log
+      return getAllAccounts(userId as string);
+    },
     enabled: !!userId, // Ensure the query runs only if userId is not null
   });
 }

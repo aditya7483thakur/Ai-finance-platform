@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useState } from "react";
+import { Skeleton } from "../ui/skeleton";
 
 const TransactionGraph = () => {
   const { accountId } = useParams();
@@ -33,6 +34,40 @@ const TransactionGraph = () => {
     { key: "last_month", label: "Last month" },
     { key: "last_6_months", label: "Last 6 months" },
   ];
+
+  if (isPending)
+    return (
+      <div className="max-w-7xl mx-auto mt-6 bg-white p-6 rounded-lg shadow-sm">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-4">
+          <Skeleton className="h-6 w-40" />
+          <Skeleton className="h-8 w-40" />
+        </div>
+
+        {/* Summary Stats */}
+        <div className="flex justify-between mb-6">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="space-y-2">
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-6 w-20" />
+            </div>
+          ))}
+        </div>
+
+        {/* Graph Bars */}
+        <div className="h-64 grid grid-cols-12 gap-2 items-end">
+          {Array.from({ length: 12 }).map((_, idx) => (
+            <Skeleton
+              key={idx}
+              className="rounded-t"
+              style={{
+                height: `${Math.floor(Math.random() * 60 + 40)}%`,
+              }}
+            />
+          ))}
+        </div>
+      </div>
+    );
 
   return (
     <>
@@ -64,15 +99,25 @@ const TransactionGraph = () => {
         <div className="flex justify-between text-sm mb-6">
           <div>
             <p className="text-gray-500">Total Income</p>
-            <p className="text-xl font-bold text-green-500">$57378.46</p>
+            <p className="text-xl font-bold text-green-500">
+              ${data.meta.totalIncome}
+            </p>
           </div>
           <div>
             <p className="text-gray-500">Total Expenses</p>
-            <p className="text-xl font-bold text-red-500">$16118.94</p>
+            <p className="text-xl font-bold text-red-500">
+              ${data.meta.totalExpense}
+            </p>
           </div>
           <div>
             <p className="text-gray-500">Net</p>
-            <p className="text-xl font-bold text-green-500">$41259.52</p>
+            <p
+              className={`text-xl font-bold ${
+                data.meta.net < 0 ? "text-red-500" : " text-green-500"
+              }`}
+            >
+              ${data.meta.net}
+            </p>
           </div>
         </div>
 

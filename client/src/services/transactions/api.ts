@@ -24,13 +24,11 @@ export const deleteBulkTransactions = async (data: string[]) => {
 };
 
 export const createTransaction = async (data: any) => {
-  console.log(data);
   const res = await backend.post("/transactions/create-transaction", data);
   return res.data;
 };
 
 export const editTransaction = async (data: any) => {
-  console.log(data);
   const res = await backend.patch(
     `/transactions/update-transaction/${data.transactionId}`,
     data

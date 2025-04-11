@@ -96,7 +96,7 @@ export const updateAccount = async (req, res) => {
       },
     });
 
-    res.json({ message: "Account name updated successfully", updatedAccount });
+    res.json({ message: "Account updated successfully", updatedAccount });
   } catch (error) {
     console.log(error);
     res.status(400).json({ error: "Account update failed" });

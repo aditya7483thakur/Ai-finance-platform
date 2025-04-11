@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/drawer";
 import { useUserContext } from "@/contexts/userContext";
 import { useCreateAccount } from "@/services/accounts/mutation";
+import { useState } from "react";
 
 interface props {
   accounts: AccountType[];
@@ -45,9 +46,9 @@ const formSchema = z.object({
 const Accounts = ({ accounts, accountsLoading, onAccountClick }: props) => {
   const navigate = useNavigate();
   const { userId } = useUserContext();
+  const [isOpen, setIsOpen] = useState<boolean>(false);
   const { mutate: createAccount, isPending: creatingAccount } =
     useCreateAccount();
-  console.log(accounts);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -64,6 +65,7 @@ const Accounts = ({ accounts, accountsLoading, onAccountClick }: props) => {
       {
         onSuccess: () => {
           form.reset();
+          setIsOpen(false);
         },
       }
     );
@@ -102,7 +104,7 @@ const Accounts = ({ accounts, accountsLoading, onAccountClick }: props) => {
     <>
       <div className="mb-8 mt-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Drawer>
+          <Drawer open={isOpen} onOpenChange={setIsOpen}>
             <DrawerTrigger asChild>
               <div className="bg-white rounded-xl p-5 shadow-sm hover:cursor-pointer border flex flex-col justify-center items-center border-gray-200 hover:shadow-lg hover:bg-slate-100 transition-all duration-200">
                 <Plus className="h-10 w-10 text-slate-600 group-hover:text-primary transition-colors duration-200" />
@@ -228,14 +230,14 @@ const Accounts = ({ accounts, accountsLoading, onAccountClick }: props) => {
               <div className="mt-6 flex justify-end space-x-2">
                 <Button
                   variant="outline"
-                  className="text-gray-700 border-gray-300 w-1/2 hover:bg-primary hover:text-white hover:cursor-pointer"
+                  className="text-gray-700 border-gray-300 w-1/2 hover:bg-primary hover:text-white hover:cursor-pointer active:bg-[#164ea3] active:text-white"
                   onClick={() => onAccountClick(account)}
                 >
                   View Budget
                 </Button>
                 <Button
                   variant="outline"
-                  className="text-blue-600 border-blue-200 w-1/2 hover:bg-primary hover:text-white hover:cursor-pointer"
+                  className="text-blue-600 border-blue-200 w-1/2 hover:bg-primary hover:text-white hover:cursor-pointer active:bg-[#164ea3] active:text-white"
                   onClick={() =>
                     navigate(`/dashboard/transactions/${account.id}`)
                   }

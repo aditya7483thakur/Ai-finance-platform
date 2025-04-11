@@ -1,4 +1,5 @@
 import { AppSidebar } from "@/components/app-sidebar";
+import Header from "@/components/custom/Header";
 import {
   SidebarInset,
   SidebarProvider,
@@ -30,11 +31,15 @@ export default function Page() {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <header className="sticky top-0 z-50 bg-white flex h-16 shrink-0 items-center gap-1 border-b border-border px-4">
-          <SidebarTrigger className="-ml-1" />
-          <span className="font-bold text-3xl text-primary">
-            {currentTitle}
-          </span>
+        <header className="sticky top-0 z-50 bg-white flex h-16 shrink-0 items-center justify-between gap-1 border-b border-border px-4 pr-8">
+          <div className="flex items-center">
+            <SidebarTrigger className="-ml-1" />
+            <span className="font-bold text-3xl text-primary">
+              {currentTitle}
+            </span>
+          </div>
+
+          <Header />
         </header>
         <div className="flex flex-1 flex-col gap-4 pt-0">
           <Outlet />

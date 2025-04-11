@@ -11,7 +11,9 @@ export const useCreateAccount = () => {
     onSuccess: (data) => {
       console.log(data);
       toast.success(data.message);
-      queryClient.invalidateQueries({ queryKey: ["getAllAccounts"] });
+      queryClient.invalidateQueries({
+        queryKey: ["getAllAccounts", data.data.userId],
+      });
     },
   });
 };
@@ -21,9 +23,11 @@ export const useUpdateAccount = () => {
   return useMutation({
     mutationFn: (data: updateAccountData) => updateAccount(data),
     onSuccess: (data) => {
-      console.log(data);
+      console.log(data, "new invalidated");
       toast.success(data.message);
-      queryClient.invalidateQueries({ queryKey: ["getAllAccounts"] });
+      queryClient.invalidateQueries({
+        queryKey: ["getAllAccounts", data.updatedAccount.userId],
+      });
     },
   });
 };
