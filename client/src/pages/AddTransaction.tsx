@@ -432,12 +432,17 @@ const AddTransaction = () => {
 
           {/* Action Buttons */}
           <div className="flex justify-between pt-2">
-            <Button variant="outline" type="button">
+            <Button
+              onClick={() => navigate("/dashboard")}
+              variant="outline"
+              type="button"
+              className="hover:cursor-pointer"
+            >
               Cancel
             </Button>
             <Button
               type="submit"
-              className="bg-black text-white hover:bg-gray-800"
+              className="bg-black text-white hover:bg-gray-800 hover:cursor-pointer"
               disabled={creatingTransaction || editingTransaction}
             >
               {creatingTransaction ||

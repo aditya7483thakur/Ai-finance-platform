@@ -113,7 +113,7 @@ const Accounts = ({ accounts, accountsLoading, onAccountClick }: props) => {
                 </span>
               </div>
             </DrawerTrigger>
-            <DrawerContent className="px-6">
+            <DrawerContent className="px-6 backdrop-blur-0">
               <Form {...form}>
                 <form
                   onSubmit={form.handleSubmit(onSubmit)}
@@ -176,14 +176,23 @@ const Accounts = ({ accounts, accountsLoading, onAccountClick }: props) => {
                     )}
                   />
                   <DrawerFooter className="px-0 flex">
-                    <Button type="submit" disabled={creatingAccount}>
+                    <Button
+                      type="submit"
+                      disabled={creatingAccount}
+                      className="hover:cursor-pointer"
+                    >
                       {creatingAccount && (
                         <Loader2 className="mr-1 h-4 w-4 animate-spin" />
                       )}
                       {creatingAccount ? "Creating..." : " Create Account"}
                     </Button>
                     <DrawerClose asChild>
-                      <Button variant="outline">Cancel</Button>
+                      <Button
+                        variant="outline"
+                        className="hover:cursor-pointer"
+                      >
+                        Cancel
+                      </Button>
                     </DrawerClose>
                   </DrawerFooter>
                 </form>

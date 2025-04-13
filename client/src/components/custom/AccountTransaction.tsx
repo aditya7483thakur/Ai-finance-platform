@@ -13,7 +13,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { z } from "zod";
-
+import { RefreshCcw, CheckCircle } from "lucide-react";
 import { Loader2, MoreVertical, Trash2 } from "lucide-react";
 import { useFilteredTransactions } from "@/services/transactions/query";
 import { useNavigate, useParams } from "react-router-dom";
@@ -25,6 +25,12 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useEffect, useState } from "react";
 import {
   Dialog,
@@ -33,6 +39,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogClose,
 } from "@/components/ui/dialog";
 import {
   useDeleteBulkTransactions,
@@ -50,14 +57,45 @@ const formatDate = (dateString: string) => {
   });
 };
 
-const getCategoryIcon = (category: string) => {
+const getCategoryColour = (category: string): string => {
   switch (category) {
+    case "SALARY":
+      return "bg-green-100 text-green-800"; // Softer green
+    case "INVESTMENTS":
+      return "bg-teal-200 text-teal-900";
+    case "FOOD":
+      return "bg-orange-200 text-orange-900";
+    case "TRANSPORT":
+      return "bg-blue-200 text-blue-900";
+    case "HOUSING":
+      return "bg-indigo-200 text-indigo-900";
     case "ENTERTAINMENT":
-      return "🎭";
-    case "WORK":
-      return "💼";
+      return "bg-purple-200 text-purple-900";
+    case "TRAVEL":
+      return "bg-cyan-200 text-cyan-900";
+    case "HEALTH":
+      return "bg-red-200 text-red-900";
+    case "SHOPPING":
+      return "bg-pink-200 text-pink-900";
+    case "MISCELLANEOUS":
+      return "bg-gray-200 text-gray-900";
     default:
-      return "💰";
+      return "bg-yellow-200 text-yellow-900";
+  }
+};
+
+const getRecurringBadgeColor = (interval: string) => {
+  switch (interval.toLowerCase()) {
+    case "daily":
+      return "bg-blue-100 text-blue-700";
+    case "weekly":
+      return "bg-green-100 text-green-700";
+    case "monthly":
+      return "bg-yellow-100 text-yellow-800";
+    case "yearly":
+      return "bg-purple-100 text-purple-700";
+    default:
+      return "bg-gray-100 text-gray-700"; // One-time
   }
 };
 
@@ -157,8 +195,7 @@ const AccountTransaction = ({
               <TableHead>Date</TableHead>
               <TableHead>Description</TableHead>
               <TableHead>Category</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Amount</TableHead>
+              <TableHead className="text-right pr-10">Amount</TableHead>
               <TableHead>Recurring</TableHead>
               <TableHead className="text-center">Actions</TableHead>
             </TableRow>
@@ -166,13 +203,16 @@ const AccountTransaction = ({
           <TableBody>
             {isPending ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center">
+                <TableCell
+                  colSpan={8}
+                  className="text-center py-4 text-gray-500"
+                >
                   Loading...
                 </TableCell>
               </TableRow>
             ) : transactionData?.data?.length > 0 ? (
               transactionData.data.map((transaction: Transaction) => (
-                <TableRow key={transaction.id}>
+                <TableRow key={transaction.id} className="hover:bg-gray-100">
                   <TableCell className="font-medium">
                     <Checkbox
                       className="border-black/70"
@@ -183,48 +223,88 @@ const AccountTransaction = ({
                       }
                     />
                   </TableCell>
-                  <TableCell className="font-medium">
+                  <TableCell className="font-medium text-sm">
                     {formatDate(transaction.date)}
                   </TableCell>
 
+                  <TableCell className="text-sm">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div>
+                            {transaction.description &&
+                            transaction.description.length > 20
+                              ? `${transaction.description.slice(0, 20)}...`
+                              : transaction.description}
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-72 text-center">
+                          <p>{transaction.description}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </TableCell>
+
                   <TableCell>
-                    {transaction.description &&
-                    transaction.description.length > 20
-                      ? `${transaction.description.slice(0, 20)}...`
-                      : transaction.description}
+                    <span
+                      className={`text-xs px-2 py-0.5 rounded-sm font-medium ${getCategoryColour(
+                        transaction.category
+                      )}`}
+                    >
+                      {transaction.category}
+                    </span>
+                  </TableCell>
+                  <TableCell
+                    className={`font-semibold ${
+                      transaction.type === "INCOME"
+                        ? "text-green-600"
+                        : "text-red-600"
+                    } text-right  pr-10`}
+                  >
+                    {transaction.type === "INCOME" ? "+" : "-"}$
+                    {transaction.amount}
                   </TableCell>
                   <TableCell>
-                    {getCategoryIcon(transaction.category)}{" "}
-                    {transaction.category}
-                  </TableCell>
-                  <TableCell>{transaction.type}</TableCell>
-                  <TableCell>${transaction.amount}</TableCell>
-                  <TableCell>
-                    {transaction.isRecurring
-                      ? transaction.recurringInterval
-                      : "One time"}
+                    <span
+                      className={`text-xs px-2 py-0.5 inline-flex items-center rounded-sm font-medium ${getRecurringBadgeColor(
+                        transaction.isRecurring
+                          ? transaction.recurringInterval ?? "one-time"
+                          : "one-time"
+                      )}`}
+                    >
+                      {transaction.isRecurring ? (
+                        <RefreshCcw className="w-3 h-3 mr-1 inline-block" />
+                      ) : (
+                        <CheckCircle className="w-3 h-3 mr-1 inline-block" />
+                      )}
+                      {transaction.isRecurring
+                        ? transaction.recurringInterval ?? "One Time"
+                        : "One Time"}
+                    </span>
                   </TableCell>
                   <TableCell className="flex justify-center">
                     <Popover>
                       <PopoverTrigger asChild>
                         <MoreVertical className="w-4 h-4 text-gray-500 cursor-pointer" />
                       </PopoverTrigger>
-                      <PopoverContent className="w-20 p-3">
-                        <div
-                          className="text-center"
+                      <PopoverContent className="w-20 p-0">
+                        <button
                           onClick={() =>
                             navigate("/dashboard/add-transaction", {
                               state: { mode: "edit", transaction },
                             })
                           }
+                          className="px-2 text-center focus:outline-none focus:ring-0 py-1 text-gray-700 rounded-t-md hover:bg-gray-100  w-full "
                         >
                           Edit
-                        </div>
+                        </button>
+
+                        <div className="h-px bg-gray-300" />
                         <Dialog open={open} onOpenChange={setOpen}>
                           <DialogTrigger asChild>
-                            <div className="text-center text-red-500 cursor-pointer">
+                            <button className="px-2 py-1  text-red-500 rounded-b-md hover:bg-red-100 transition-colors w-full text-center">
                               Delete
-                            </div>
+                            </button>
                           </DialogTrigger>
                           <DialogContent>
                             <DialogHeader>
@@ -235,11 +315,20 @@ const AccountTransaction = ({
                               </DialogDescription>
                             </DialogHeader>
                             <div className="flex justify-end space-x-2">
-                              <Button variant="outline">Cancel</Button>
+                              <DialogClose asChild>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  className="hover:cursor-pointer"
+                                >
+                                  Close
+                                </Button>
+                              </DialogClose>
                               <Button
                                 variant="destructive"
                                 onClick={() => handleDelete(transaction.id)}
                                 disabled={deleting}
+                                className="hover:cursor-pointer hover:bg-destructive/80"
                               >
                                 {deleting && (
                                   <Loader2 className="mr-1 h-4 w-4 animate-spin" />
