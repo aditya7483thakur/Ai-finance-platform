@@ -33,7 +33,7 @@ const cardVariants = {
     opacity: 1,
     scale: 1,
     y: 0,
-    transition: { type: "spring", stiffness: 120, damping: 10 },
+    transition: { type: "spring", stiffness: 120, damping: 25 },
   },
 };
 
@@ -42,80 +42,80 @@ const Features = () => {
     {
       id: 1,
       title: "Smart Budgeting",
-      icon: <BarChart className="w-8 h-8 text-blue-500" />,
+      icon: <BarChart className="w-10 h-10 text-blue-500" />,
       description:
         "Set spending limits, track expenses, and get alerts when you're close to exceeding your budget.",
     },
     {
       id: 2,
       title: "Seamless Transactions",
-      icon: <Wallet className="w-8 h-8 text-blue-500" />,
+      icon: <Wallet className="w-10 h-10 text-blue-500" />,
       description:
         "Easily add, categorize, and manage transactions with instant organization.",
     },
     {
       id: 3,
       title: "Multiple Accounts Management",
-      icon: <Banknote className="w-8 h-8 text-blue-500" />,
+      icon: <Banknote className="w-10 h-10 text-blue-500" />,
       description:
         "Link multiple accounts, track balances, and view all your finances in one place.",
     },
     {
       id: 4,
       title: "Insightful Reports",
-      icon: <LineChart className="w-8 h-8 text-blue-500" />,
+      icon: <LineChart className="w-10 h-10 text-blue-500" />,
       description:
         "Generate spending reports by category, account, or status to make informed decisions.",
     },
     {
       id: 5,
       title: "Secure & Fast Authentication",
-      icon: <Lock className="w-8 h-8 text-blue-500" />,
+      icon: <Lock className="w-10 h-10 text-blue-500" />,
       description:
         "Enjoy a seamless login experience with secure authentication.",
     },
     {
       id: 6,
       title: "Automated Expense Tracking",
-      icon: <RefreshCcw className="w-8 h-8 text-blue-500" />,
+      icon: <RefreshCcw className="w-10 h-10 text-blue-500" />,
       description:
         "Set up recurring transactions and automate bill payments effortlessly.",
     },
   ];
 
   return (
-    <section className="bg-gradient-to-b py-16 px-4 md:px-20 lg:px-40">
+    <section className=" py-16 px-4 md:px-20 lg:px-40 mt-10">
       <div>
-        {" "}
         <motion.div
           className="mx-auto text-center mb-16"
           initial="hidden"
           whileInView="show"
           viewport={{ once: true, amount: 0.8 }}
-          variants={containerVariants} // for staggerChildren
+          variants={containerVariants}
         >
           {/* Animated Heading */}
           <motion.h2
-            className="text-3xl md:text-4xl font-bold mb-4"
-            variants={textVariants} // this will now work because parent has initial/show
+            className="text-3xl md:text-4xl font-extrabold mb-4 text-gray-900"
+            variants={textVariants}
           >
             Unlock the Power of AI for{" "}
-            <span className="text-blue-500">Smarter Finance</span>
+            <span className="text-blue-600">Smarter Finance</span>
           </motion.h2>
 
           {/* Animated Paragraph */}
           <motion.p
-            className="text-gray-600 max-w-2xl mx-auto"
-            variants={textVariants} // will animate with stagger
+            className="text-lg text-gray-700 max-w-2xl mx-auto"
+            variants={textVariants}
           >
             Say goodbye to manual bookkeeping—let smart automation handle your
             transactions while you focus on growth.
           </motion.p>
         </motion.div>
       </div>
-      {/* Motion Container */}
+
+      {/* Motion Container for Features */}
       <motion.div
-        className="flex flex-wrap justify-center gap-6"
+        className="flex flex-wrap justify-center gap-8"
         variants={containerVariants}
         initial="hidden"
         whileInView="show"
@@ -124,13 +124,13 @@ const Features = () => {
         {features.map((feature) => (
           <motion.div
             key={feature.id}
-            className="flex flex-col items-center text-center bg-white rounded-2xl shadow-md border border-gray-100 p-6 w-full sm:w-[48%] md:w-[30%] hover:shadow-xl "
+            className="flex flex-col items-center text-center bg-white rounded-2xl shadow-lg border border-gray-100 p-4 w-full sm:w-[48%] md:w-[30%] hover:shadow-2xl"
             variants={cardVariants}
           >
-            <div className="flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 mb-4">
+            <div className="flex items-center justify-center w-16 h-16 rounded-full bg-blue-50 mb-6">
               {feature.icon}
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+            <h3 className="text-xl font-semibold text-gray-900 mb-3">
               {feature.title}
             </h3>
             <p className="text-gray-600">{feature.description}</p>

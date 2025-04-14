@@ -9,11 +9,7 @@ const Navbar = () => {
 
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 50) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
-      }
+      setIsScrolled(window.scrollY > 50);
     };
 
     window.addEventListener("scroll", handleScroll);
@@ -22,27 +18,61 @@ const Navbar = () => {
 
   return (
     <nav
-      className={`fixed top-0 left-0 w-full z-50 h-16 transition-all duration-300 px-4 md:px-20 lg:px-40 ${
+      role="navigation"
+      aria-label="Main navigation"
+      className={`fixed top-0 left-0 w-full z-50 h-18 transition-all duration-300 px-4 md:px-20 lg:px-40 ${
         isScrolled ? "bg-white/70 backdrop-blur-md shadow-md" : "bg-transparent"
       }`}
     >
-      {/* Navbar for Large Screens */}
-      <div className="max-w-7xl mx-auto flex justify-between items-center p-4">
-        <span className="font-bold text-2xl text-primary">💸Budgetly</span>
-        <ul className="hidden lg:flex space-x-6">
-          <li className="hover:text-blue-500 cursor-pointer">Home</li>
-          <li className="hover:text-blue-500 cursor-pointer">Dashboard</li>
-          <li className="hover:text-blue-500 cursor-pointer">Reports</li>
-          <li className="hover:text-blue-500 cursor-pointer">Settings</li>
-          <Header />
+      <div className="max-w-7xl mx-auto flex items-center justify-between h-full">
+        {/* Logo */}
+        <a
+          href="/"
+          className="font-extrabold text-2xl text-primary flex items-center"
+        >
+          💸Budgetly
+        </a>
+
+        {/* Nav Links (Desktop) */}
+        <ul className="hidden lg:flex items-center space-x-8 text-base font-medium mr-20">
+          <li>
+            <a href="#" className="hover:text-primary transition-colors">
+              Home
+            </a>
+          </li>
+          <li>
+            <a href="#" className="hover:text-primary transition-colors">
+              Dashboard
+            </a>
+          </li>
+          <li>
+            <a href="#" className="hover:text-primary transition-colors">
+              Reports
+            </a>
+          </li>
+          <li>
+            <a href="#" className="hover:text-primary transition-colors">
+              Settings
+            </a>
+          </li>
         </ul>
-        {/* Hamburger Icon for Small Screens */}
-        <button className="lg:hidden" onClick={() => setIsOpen(true)}>
+
+        {/* Header Component (User Avatar) */}
+        <div className="hidden lg:block">
+          <Header />
+        </div>
+
+        {/* Hamburger (Mobile) */}
+        <button
+          className="lg:hidden text-gray-800"
+          onClick={() => setIsOpen(true)}
+          aria-label="Open Menu"
+        >
           <Menu size={28} />
         </button>
       </div>
 
-      {/* Sidebar Drawer for Small Screens */}
+      {/* Mobile Drawer */}
       {isOpen && (
         <motion.div
           initial={{ x: "-100%" }}
@@ -54,15 +84,34 @@ const Navbar = () => {
           <button
             className="absolute top-4 right-4"
             onClick={() => setIsOpen(false)}
+            aria-label="Close Menu"
           >
             <X size={24} />
           </button>
-          <ul className="mt-10 space-y-6 text-lg">
-            <li className="hover:text-blue-500 cursor-pointer">Home</li>
-            <li className="hover:text-blue-500 cursor-pointer">Dashboard</li>
-            <li className="hover:text-blue-500 cursor-pointer">Reports</li>
-            <li className="hover:text-blue-500 cursor-pointer">Settings</li>
-            <Header />
+          <ul className="mt-12 space-y-6 text-base font-medium">
+            <li>
+              <a href="#" className="hover:text-primary block">
+                Home
+              </a>
+            </li>
+            <li>
+              <a href="#" className="hover:text-primary block">
+                Dashboard
+              </a>
+            </li>
+            <li>
+              <a href="#" className="hover:text-primary block">
+                Reports
+              </a>
+            </li>
+            <li>
+              <a href="#" className="hover:text-primary block">
+                Settings
+              </a>
+            </li>
+            <li>
+              <Header />
+            </li>
           </ul>
         </motion.div>
       )}

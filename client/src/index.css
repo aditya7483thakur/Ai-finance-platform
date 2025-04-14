@@ -2,16 +2,6 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* @theme {
-  --color-primary-dark: #1a5cbd;
-  --color-primary-light: #e6f0ff;
-  --color-white: #ffffff;
-  --color-gray-light: #f7f9fc;
-  --color-gray: #e0e6ed;
-  --color-gray-dark: #6b7280;
-  --color-text: #1f2937;
-} */
-
 :root {
   --radius: 0.625rem;
   --background: oklch(1 0 0);
@@ -130,4 +120,10 @@
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* globals.css */
+.cl-avatarBox {
+  width: 2.05rem;
+  height: 2.05rem;
 }

@@ -31,20 +31,21 @@ const HeroSection = () => {
 
         {/* Main Heading */}
         <motion.h1
-          className="text-4xl md:text-5xl font-bold mb-4"
+          className="text-4xl md:text-[2.5rem] font-extrabold mb-4"
           initial={{ opacity: 0, y: 50 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7, duration: 0.8 }}
           viewport={{ once: true }}
         >
-          Turn Your Finances
+          Turn Your <span className="text-blue-500"> Finances</span>
           <br />
-          from Chaos to Control!
+          from <span className="text-blue-500"> Chaos </span> to{" "}
+          <span className="text-blue-500"> Control</span>!
         </motion.h1>
 
         {/* Description */}
         <motion.p
-          className="text-gray-600 mb-6 max-w-2xl mx-auto"
+          className="text-gray-600 mb-6 max-w-2xl mx-auto "
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           transition={{ delay: 0.9, duration: 0.8 }}

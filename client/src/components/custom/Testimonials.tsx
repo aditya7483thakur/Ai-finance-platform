@@ -1,6 +1,4 @@
-import adityaImage from "@/assets/aditya.jpg";
-import saifImage from "@/assets/saif.jpg";
-import sanikaImage from "@/assets/sanika.jpg";
+import { motion } from "framer-motion";
 import {
   Carousel,
   CarouselContent,
@@ -11,72 +9,96 @@ import {
 
 const testimonials = [
   {
-    name: "Aditya Kumar",
-    feedback: ` "iamreadyAI  for internship interviews with its mock interviews and AI-driven feedback. It improved my communication and problem-solving skills, making me feel more confident during the interviews."`,
-    img: adityaImage,
-    proffession: "Student",
-    company: "MSIT",
+    name: "Samantha Ray",
+    feedback:
+      "Budgetly made it super easy to track expenses. I used to hate budgeting, but now I actually enjoy it.",
+    img: "https://randomuser.me/api/portraits/women/44.jpg",
+    profession: "Digital Marketer",
+    companyOrCollege: "Freelancer",
   },
-
   {
-    name: "Md. Saif Ali",
-    feedback: ` "Through hands-on training and detailed feedback, I improved my problem-solving and communication skills. Mock interviews gave me the confidence to navigate the job search process more effectively."`,
-    img: saifImage,
-    proffession: "Student",
-    company: "BCET",
+    name: "James Thompson",
+    feedback:
+      "The personalized tips based on my spending are amazing. It genuinely feels like having a smart finance coach with me.",
+    img: "https://randomuser.me/api/portraits/men/32.jpg",
+    profession: "Startup Founder",
+    companyOrCollege: "FinGrow Tech",
   },
-
   {
-    name: "Sanika Patil",
-    feedback: ` "This platform was easy to use and made my placement preparation much smoother. The structured practice and feedback helped me improve my skills and feel more confident for my interviews."`,
-    img: sanikaImage,
-    proffession: "Student",
-    company: "PICT",
+    name: "Priya Mehta",
+    feedback:
+      "Thanks to Budgetly alerts, I was finally able to stay within my grocery budget without stressing about overspending again.",
+    img: "https://randomuser.me/api/portraits/women/68.jpg",
+    profession: "Graduate Student",
+    companyOrCollege: "University of Toronto",
   },
-
   {
-    name: "Sanika Patil",
-    feedback: ` "This platform was easy to use and made my placement preparation much smoother. The structured practice and feedback helped me improve my skills and feel more confident for my interviews."`,
-    img: sanikaImage,
-    proffession: "Student",
-    company: "PICT",
+    name: "Arjun Nair",
+    feedback:
+      "Recurring transaction tracking is so helpful. I never forget rent or subscriptions anymore—it’s all handled automatically by Budgetly.",
+    img: "https://randomuser.me/api/portraits/men/45.jpg",
+    profession: "Software Engineer",
+    companyOrCollege: "Zoho Corp",
+  },
+  {
+    name: "Emily Chen",
+    feedback:
+      "The clean and simple interface makes budgeting feel easy. I no longer get overwhelmed by tracking my expenses.",
+    img: "https://randomuser.me/api/portraits/women/65.jpg",
+    profession: "UI/UX Designer",
+    companyOrCollege: "Notion",
+  },
+  {
+    name: "Rohan Verma",
+    feedback:
+      "As a student, Budgetly is perfect. Budget alerts and summaries keep me on track without needing constant checks.",
+    img: "https://randomuser.me/api/portraits/men/27.jpg",
+    profession: "Computer Science Student",
+    companyOrCollege: "IIT Bombay",
   },
 ];
 
 const HomeSectionTwo = () => {
   return (
     <>
-      <div className=" px-4 md:px-20 lg:px-40">
-        <section className="py-16 px-4">
-          <div className="mx-auto">
-            <h2 className="text-3xl md:text-4xl font-bold text-center mb-4">
+      <div className="px-4 md:px-20 lg:px-40 mt-10">
+        <section className="pt-16 px-4">
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            transition={{ duration: 0.8 }}
+            className="mx-auto"
+            viewport={{ once: true }}
+          >
+            <h2 className="text-3xl md:text-4xl font-extrabold text-center mb-4">
               What Our
-              <span className="text-blue-500">Users</span> Say
+              <span className="text-blue-500"> Users</span> Say
             </h2>
             <p className="text-center text-gray-600 mb-16 max-w-2xl mx-auto">
               Hear from our satisfied users about how our platform has made
               managing finances easier and more efficient.
             </p>
-          </div>
+          </motion.div>
         </section>
-        <div className=" flex flex-wrap justify-center gap-6 px-6 lg:px-20">
-          <Carousel
-            opts={{
-              align: "start",
-            }}
-            className="mx-auto w-full max-w-7xl mt-3"
-          >
-            <CarouselContent>
+        <div className="flex flex-wrap justify-center gap-6 px-6 lg:px-20">
+          <Carousel opts={{ align: "start" }} className="mx-auto w-full mt-3">
+            <CarouselContent className="p-4">
               {testimonials.map((item, index) => (
                 <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3">
-                  <div
+                  <motion.div
                     className="flex justify-center flex-col p-4 px-6 rounded-lg bg-white shadow-[0px_3px_8px_rgba(0,0,0,0.24)]"
                     key={index}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.2 * index }}
+                    viewport={{ once: true }}
                   >
                     <div className="font-bold text-main-300 text-xl mt-2">
                       {item.name}
                     </div>
-                    <div className="text-sm mt-4">{item.feedback}</div>
+                    <div className="text-sm mt-4 flex-grow">
+                      {item.feedback}
+                    </div>
                     <div className="flex justify-between items-center mt-5">
                       <img
                         className="w-16 h-16 rounded-full"
@@ -85,12 +107,12 @@ const HomeSectionTwo = () => {
                       />
                       <div>
                         <div className="font-bold text-end">
-                          {item.proffession}
+                          {item.profession}
                         </div>
-                        <div className="text-end">{item.company}</div>
+                        <div className="text-end">{item.companyOrCollege}</div>
                       </div>
                     </div>
-                  </div>
+                  </motion.div>
                 </CarouselItem>
               ))}
             </CarouselContent>
@@ -101,19 +123,38 @@ const HomeSectionTwo = () => {
         </div>
       </div>
 
-      <div className="w-full bg-gradient-to-r from-white to-sky-100 text-gray-900 text-center py-16 px-6 mb-5">
-        <h2 className="text-4xl font-bold mb-4 text-sky-700">
-          Take Control of Your Finances Today 💡
-        </h2>
+      <div className="w-full bg-gradient-to-r from-white to-sky-100 text-gray-900 text-center py-16 px-6 mb-28 mt-16 ">
+        <motion.h2
+          className="text-4xl font-extrabold mb-4"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          transition={{ duration: 0.8 }}
+          viewport={{ once: true, amount: 0.8 }}
+        >
+          Take Control of Your <span className="text-blue-500">Finances</span>{" "}
+          Today 💡
+        </motion.h2>
 
-        <p className="text-lg max-w-2xl mx-auto mb-6 text-gray-700">
+        <motion.p
+          className="text-lg max-w-2xl mx-auto mb-6 text-gray-700"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          transition={{ duration: 1 }}
+          viewport={{ once: true, amount: 0.8 }}
+        >
           Join thousands of users who simplify financial management
           effortlessly. Sign up now and experience seamless control!
-        </p>
+        </motion.p>
 
-        <button className="bg-sky-600 text-white font-semibold px-6 py-3 rounded-lg shadow-lg text-lg hover:bg-sky-700 transition-all">
+        <motion.button
+          className="bg-primary text-white font-semibold px-6 py-3 rounded-lg shadow-lg text-lg hover:bg-sky-700 hover:cursor-pointer transition-all"
+          initial={{ scale: 0.9 }}
+          whileInView={{ scale: 1 }}
+          transition={{ duration: 0.5 }}
+          viewport={{ once: true, amount: 0.8 }}
+        >
           Get Started for Free!
-        </button>
+        </motion.button>
       </div>
     </>
   );
