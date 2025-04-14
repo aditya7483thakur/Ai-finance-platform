@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import adityaImage from "@/assets/aditya.jpg";
 import saifImage from "@/assets/saif.jpg";
 import sanikaImage from "@/assets/sanika.jpg";
@@ -9,22 +8,6 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
-
-const cardPopUp = {
-  hidden: { opacity: 0, scale: 0.8, y: 50 },
-  show: (index: number) => ({
-    opacity: 1,
-    scale: 1,
-    y: 0,
-    transition: {
-      duration: 0.6,
-      delay: index * 0.2,
-      ease: "easeOut",
-      type: "spring",
-      stiffness: 120,
-    },
-  }),
-};
 
 const testimonials = [
   {
@@ -76,13 +59,7 @@ const HomeSectionTwo = () => {
             </p>
           </div>
         </section>
-        <motion.div
-          className=" flex flex-wrap justify-center gap-6 px-6 lg:px-20"
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true, amount: 0.5 }}
-          variants={cardPopUp}
-        >
+        <div className=" flex flex-wrap justify-center gap-6 px-6 lg:px-20">
           <Carousel
             opts={{
               align: "start",
@@ -121,31 +98,22 @@ const HomeSectionTwo = () => {
             <CarouselPrevious className="translate-x-14 lg:translate-x-0" />
             <CarouselNext className="-translate-x-14 lg:translate-x-0" />
           </Carousel>
-        </motion.div>
+        </div>
       </div>
 
       <div className="w-full bg-gradient-to-r from-white to-sky-100 text-gray-900 text-center py-16 px-6 mb-5">
-        <motion.h2
-          className="text-4xl font-bold mb-4 text-sky-700"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-        >
+        <h2 className="text-4xl font-bold mb-4 text-sky-700">
           Take Control of Your Finances Today 💡
-        </motion.h2>
+        </h2>
 
         <p className="text-lg max-w-2xl mx-auto mb-6 text-gray-700">
           Join thousands of users who simplify financial management
           effortlessly. Sign up now and experience seamless control!
         </p>
 
-        <motion.button
-          className="bg-sky-600 text-white font-semibold px-6 py-3 rounded-lg shadow-lg text-lg hover:bg-sky-700 transition-all"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
+        <button className="bg-sky-600 text-white font-semibold px-6 py-3 rounded-lg shadow-lg text-lg hover:bg-sky-700 transition-all">
           Get Started for Free!
-        </motion.button>
+        </button>
       </div>
     </>
   );
