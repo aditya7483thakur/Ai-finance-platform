@@ -6,6 +6,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import { Link } from "react-router-dom";
 
 const testimonials = [
   {
@@ -123,7 +124,7 @@ const HomeSectionTwo = () => {
         </div>
       </div>
 
-      <div className="w-full bg-gradient-to-r from-white to-sky-100 text-gray-900 text-center py-16 px-6 mb-28 mt-16 ">
+      <div className="w-full flex flex-col items-center bg-gradient-to-r from-white to-sky-100 text-gray-900 text-center pt-32 px-6 pb-48 mt-16 ">
         <motion.h2
           className="text-4xl font-extrabold mb-4"
           initial={{ opacity: 0 }}
@@ -146,15 +147,15 @@ const HomeSectionTwo = () => {
           effortlessly. Sign up now and experience seamless control!
         </motion.p>
 
-        <motion.button
-          className="bg-primary text-white font-semibold px-6 py-3 rounded-lg shadow-lg text-lg hover:bg-sky-700 hover:cursor-pointer transition-all"
+        <motion.div
+          className="bg-primary text-white font-semibold px-6 py-3 rounded-lg shadow-lg text-lg hover:bg-primary/90 duration-200 block hover:cursor-pointer transition-all"
           initial={{ scale: 0.9 }}
           whileInView={{ scale: 1 }}
           transition={{ duration: 0.5 }}
           viewport={{ once: true, amount: 0.8 }}
         >
-          Get Started for Free!
-        </motion.button>
+          <Link to={"/sign-up"}>Get Started for Free!</Link>
+        </motion.div>
       </div>
     </>
   );

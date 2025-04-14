@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Menu, X } from "lucide-react";
-import Header from "./Header";
+import { Link } from "react-router-dom";
+import { SignedIn, SignedOut } from "@clerk/clerk-react";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -26,40 +27,38 @@ const Navbar = () => {
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between h-full">
         {/* Logo */}
-        <a
-          href="/"
+        <Link
+          to="/"
           className="font-extrabold text-2xl text-primary flex items-center"
         >
           💸Budgetly
-        </a>
+        </Link>
 
-        {/* Nav Links (Desktop) */}
-        <ul className="hidden lg:flex items-center space-x-8 text-base font-medium mr-20">
-          <li>
-            <a href="#" className="hover:text-primary transition-colors">
-              Home
-            </a>
-          </li>
-          <li>
-            <a href="#" className="hover:text-primary transition-colors">
-              Dashboard
-            </a>
-          </li>
-          <li>
-            <a href="#" className="hover:text-primary transition-colors">
-              Reports
-            </a>
-          </li>
-          <li>
-            <a href="#" className="hover:text-primary transition-colors">
-              Settings
-            </a>
-          </li>
-        </ul>
+        {/* Desktop Header Component (User Avatar) */}
+        <div className="hidden lg:flex space-x-4">
+          <SignedIn>
+            <Link
+              to="/dashboard"
+              className="bg-primary text-white px-4 py-2 rounded-lg shadow hover:bg-primary/90 transition duration-200"
+            >
+              Dashboard →
+            </Link>
+          </SignedIn>
 
-        {/* Header Component (User Avatar) */}
-        <div className="hidden lg:block">
-          <Header />
+          <SignedOut>
+            <Link
+              to="/sign-up"
+              className="bg-primary text-white px-4 py-2 rounded-lg shadow hover:bg-primary/90 transition duration-200"
+            >
+              Sign Up
+            </Link>
+            <Link
+              to="/sign-in"
+              className="bg-primary text-white px-4 py-2 rounded-lg shadow hover:bg-primary/90 transition duration-200"
+            >
+              Sign In
+            </Link>
+          </SignedOut>
         </div>
 
         {/* Hamburger (Mobile) */}
@@ -90,28 +89,53 @@ const Navbar = () => {
           </button>
           <ul className="mt-12 space-y-6 text-base font-medium">
             <li>
-              <a href="#" className="hover:text-primary block">
+              <Link to="/" className="hover:text-primary block">
                 Home
-              </a>
+              </Link>
             </li>
             <li>
-              <a href="#" className="hover:text-primary block">
+              <Link to="/dashboard" className="hover:text-primary block">
                 Dashboard
-              </a>
+              </Link>
             </li>
             <li>
-              <a href="#" className="hover:text-primary block">
+              <Link to="/reports" className="hover:text-primary block">
                 Reports
-              </a>
+              </Link>
             </li>
             <li>
-              <a href="#" className="hover:text-primary block">
+              <Link to="/settings" className="hover:text-primary block">
                 Settings
-              </a>
+              </Link>
             </li>
-            <li>
-              <Header />
-            </li>
+            <SignedIn>
+              <li>
+                <Link
+                  to="/dashboard"
+                  className="bg-primary text-white px-4 py-2 rounded-lg shadow hover:bg-primary/90 transition duration-200"
+                >
+                  Dashboard →
+                </Link>
+              </li>
+            </SignedIn>
+            <SignedOut>
+              <li>
+                <Link
+                  to="/sign-up"
+                  className="bg-primary text-white px-4 py-2 rounded-lg shadow hover:bg-primary/90 transition duration-200"
+                >
+                  Sign Up
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/sign-in"
+                  className="bg-primary text-white px-4 py-2 rounded-lg shadow hover:bg-primary/90 transition duration-200"
+                >
+                  Sign In
+                </Link>
+              </li>
+            </SignedOut>
           </ul>
         </motion.div>
       )}

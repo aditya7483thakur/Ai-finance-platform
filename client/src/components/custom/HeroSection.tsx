@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 
 const HeroSection = () => {
   return (
@@ -64,21 +65,24 @@ const HeroSection = () => {
           transition={{ delay: 1.1, duration: 0.8 }}
           viewport={{ once: true }}
         >
-          <motion.a
-            href="/signup"
-            className="bg-primary text-white px-6 py-2 rounded-md shadow hover:bg-primary/90 transition-all duration-200"
+          <motion.div
             whileHover={{ scale: 1.05 }}
             transition={{ duration: 0.3 }}
-            viewport={{ once: true }}
           >
-            Get Started →
-          </motion.a>
+            <Link
+              to="/sign-up"
+              className="bg-primary text-white px-6 py-2 rounded-md shadow hover:bg-primary/90 transition-all duration-200 block"
+            >
+              Get Started →
+            </Link>
+          </motion.div>
+
           <motion.a
-            href="#features"
+            href="https://github.com/aditya7483thakur/Ai-finance-platform"
+            target="_blank"
             className="px-6 py-2 border border-primary text-primary rounded-md hover:bg-primary/10 transition-all duration-200"
             whileHover={{ scale: 1.05 }}
             transition={{ duration: 0.3 }}
-            viewport={{ once: true }}
           >
             Learn More
           </motion.a>

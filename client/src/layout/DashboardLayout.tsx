@@ -1,10 +1,10 @@
 import { AppSidebar } from "@/components/app-sidebar";
-import Header from "@/components/custom/Header";
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
+import { SignedIn, UserButton } from "@clerk/clerk-react";
 import { Outlet, useLocation } from "react-router-dom";
 
 export default function Page() {
@@ -38,8 +38,9 @@ export default function Page() {
               {currentTitle}
             </span>
           </div>
-
-          <Header />
+          <SignedIn>
+            <UserButton />
+          </SignedIn>
         </header>
         <div className="flex flex-1 flex-col gap-4 pt-0">
           <Outlet />
