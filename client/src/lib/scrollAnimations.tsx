@@ -1,7 +1,6 @@
 import { MdFace } from "react-icons/md";
 import { BiSolidPencil } from "react-icons/bi";
 import { FaCircleDot } from "react-icons/fa6";
-import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 
 const containerVariants = {
@@ -33,15 +32,6 @@ const itemVariants = {
   },
 };
 
-const popUpVariants = {
-  hidden: { opacity: 0, y: 50 },
-  show: {
-    opacity: 1,
-    y: 0,
-    transition: { type: "spring", stiffness: 100, damping: 25, duration: 0.8 },
-  },
-};
-
 const textPopUp = {
   hidden: { opacity: 0, scale: 0.7 },
   show: {
@@ -51,9 +41,7 @@ const textPopUp = {
   },
 };
 
-const Features = () => {
-  const navigate = useNavigate();
-
+const HomeSectionThree = () => {
   const mapper = [
     {
       title: "Interview Prep",
@@ -105,79 +93,10 @@ const Features = () => {
           </motion.div>
 
           {/* Motion container with stagger effect for cards */}
-          <motion.div
-            className="flex flex-col lg:flex-row justify-center items-center w-2/3 space-y-16 lg:space-y-0 lg:space-x-16 mx-auto"
-            variants={containerVariants}
-          >
-            {mapper.map((element) => (
-              <motion.div
-                className="rounded-xl w-4/5 lg:w-1/5 p-4 min-h-64"
-                style={{
-                  boxShadow: "rgba(69, 74, 222, 0.4) 0px 12px 36px 0px",
-                }}
-                key={element.title}
-                variants={itemVariants}
-              >
-                {element.icon}
-                <div className="font-bold my-3 text-2xl w-2/3">
-                  {element.title}
-                </div>
-                <div>{element.desc}</div>
-              </motion.div>
-            ))}
-          </motion.div>
         </motion.div>
-
-        <div className="text-center mt-56">
-          {/* Pop-Up Animated Text */}
-          <motion.div
-            className="text-5xl w-11/12 lg:w-7/12 mx-auto"
-            style={{
-              background:
-                "linear-gradient(to right, #454ADE, black, #454ADE, black)",
-              WebkitBackgroundClip: "text",
-              color: "transparent",
-            }}
-            variants={popUpVariants}
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true, amount: 0.5 }}
-          >
-            Take your career and wellbeing to the{" "}
-            <span className="font-bold">next level</span> now
-          </motion.div>
-
-          {/* Button */}
-          <div className="mt-8">
-            <motion.button
-              className="bg-main-300 text-white rounded-3xl font-bold px-6 py-3"
-              style={{
-                boxShadow: "rgba(69, 74, 222, 0.6) 0px 15px 36px 0px",
-              }}
-              onClick={() => navigate("/register")}
-              variants={popUpVariants}
-              initial="hidden"
-              whileInView="show"
-              viewport={{ once: true }}
-            >
-              Sign up for free
-            </motion.button>
-          </div>
-
-          {/* Background effect */}
-          <div className="w-full h-72 relative overflow-hidden">
-            <div
-              className="w-1/2 h-1/2 rounded-full absolute left-1/2 blur-3xl bottom-[-20%] transform -translate-x-1/2"
-              style={{
-                background:
-                  "linear-gradient(to bottom, transparent, rgba(69, 74, 222, 1))",
-              }}
-            />
-          </div>
-        </div>
       </div>
     </>
   );
 };
 
-export default Features;
+export default HomeSectionThree;
