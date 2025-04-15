@@ -81,6 +81,7 @@ model ScheduledEmail {
   @@map("scheduled_emails")
 }
 
+
 enum EmailType {
   BUDGET_ALERT
   MONTHLY_REPORT
