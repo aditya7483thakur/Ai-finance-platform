@@ -7,7 +7,6 @@ import graphRouter from "./routes/graph.js";
 import accountRouter from "./routes/account.js";
 import cronRoutes from "./routes/cron.js";
 
-// Load environment variables
 dotenv.config();
 
 // Initialize Express
@@ -22,10 +21,10 @@ app.use(
     credentials: true,
   })
 );
+// app.use(botProtection);
 
 // Sample Route
 app.get("/", (req, res) => {
-  console.log(req.body);
   res.send("Prisma with Express is running! 🚀");
 });
 

@@ -137,6 +137,7 @@ export const getTransactionSummary = async (req, res) => {
 
 export const getCurrentMonthCategoryExpenses = async (req, res) => {
   try {
+    console.log(req.headers);
     const { userId } = req.query;
     // Validate accountId
     if (!userId || typeof userId !== "string") {
