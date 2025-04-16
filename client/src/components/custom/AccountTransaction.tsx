@@ -120,7 +120,8 @@ const AccountTransaction = ({
     useDeleteBulkTransactions();
 
   useEffect(() => {
-    if (transactionData?.pagination.totalTransactions) {
+    console.log("ran", transactionData);
+    if (transactionData?.pagination) {
       setTotalTransactions(transactionData?.pagination.totalTransactions);
     }
   }, [transactionData]);

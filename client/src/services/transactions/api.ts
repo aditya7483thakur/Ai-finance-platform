@@ -6,6 +6,8 @@ export const fetchFilteredTransactions = async (
   const { data } = await backend.get("/transactions/filter", {
     params: filters,
   });
+
+  console.log(data);
   return data;
 };
 
