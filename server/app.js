@@ -6,6 +6,7 @@ import transactionRouter from "./routes/transaction.js";
 import graphRouter from "./routes/graph.js";
 import accountRouter from "./routes/account.js";
 import cronRoutes from "./routes/cron.js";
+import { requireAuth } from "@clerk/express";
 
 dotenv.config();
 
@@ -21,7 +22,7 @@ app.use(
     credentials: true,
   })
 );
-// app.use(botProtection);
+app.use(requireAuth());
 
 // Sample Route
 app.get("/", (req, res) => {
