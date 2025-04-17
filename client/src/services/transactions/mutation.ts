@@ -17,6 +17,10 @@ export const useDeleteTransaction = () => {
       toast.success(data.message);
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
     },
+
+    onError: (data: any) => {
+      toast.error(data?.response?.data?.error);
+    },
   });
 };
 
@@ -28,6 +32,10 @@ export const useDeleteBulkTransactions = () => {
       console.log(data);
       toast.success(data.message);
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
+    },
+
+    onError: (data: any) => {
+      toast.error(data?.response?.data?.error);
     },
   });
 };
@@ -41,6 +49,10 @@ export const useCreateTransaction = () => {
       toast.success(data.message);
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
     },
+
+    onError: (data: any) => {
+      toast.error(data?.response?.data?.error);
+    },
   });
 };
 
@@ -53,14 +65,22 @@ export const useEditTransaction = () => {
       toast.success(data.message);
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
     },
+    onError: (data: any) => {
+      toast.error(data?.response?.data?.error);
+    },
   });
 };
 
 export const useScanReceipt = () => {
   return useMutation({
     mutationFn: (file: File) => scanReceipt(file),
-    onError: (err) => {
-      console.error("Receipt scan failed", err);
+    onError: (data: any) => {
+      if (data?.response?.status === 429) {
+        toast.error(data?.response?.data?.error);
+      } else {
+        toast.error("Receipt scan failed");
+        console.error(data);
+      }
     },
   });
 };

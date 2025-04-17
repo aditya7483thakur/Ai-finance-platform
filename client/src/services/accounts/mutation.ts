@@ -15,6 +15,10 @@ export const useCreateAccount = () => {
         queryKey: ["getAllAccounts", data.data.userId],
       });
     },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.error);
+      console.log(err);
+    },
   });
 };
 
@@ -28,6 +32,9 @@ export const useUpdateAccount = () => {
       queryClient.invalidateQueries({
         queryKey: ["getAllAccounts", data.updatedAccount.userId],
       });
+    },
+    onError: (data: any) => {
+      toast.error(data?.response?.data?.error);
     },
   });
 };
