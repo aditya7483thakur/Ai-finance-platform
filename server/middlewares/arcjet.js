@@ -21,7 +21,7 @@ export const arcjetMiddleware = async (req, res, next) => {
     const decision = await aj.protect(req);
 
     // Log the decision (optional for debugging)
-    console.log("Arcjet decision", decision);
+    // console.log("Arcjet decision", decision);
 
     if (decision.isDenied() || decision.results.some(isSpoofedBot)) {
       return res.status(403).json({ error: "Forbidden - bot detected" });
