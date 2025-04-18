@@ -1,7 +1,7 @@
 import { createContext, useContext, ReactNode, useEffect } from "react";
 import { useAuth } from "@clerk/clerk-react";
 import { useGetUserId } from "@/services/users/query";
-import { setAuthToken } from "@/axios-instance"; // Import your axios instance and the setter function
+import { setTokenGetter } from "@/axios-instance";
 
 // Define context type
 interface UserContextType {
@@ -15,16 +15,16 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const { userId, isLoaded: isAuthLoaded, getToken } = useAuth();
   const { data, isLoading: isUserLoading } = useGetUserId(userId ?? "");
 
-  // Set up the authentication token for axios
+  // Set up the token getter function once
   useEffect(() => {
-    const setupAuthToken = async () => {
+    const tokenGetterFn = async () => {
       if (isAuthLoaded && userId) {
-        const token = await getToken();
-        setAuthToken(token);
+        return await getToken();
       }
+      return null;
     };
 
-    setupAuthToken();
+    setTokenGetter(tokenGetterFn);
   }, [isAuthLoaded, userId, getToken]);
 
   // Show a loader while waiting for Clerk or Backend

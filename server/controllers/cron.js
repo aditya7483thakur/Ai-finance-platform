@@ -125,7 +125,6 @@ export const sendMonthlySummaries = async () => {
       accounts: true,
     },
   });
-  console.log(users);
   for (const user of users) {
     if (!user.email || user.email.trim() === "") continue; // Skip if email is blank (just in case)
 

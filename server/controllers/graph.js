@@ -176,15 +176,6 @@ export const getCurrentMonthCategoryExpenses = async (req, res) => {
       name: item.category,
       value: Number(item._sum.amount), // Convert Decimal to number
     }));
-    console.log({
-      success: true,
-      data: formattedData,
-      meta: {
-        month: now.toLocaleString("default", { month: "long" }),
-        year: now.getFullYear(),
-        userId,
-      },
-    });
     return res.status(200).json({
       success: true,
       data: formattedData,
