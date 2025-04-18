@@ -445,10 +445,9 @@ const AddTransaction = () => {
               className="bg-black text-white hover:bg-gray-800 hover:cursor-pointer"
               disabled={creatingTransaction || editingTransaction}
             >
-              {creatingTransaction ||
-                (editingTransaction && (
-                  <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-                ))}
+              {(creatingTransaction || editingTransaction) && (
+                <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+              )}
               {isEdit ? "Update" : "Create"} Transaction
             </Button>
           </div>
