@@ -11,4 +11,4 @@ jobs:
     steps:
       - name: Curl your endpoint
         run: |
-          curl -s -o /dev/null -w "%{http_code}" https://881a-110-235-235-99.ngrok-free.app/cron/run-recurring-transactions
+          curl -s -o /dev/null -w "%{http_code}" https://0504-110-235-235-31.ngrok-free.app/cron/run-recurring-transactions
