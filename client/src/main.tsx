@@ -25,7 +25,6 @@ createRoot(document.getElementById("root")!).render(
         signInForceRedirectUrl={"/dashboard"}
         afterSignOutUrl={"/"}
       >
-        {" "}
         <UserProvider>
           <App />
           <Toaster

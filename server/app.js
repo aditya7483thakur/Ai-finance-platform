@@ -7,6 +7,7 @@ import graphRouter from "./routes/graph.js";
 import accountRouter from "./routes/account.js";
 import cronRoutes from "./routes/cron.js";
 import { requireAuth, clerkMiddleware } from "@clerk/express";
+import { arcjetMiddleware } from "./middlewares/arcjet.js";
 
 dotenv.config();
 
@@ -22,7 +23,7 @@ app.use(
     credentials: true,
   })
 );
-// app.use(requireAuth());
+app.use(arcjetMiddleware);
 app.use(clerkMiddleware({ debug: true }));
 
 // Sample Route
