@@ -1,0 +1,14 @@
+name: Test Cron API
+
+on:
+  schedule:
+    - cron: "*/1 * * * *" # Every 1 minute
+  workflow_dispatch: # Optional, allows manual trigger
+
+jobs:
+  ping-ngrok:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Curl your endpoint
+        run: |
+          curl -s -o /dev/null -w "%{http_code}" https://0504-110-235-235-31.ngrok-free.app/cron/run-recurring-transactions
