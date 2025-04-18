@@ -1,20 +1,28 @@
+// In your axios-instance.ts file
 import axios from "axios";
 
-// Create axios instance
 const backend = axios.create({
   baseURL: import.meta.env.VITE_BASE_URL,
   timeout: 60000,
   headers: { "X-Custom-Header": "foobar" },
 });
 
-// Function to set auth token for all future requests
-export const setAuthToken = (token: any) => {
-  console.log("Reached in instacne", token);
-  if (token) {
-    backend.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-  } else {
-    delete backend.defaults.headers.common["Authorization"];
-  }
+// Store the getToken function for use in interceptors
+let tokenGetter: (() => Promise<string | null>) | null = null;
+
+export const setTokenGetter = (getter: () => Promise<string | null>) => {
+  tokenGetter = getter;
 };
+
+// Add request interceptor to get fresh token on each request
+backend.interceptors.request.use(async (config) => {
+  if (tokenGetter) {
+    const token = await tokenGetter();
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+  }
+  return config;
+});
 
 export default backend;

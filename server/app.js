@@ -23,11 +23,11 @@ app.use(
     credentials: true,
   })
 );
-// app.use((req, res, next) => {
-//   console.log("Incoming Request Headers:");
-//   console.log(req.headers.authorization);
-//   next();
-// });
+app.use((req, res, next) => {
+  console.log("Incoming Request Headers:");
+  console.log(req.headers.authorization);
+  next();
+});
 
 app.use(arcjetMiddleware);
 app.use(clerkMiddleware({ debug: true }));
