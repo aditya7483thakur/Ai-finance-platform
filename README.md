@@ -1,6 +1,11 @@
 # 💰 Budgetly
 
-**Budgetly** is a personal finance management platform that helps users track income and expenses, set budgets, and receive intelligent financial tips. Built with **Node.js**, **Express**, **Prisma**, and **PostgreSQL**, it includes recurring transaction handling, budget alerts, and monthly summaries powered by **Google Gemini AI**.
+**Budgetly** is a personal finance management platform that helps users track income and expenses, set budgets, and receive intelligent financial emails.
+
+# 📽️ Demo
+
+🎬 [Watch the Demo Video](https://www.youtube.com/watch?v=YOUR_VIDEO_ID)  
+🌐 [Live App](https://budgetly-sandy.vercel.app/)
 
 ## 🚀 Features
 
@@ -8,19 +13,18 @@
 - 🔔 **Automated Budget Alerts** (when usage exceeds 90%)
 - 📬 **Monthly Summary Emails** with Gemini-generated financial tips
 - 📸 **Receipt Scanning** using Google Gemini API
-- 🕒 **Scheduled Cron Jobs** using GitHub Actions
+- 🕒 **Scheduled Cron Jobs** using cron-job.org
 - 🔐 **Authentication** via Clerk
 - 🌐 **REST API** built with Express and Prisma
 
 ## 🛠️ Tech Stack
 
+- **Frontend**: React.js, ShadCn UI, Tailwind CSS
 - **Backend**: Node.js, Express.js
 - **Database**: PostgreSQL, Prisma ORM
 - **Authentication**: Clerk
 - **AI Integration**: Google Gemini API
 - **Email Service**: Nodemailer (Gmail)
-- **Scheduling**: GitHub Actions
-- **Date Handling**: date-fns
 
 ## 📦 Getting Started
 
