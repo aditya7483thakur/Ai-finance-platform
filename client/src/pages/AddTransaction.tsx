@@ -168,11 +168,11 @@ const AddTransaction = () => {
   }, [isEdit, transaction]);
 
   return (
-    <div className=" flex justify-center p-4 px-20 bg-white">
+    <div className=" flex justify-center p-4 md:px-20 bg-white">
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
-          className="space-y-6 w-1/2"
+          className="space-y-6 md:w-1/2"
         >
           <label
             className={`w-full mb-6 flex items-center justify-center gap-2 text-white py-2 rounded-md transition-colors duration-200
