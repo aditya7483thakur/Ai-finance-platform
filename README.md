@@ -90,5 +90,4 @@ Now Budgetly should be running locally with both the frontend and backend active
 
 
 ---
-
-Let me know when you're ready to add API docs, contributing guidelines, or badges!
+Feel free to open issues, submit pull requests, or contribute in any way. Happy coding! 🚀
