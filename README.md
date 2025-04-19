@@ -26,11 +26,69 @@
 - **AI Integration**: Google Gemini API
 - **Email Service**: Nodemailer (Gmail)
 
-## 📦 Getting Started
+# 🛠️ Local Setup
 
-### 1. Clone the repo
+Follow these steps to get Budgetly running locally:
+
+### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-username/budgetly.git
-cd budgetly
+git clone https://github.com/aditya7483thakur/Ai-finance-platform
+cd Ai-finance-platform
 ```
+
+### 2. Project Structure
+After cloning, you'll see two main folders:
+
+```bash
+budgetly/
+├── client/   # Frontend (React)
+└── server/   # Backend (Express + Prisma)
+```
+
+### 3. Open Two Terminals
+Use two terminals or split your terminal window to run both frontend and backend simultaneously.
+
+Terminal 1: Frontend
+```bash
+cd client
+npm install
+```
+Terminal 2: Backend
+```bash
+cd client
+npm install
+```
+
+### 4. Environment Variables
+Create a .env file in the root of both client/ and server/ directories.
+
+Refer to the provided .env.example files in each folder to know which environment variables are needed.
+
+
+```bash
+# In client/.env
+# Refer to client/.env.example
+
+# In server/.env
+# Refer to server/.env.example
+```
+Make sure to fill in the necessary values (e.g., API keys, database URLs, Clerk credentials, Gmail credentials, etc.).
+
+### 5. Run the App
+Once environment variables are set up and dependencies are installed, start both the client and server.
+
+Frontend
+```bash
+npm run dev
+```
+Backend
+```bash
+npm run dev
+```
+Now Budgetly should be running locally with both the frontend and backend active. 🎉
+
+
+---
+
+Let me know when you're ready to add API docs, contributing guidelines, or badges!
