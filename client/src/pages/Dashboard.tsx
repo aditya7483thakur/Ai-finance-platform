@@ -112,8 +112,8 @@ const Dashboard = () => {
             <>
               <div className="flex gap-2 items-center mb-2">
                 <span className="text-gray-400">
-                  ${selectedAccount.usedAmount}/
-                  {selectedAccount.budget ?? "Not Set"} spent
+                  ${selectedAccount.usedAmount}/{selectedAccount.budget ?? "∞"}{" "}
+                  spent
                 </span>
                 <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
                   <DialogTrigger asChild>
