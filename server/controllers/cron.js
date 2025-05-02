@@ -147,7 +147,7 @@ export const sendMonthlySummaries = async () => {
           ${formatted
             .map(
               (item) =>
-                `<li><strong>${item.name}</strong>: ₹${item.value.toFixed(
+                `<li><strong>${item.name}</strong>: $${item.value.toFixed(
                   2
                 )}</li>`
             )
