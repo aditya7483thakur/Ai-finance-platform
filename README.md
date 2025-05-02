@@ -57,7 +57,7 @@ npm install
 ```
 Terminal 2: Backend
 ```bash
-cd client
+cd server
 npm install
 ```
 
