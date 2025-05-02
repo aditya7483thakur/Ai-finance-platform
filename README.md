@@ -3,9 +3,10 @@
 **Budgetly** is a personal finance management platform that helps users track income and expenses, set budgets, and receive intelligent financial emails.
 
 # 📽️ Demo
+[![Demo Thumbnail](https://github.com/user-attachments/assets/43c097a3-4dec-42eb-b28b-5442eda4d059)](https://drive.google.com/file/d/1AF_H0IvMDtSZxccpNHYtL9AQp4QvGEoK/view?usp=sharing)
 
-🎬 [Watch the Demo Video](https://drive.google.com/file/d/1AF_H0IvMDtSZxccpNHYtL9AQp4QvGEoK/view?usp=sharing)  
-🌐 [Live App](https://budgetly-sandy.vercel.app/)
+## 🌐 [🔗 Live App – Try it Now!](https://budgetly-sandy.vercel.app/)
+
 
 ## 🚀 Features
 
