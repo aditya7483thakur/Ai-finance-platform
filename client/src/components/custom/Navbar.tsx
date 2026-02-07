@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { SignedIn, SignedOut } from "@clerk/clerk-react";
+import { useUserContext } from "@/contexts/userContext";
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
+  const { isSignedIn } = useUserContext();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -33,29 +34,29 @@ const Navbar = () => {
 
         {/* Desktop Header Component (User Avatar) */}
         <div className="space-x-2 sm:space-x-4 flex items-center">
-          <SignedIn>
+          {isSignedIn ? (
             <Link
               to="/dashboard"
               className="bg-primary text-white text-sm sm:text-base px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg shadow hover:bg-primary/90 transition duration-200"
             >
               Dashboard →
             </Link>
-          </SignedIn>
-
-          <SignedOut>
-            <Link
-              to="/sign-up"
-              className="bg-primary text-white text-sm sm:text-base px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg shadow hover:bg-primary/90 transition duration-200"
-            >
-              Sign Up
-            </Link>
-            <Link
-              to="/sign-in"
-              className="bg-primary text-white text-sm sm:text-base px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg shadow hover:bg-primary/90 transition duration-200"
-            >
-              Sign In
-            </Link>
-          </SignedOut>
+          ) : (
+            <>
+              <Link
+                to="/sign-up"
+                className="bg-primary text-white text-sm sm:text-base px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg shadow hover:bg-primary/90 transition duration-200"
+              >
+                Sign Up
+              </Link>
+              <Link
+                to="/sign-in"
+                className="bg-primary text-white text-sm sm:text-base px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg shadow hover:bg-primary/90 transition duration-200"
+              >
+                Sign In
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </nav>

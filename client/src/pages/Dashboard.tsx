@@ -29,7 +29,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useUpdateAccount } from "@/services/accounts/mutation";
-import { useAuth } from "@clerk/clerk-react";
+
 const formSchema = z.object({
   name: z.string().min(3, {
     message: "Account name must be at least 3 characters.",
@@ -38,22 +38,6 @@ const formSchema = z.object({
 });
 
 const Dashboard = () => {
-  const { getToken, isLoaded, isSignedIn } = useAuth(); // Destructure useful values from `useAuth`
-
-  useEffect(() => {
-    const fetchToken = async () => {
-      if (isSignedIn) {
-        const token = await getToken(); // Get the token from Clerk
-        console.log("Clerk Session Token:", token); // Console the token
-      }
-    };
-
-    // Fetch token when the session is loaded
-    if (isLoaded) {
-      fetchToken();
-    }
-  }, [isLoaded, isSignedIn, getToken]);
-
   const { userId } = useUserContext();
   const { data: accounts, isPending: accountsLoading } =
     useGetAllAccounts(userId);

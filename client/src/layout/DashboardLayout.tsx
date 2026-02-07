@@ -4,11 +4,36 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { SignedIn, UserButton } from "@clerk/clerk-react";
+import { useUserContext } from "@/contexts/userContext";
 import { Outlet, useLocation } from "react-router-dom";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { LogOut } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export default function Page() {
   const location = useLocation();
+  const { user, logout } = useUserContext();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
+
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
 
   // Define static route-to-title mapping
   const pageTitles: Record<string, string> = {
@@ -38,9 +63,29 @@ export default function Page() {
               {currentTitle}
             </span>
           </div>
-          <SignedIn>
-            <UserButton />
-          </SignedIn>
+          {user && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Avatar className="cursor-pointer">
+                  <AvatarFallback className="bg-primary text-white">
+                    {getInitials(user.name)}
+                  </AvatarFallback>
+                </Avatar>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem className="text-sm text-gray-500">
+                  {user.email}
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={handleLogout}
+                  className="cursor-pointer"
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </header>
         <div className="flex flex-1 flex-col gap-4 pt-0">
           <Outlet />

@@ -1,12 +1,12 @@
 import express from "express";
 import dotenv from "dotenv";
 import cors from "cors";
-import userRouter from "./routes/user.js";
+import authRouter from "./routes/auth.js";
 import transactionRouter from "./routes/transaction.js";
 import graphRouter from "./routes/graph.js";
 import accountRouter from "./routes/account.js";
 import cronRoutes from "./routes/cron.js";
-import { requireAuth, clerkMiddleware } from "@clerk/express";
+import { requireAuth } from "./middlewares/auth.js";
 
 dotenv.config();
 
@@ -23,28 +23,19 @@ app.use(
   })
 );
 
-app.use(clerkMiddleware({ debug: true }));
-
 // Sample Route
 app.get("/", (req, res) => {
   res.send("Prisma with Express is running! 🚀");
 });
 
-app.use("/users", userRouter);
-app.use("/accounts", requireAuth({ signInUrl: "/error" }), accountRouter);
-app.use(
-  "/transactions",
-  requireAuth({ signInUrl: "/error" }),
-  transactionRouter
-);
-app.use("/graphs", requireAuth({ signInUrl: "/error" }), graphRouter);
-app.use("/cron", cronRoutes);
+// Auth routes (public)
+app.use("/auth", authRouter);
 
-app.get("/error", (req, res) => {
-  return res
-    .status(401)
-    .json({ message: "Unauthorized: Invalid or missing token" });
-});
+// Protected routes
+app.use("/accounts", requireAuth, accountRouter);
+app.use("/transactions", requireAuth, transactionRouter);
+app.use("/graphs", requireAuth, graphRouter);
+app.use("/cron", cronRoutes);
 
 // Start Server
 const PORT = process.env.PORT || 5000;
