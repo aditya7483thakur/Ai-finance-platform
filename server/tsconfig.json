@@ -12,6 +12,15 @@
     "resolveJsonModule": true,
     "types": ["node"]
   },
-  "include": ["app.ts", "controllers/**/*.ts", "middlewares/**/*.ts", "routes/**/*.ts", "utils/**/*.ts"],
+  "include": [
+    "app.ts",
+    "controllers/**/*.ts",
+    "middlewares/**/*.ts",
+    "routes/**/*.ts",
+    "utils/**/*.ts",
+    "domains/**/*.ts",
+    "shared/**/*.ts",
+    "config/**/*.ts"
+  ],
   "exclude": ["node_modules", "dist"]
 }
