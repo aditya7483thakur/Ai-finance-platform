@@ -353,7 +353,7 @@ export const deleteMultipleTransactions = async (req, res) => {
 
         const newUsedAmount = Math.max(
           Number(account.usedAmount) + usedAmount,
-          0
+          0,
         );
 
         return prisma.account.update({
@@ -363,7 +363,7 @@ export const deleteMultipleTransactions = async (req, res) => {
             usedAmount: newUsedAmount, // Update usedAmount
           },
         });
-      }
+      },
     );
 
     // Execute deletion and balance update in a single Prisma transaction
@@ -407,7 +407,7 @@ export const getFilteredTransactions = async (req, res) => {
     if (isNaN(limit) || limit < 1) limit = 10;
 
     // Build the filters object dynamically
-    let filters = {};
+    let filters: Record<string, any> = {};
     if (category && category !== "ALL") filters.category = category;
     if (type && type !== "ALL") filters.type = type;
     if (isRecurring && isRecurring !== "ALL")

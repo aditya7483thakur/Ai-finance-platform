@@ -12,11 +12,14 @@ export const requireAuth = (req, res, next) => {
 
     const token = authHeader.split(" ")[1];
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET as string,
+    ) as jwt.JwtPayload;
 
     // Attach user info to request
-    req.userId = decoded.userId;
-    req.userEmail = decoded.email;
+    (req as any).userId = decoded.userId;
+    (req as any).userEmail = decoded.email;
 
     next();
   } catch (error) {

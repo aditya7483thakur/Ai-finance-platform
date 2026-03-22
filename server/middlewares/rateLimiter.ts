@@ -21,10 +21,13 @@ const rateLimiter = (tokens = 1) => {
         req.headers["x-forwarded-for"]?.split(",")[0] ||
         req.socket.remoteAddress;
 
-      const decision = await aj.protect(req, {
-        ip,
-        requested: tokens,
-      });
+      const decision = await aj.protect(
+        req as any,
+        {
+          ip,
+          requested: tokens,
+        } as any,
+      );
 
       console.log("Arcjet decision", decision);
 

@@ -98,7 +98,7 @@ export const getTransactionSummary = async (req, res) => {
       result = Object.entries(dailySummary)
         .map(([date, amounts]) => ({
           date,
-          ...amounts,
+          ...(amounts as { income: number; expense: number }),
         }))
         .sort((a, b) => a.date.localeCompare(b.date));
     }
