@@ -1,12 +1,12 @@
-export type ClerkUserId = string;
+export type AuthUserId = string;
 
-export type ClerkEmailAddress = {
+export type AuthEmailAddress = {
   email_address: string;
 };
 
-export type ClerkUserPayload = {
+export type AuthUserPayload = {
   id: string;
-  email_addresses: ClerkEmailAddress[];
+  email_addresses: AuthEmailAddress[];
   first_name?: string | null;
   last_name?: string | null;
   image_url?: string | null;
@@ -25,34 +25,3 @@ export type UpdateUserInput = {
   name: string;
   imageUrl: string | null;
 };
-
-export class DomainError extends Error {
-  public readonly statusCode: number;
-
-  constructor(message: string, statusCode: number) {
-    super(message);
-    this.name = "DomainError";
-    this.statusCode = statusCode;
-  }
-}
-
-export class BadRequestError extends DomainError {
-  constructor(message: string) {
-    super(message, 400);
-    this.name = "BadRequestError";
-  }
-}
-
-export class NotFoundError extends DomainError {
-  constructor(message: string) {
-    super(message, 404);
-    this.name = "NotFoundError";
-  }
-}
-
-export class ConflictError extends DomainError {
-  constructor(message: string) {
-    super(message, 409);
-    this.name = "ConflictError";
-  }
-}

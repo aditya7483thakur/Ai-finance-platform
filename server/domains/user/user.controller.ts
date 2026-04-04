@@ -1,12 +1,12 @@
 import type { Request, Response } from "express";
 import type { User } from "@prisma/client";
 import {
-  createClerkUserService,
-  deleteClerkUserService,
-  getClerkUserService,
-  updateClerkUserService,
+  createAuthUserService,
+  deleteAuthUserService,
+  getAuthUserService,
+  updateAuthUserService,
 } from "./user.service.js";
-import { DomainError } from "./user.types.js";
+import { DomainError } from "../../shared/types/errors.js";
 
 const handleControllerError = (
   res: Response,
@@ -26,9 +26,9 @@ const toPublicUser = (user: User): Omit<User, "password"> => {
   return publicUser;
 };
 
-export const createClerkUser = async (req: Request, res: Response) => {
+export const createAuthUser = async (req: Request, res: Response) => {
   try {
-    const user = await createClerkUserService(req.body?.data);
+    const user = await createAuthUserService(req.body?.data);
     return res
       .status(201)
       .json({ message: "User created successfully", data: toPublicUser(user) });
@@ -37,9 +37,9 @@ export const createClerkUser = async (req: Request, res: Response) => {
   }
 };
 
-export const updateClerkUser = async (req: Request, res: Response) => {
+export const updateAuthUser = async (req: Request, res: Response) => {
   try {
-    const user = await updateClerkUserService(req.body?.data);
+    const user = await updateAuthUserService(req.body?.data);
     return res
       .status(200)
       .json({ message: "User updated successfully", data: toPublicUser(user) });
@@ -48,9 +48,9 @@ export const updateClerkUser = async (req: Request, res: Response) => {
   }
 };
 
-export const deleteClerkUser = async (req: Request, res: Response) => {
+export const deleteAuthUser = async (req: Request, res: Response) => {
   try {
-    const user = await deleteClerkUserService(req.body?.data);
+    const user = await deleteAuthUserService(req.body?.data);
     return res
       .status(200)
       .json({ message: "User deleted successfully", data: toPublicUser(user) });
@@ -59,9 +59,9 @@ export const deleteClerkUser = async (req: Request, res: Response) => {
   }
 };
 
-export const getClerkUser = async (req: Request, res: Response) => {
+export const getAuthUser = async (req: Request, res: Response) => {
   try {
-    const user = await getClerkUserService(req.params?.clerkUserId || "");
+    const user = await getAuthUserService(req.params?.userId || "");
     return res
       .status(200)
       .json({ message: "User found", data: toPublicUser(user) });

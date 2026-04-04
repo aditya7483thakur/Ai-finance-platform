@@ -2,35 +2,33 @@ import bcrypt from "bcrypt";
 import type { User } from "@prisma/client";
 import {
   createUser,
-  deleteUserByClerkId,
-  findUserByClerkId,
+  deleteUserById,
+  findUserById,
   findUserByEmail,
-  updateUserByClerkId,
+  updateUserById,
 } from "./user.repository.js";
+import { type AuthUserPayload } from "./user.types.js";
 import {
   BadRequestError,
   ConflictError,
-  type ClerkUserPayload,
   NotFoundError,
-} from "./user.types.js";
+} from "../../shared/types/errors.js";
 
-const getNameFromClerkPayload = (firstName?: string, lastName?: string) => {
+const getNameFromAuthPayload = (firstName?: string, lastName?: string) => {
   return firstName ? `${firstName} ${lastName || ""}`.trim() : "Unknown User";
 };
 
-const getEmailFromPayload = (payload: ClerkUserPayload) => {
+const getEmailFromPayload = (payload: AuthUserPayload) => {
   return payload.email_addresses[0]?.email_address;
 };
 
-const validateClerkPayload = (
-  payload: ClerkUserPayload | undefined,
-): string => {
+const validateAuthPayload = (payload: AuthUserPayload | undefined): string => {
   if (!payload) {
-    throw new BadRequestError("Missing Clerk payload");
+    throw new BadRequestError("Missing user payload");
   }
 
   if (!payload.id) {
-    throw new BadRequestError("Clerk user id is required");
+    throw new BadRequestError("User id is required");
   }
 
   const email = getEmailFromPayload(payload);
@@ -41,14 +39,14 @@ const validateClerkPayload = (
   return email;
 };
 
-export const createClerkUserService = async (
-  payload: ClerkUserPayload,
+export const createAuthUserService = async (
+  payload: AuthUserPayload,
 ): Promise<User> => {
-  const email = validateClerkPayload(payload);
+  const email = validateAuthPayload(payload);
 
-  const existingById = await findUserByClerkId(payload.id);
+  const existingById = await findUserById(payload.id);
   if (existingById) {
-    throw new ConflictError("User already exists with this Clerk ID");
+    throw new ConflictError("User already exists with this ID");
   }
 
   const existingByEmail = await findUserByEmail(email);
@@ -56,12 +54,12 @@ export const createClerkUserService = async (
     throw new ConflictError("User already exists with this email");
   }
 
-  const placeholderPassword = await bcrypt.hash(`clerk:${payload.id}`, 10);
+  const placeholderPassword = await bcrypt.hash(`auth:${payload.id}`, 10);
 
   const newUser = await createUser({
     id: payload.id,
     email,
-    name: getNameFromClerkPayload(
+    name: getNameFromAuthPayload(
       payload.first_name || undefined,
       payload.last_name || undefined,
     ),
@@ -72,19 +70,19 @@ export const createClerkUserService = async (
   return newUser;
 };
 
-export const updateClerkUserService = async (
-  payload: ClerkUserPayload,
+export const updateAuthUserService = async (
+  payload: AuthUserPayload,
 ): Promise<User> => {
-  const email = validateClerkPayload(payload);
+  const email = validateAuthPayload(payload);
 
-  const existingUser = await findUserByClerkId(payload.id);
+  const existingUser = await findUserById(payload.id);
   if (!existingUser) {
     throw new NotFoundError("User not found in database");
   }
 
-  const updatedUser = await updateUserByClerkId(payload.id, {
+  const updatedUser = await updateUserById(payload.id, {
     email,
-    name: getNameFromClerkPayload(
+    name: getNameFromAuthPayload(
       payload.first_name || undefined,
       payload.last_name || undefined,
     ),
@@ -94,30 +92,28 @@ export const updateClerkUserService = async (
   return updatedUser;
 };
 
-export const deleteClerkUserService = async (
-  payload: ClerkUserPayload,
+export const deleteAuthUserService = async (
+  payload: AuthUserPayload,
 ): Promise<User> => {
   if (!payload?.id) {
-    throw new BadRequestError("Clerk user id is required");
+    throw new BadRequestError("User id is required");
   }
 
-  const existingUser = await findUserByClerkId(payload.id);
+  const existingUser = await findUserById(payload.id);
   if (!existingUser) {
     throw new NotFoundError("User not found in database");
   }
 
-  const deletedUser = await deleteUserByClerkId(payload.id);
+  const deletedUser = await deleteUserById(payload.id);
   return deletedUser;
 };
 
-export const getClerkUserService = async (
-  clerkUserId: string,
-): Promise<User> => {
-  if (!clerkUserId) {
+export const getAuthUserService = async (userId: string): Promise<User> => {
+  if (!userId) {
     throw new BadRequestError("User ID is required");
   }
 
-  const userData = await findUserByClerkId(clerkUserId);
+  const userData = await findUserById(userId);
   if (!userData) {
     throw new NotFoundError("No user found");
   }

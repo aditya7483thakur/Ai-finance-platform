@@ -5,8 +5,8 @@ export const findUserByEmail = async (email: string) => {
   return prisma.user.findUnique({ where: { email } });
 };
 
-export const findUserByClerkId = async (clerkUserId: string) => {
-  return prisma.user.findUnique({ where: { id: clerkUserId } });
+export const findUserById = async (userId: string) => {
+  return prisma.user.findUnique({ where: { id: userId } });
 };
 
 export const createUser = async (data: CreateUserInput) => {
@@ -21,12 +21,9 @@ export const createUser = async (data: CreateUserInput) => {
   });
 };
 
-export const updateUserByClerkId = async (
-  clerkUserId: string,
-  data: UpdateUserInput,
-) => {
+export const updateUserById = async (userId: string, data: UpdateUserInput) => {
   return prisma.user.update({
-    where: { id: clerkUserId },
+    where: { id: userId },
     data: {
       email: data.email,
       name: data.name,
@@ -35,6 +32,6 @@ export const updateUserByClerkId = async (
   });
 };
 
-export const deleteUserByClerkId = async (clerkUserId: string) => {
-  return prisma.user.delete({ where: { id: clerkUserId } });
+export const deleteUserById = async (userId: string) => {
+  return prisma.user.delete({ where: { id: userId } });
 };

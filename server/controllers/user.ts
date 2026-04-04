@@ -1,6 +1,6 @@
 import prisma from "../utils/prisma.js";
 
-export const createClerkUser = async (req, res) => {
+export const createAuthUser = async (req, res) => {
   try {
     const { id, email_addresses, first_name, last_name, image_url } =
       req.body.data;
@@ -21,7 +21,7 @@ export const createClerkUser = async (req, res) => {
     // If not found, create a new user
     const newUser = await prisma.user.create({
       data: {
-        clerkUserId: id,
+        id,
         email,
         name: first_name ? `${first_name} ${last_name || ""}`.trim() : null,
         imageUrl: image_url,
@@ -38,21 +38,16 @@ export const createClerkUser = async (req, res) => {
   }
 };
 
-export const updateClerkUser = async (req, res) => {
+export const updateAuthUser = async (req, res) => {
   try {
-    const {
-      id, // Clerk's unique user ID
-      email_addresses,
-      first_name,
-      last_name,
-      image_url,
-    } = req.body.data;
+    const { id, email_addresses, first_name, last_name, image_url } =
+      req.body.data;
 
     const email = email_addresses[0]?.email_address;
 
-    // Find user in database by Clerk ID
+    // Find user in database by user ID
     const existingUser = await prisma.user.findUnique({
-      where: { clerkUserId: id },
+      where: { id },
     });
 
     if (!existingUser) {
@@ -61,7 +56,7 @@ export const updateClerkUser = async (req, res) => {
 
     // Update the user's details
     const updatedUser = await prisma.user.update({
-      where: { clerkUserId: id },
+      where: { id },
       data: {
         email,
         name: first_name ? `${first_name} ${last_name || ""}`.trim() : null,
@@ -79,13 +74,13 @@ export const updateClerkUser = async (req, res) => {
   }
 };
 
-export const deleteClerkUser = async (req, res) => {
+export const deleteAuthUser = async (req, res) => {
   try {
-    const { id } = req.body.data; // Clerk user ID
+    const { id } = req.body.data;
 
-    // Find user in database by Clerk ID
+    // Find user in database by user ID
     const existingUser = await prisma.user.findUnique({
-      where: { clerkUserId: id },
+      where: { id },
     });
 
     if (!existingUser) {
@@ -94,7 +89,7 @@ export const deleteClerkUser = async (req, res) => {
 
     // Delete user from database
     await prisma.user.delete({
-      where: { clerkUserId: id },
+      where: { id },
     });
 
     console.log("User deleted from database:", id);
@@ -105,13 +100,12 @@ export const deleteClerkUser = async (req, res) => {
   }
 };
 
-export const getClerkUser = async (req, res) => {
-  const { clerkUserId } = req.params;
-  if (!clerkUserId)
-    return res.status(400).json({ message: "Transaction ID is required" });
+export const getAuthUser = async (req, res) => {
+  const { userId } = req.params;
+  if (!userId) return res.status(400).json({ message: "User ID is required" });
 
   const userData = await prisma.user.findUnique({
-    where: { clerkUserId },
+    where: { id: userId },
   });
 
   if (!userData) return res.status(404).json({ message: "No user found" });
