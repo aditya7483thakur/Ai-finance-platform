@@ -2,9 +2,7 @@ import prisma from "../utils/prisma.js";
 
 export const createAuthUser = async (req, res) => {
   try {
-    const { id, email_addresses, first_name, last_name, image_url } =
-      req.body.data;
-    const email = email_addresses[0]?.email_address;
+    const { id, email, first_name, last_name, image_url } = req.body.data;
 
     // Check if a user already exists with this email
     const existingUser = await prisma.user.findUnique({
@@ -40,10 +38,7 @@ export const createAuthUser = async (req, res) => {
 
 export const updateAuthUser = async (req, res) => {
   try {
-    const { id, email_addresses, first_name, last_name, image_url } =
-      req.body.data;
-
-    const email = email_addresses[0]?.email_address;
+    const { id, email, first_name, last_name, image_url } = req.body.data;
 
     // Find user in database by user ID
     const existingUser = await prisma.user.findUnique({

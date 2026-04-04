@@ -1,12 +1,8 @@
 export type AuthUserId = string;
 
-export type AuthEmailAddress = {
-  email_address: string;
-};
-
 export type AuthUserPayload = {
   id: string;
-  email_addresses: AuthEmailAddress[];
+  email: string;
   first_name?: string | null;
   last_name?: string | null;
   image_url?: string | null;

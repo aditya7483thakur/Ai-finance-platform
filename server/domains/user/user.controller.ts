@@ -6,20 +6,11 @@ import {
   getAuthUserService,
   updateAuthUserService,
 } from "./user.service.js";
-import { DomainError } from "../../shared/types/errors.js";
-
-const handleControllerError = (
-  res: Response,
-  error: unknown,
-  message: string,
-) => {
-  if (error instanceof DomainError) {
-    return res.status(error.statusCode).json({ error: error.message });
-  }
-
-  console.error(message, error);
-  return res.status(500).json({ error: "Internal server error" });
-};
+import { handleControllerError } from "../../shared/utils/controllerError.js";
+import {
+  USER_ERROR_MESSAGES,
+  USER_SUCCESS_MESSAGES,
+} from "./user.constants.js";
 
 const toPublicUser = (user: User): Omit<User, "password"> => {
   const { password, ...publicUser } = user;
@@ -31,9 +22,16 @@ export const createAuthUser = async (req: Request, res: Response) => {
     const user = await createAuthUserService(req.body?.data);
     return res
       .status(201)
-      .json({ message: "User created successfully", data: toPublicUser(user) });
+      .json({
+        message: USER_SUCCESS_MESSAGES.USER_CREATED,
+        data: toPublicUser(user),
+      });
   } catch (error) {
-    return handleControllerError(res, error, "Error saving user:");
+    return handleControllerError(
+      res,
+      error,
+      USER_ERROR_MESSAGES.SAVE_USER_FAILED,
+    );
   }
 };
 
@@ -42,9 +40,16 @@ export const updateAuthUser = async (req: Request, res: Response) => {
     const user = await updateAuthUserService(req.body?.data);
     return res
       .status(200)
-      .json({ message: "User updated successfully", data: toPublicUser(user) });
+      .json({
+        message: USER_SUCCESS_MESSAGES.USER_UPDATED,
+        data: toPublicUser(user),
+      });
   } catch (error) {
-    return handleControllerError(res, error, "Error updating user:");
+    return handleControllerError(
+      res,
+      error,
+      USER_ERROR_MESSAGES.UPDATE_USER_FAILED,
+    );
   }
 };
 
@@ -53,9 +58,16 @@ export const deleteAuthUser = async (req: Request, res: Response) => {
     const user = await deleteAuthUserService(req.body?.data);
     return res
       .status(200)
-      .json({ message: "User deleted successfully", data: toPublicUser(user) });
+      .json({
+        message: USER_SUCCESS_MESSAGES.USER_DELETED,
+        data: toPublicUser(user),
+      });
   } catch (error) {
-    return handleControllerError(res, error, "Error deleting user:");
+    return handleControllerError(
+      res,
+      error,
+      USER_ERROR_MESSAGES.DELETE_USER_FAILED,
+    );
   }
 };
 
@@ -64,8 +76,15 @@ export const getAuthUser = async (req: Request, res: Response) => {
     const user = await getAuthUserService(req.params?.userId || "");
     return res
       .status(200)
-      .json({ message: "User found", data: toPublicUser(user) });
+      .json({
+        message: USER_SUCCESS_MESSAGES.USER_FOUND,
+        data: toPublicUser(user),
+      });
   } catch (error) {
-    return handleControllerError(res, error, "Error fetching user:");
+    return handleControllerError(
+      res,
+      error,
+      USER_ERROR_MESSAGES.FETCH_USER_FAILED,
+    );
   }
 };
