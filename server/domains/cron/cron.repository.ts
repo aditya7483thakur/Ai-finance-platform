@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import prisma from "../../config/prisma.js";
 import type {
   AccountWithUser,
+  MonthlyCategoryExpenseSum,
   RecurringAccountUpdate,
   RecurringTransactionRecord,
 } from "./cron.types.js";
@@ -92,4 +93,33 @@ export const findUsersForMonthlySummary = async (db: DbClient = prisma) => {
       accounts: true,
     },
   });
+};
+
+export const findMonthlyCategoryExpenseSums = async (
+  userId: string,
+  from: Date,
+  to: Date,
+  db: DbClient = prisma,
+): Promise<MonthlyCategoryExpenseSum[]> => {
+  const categoryExpenses = await db.transaction.groupBy({
+    by: ["category"],
+    where: {
+      userId,
+      type: "EXPENSE",
+      date: {
+        gte: from,
+        lte: to,
+      },
+    },
+    _sum: {
+      amount: true,
+    },
+    orderBy: {
+      _sum: {
+        amount: "desc",
+      },
+    },
+  });
+
+  return categoryExpenses as MonthlyCategoryExpenseSum[];
 };

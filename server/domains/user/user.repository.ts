@@ -1,4 +1,4 @@
-import prisma from "../../utils/prisma.js";
+import prisma from "../../config/prisma.js";
 import type { CreateUserInput, UpdateUserInput } from "./user.types.js";
 
 export const findUserByEmail = async (email: string) => {

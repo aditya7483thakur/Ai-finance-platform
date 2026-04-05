@@ -1,4 +1,4 @@
-import type { Prisma } from "@prisma/client";
+import type { Account, Prisma, TransactionType, User } from "@prisma/client";
 
 export type CreateAccountInput = {
   userId: string;
@@ -16,4 +16,16 @@ export type UpdateAccountInput = {
 export type UpdateAccountData = {
   name?: string;
   budget?: Prisma.Decimal | null;
+};
+
+export type AccountWithUser = Account & {
+  user: User;
+};
+
+export type SendBudgetAlertInput = {
+  account: AccountWithUser;
+  userId: string;
+  accountId: string;
+  newUsedAmount: Prisma.Decimal;
+  type: TransactionType;
 };

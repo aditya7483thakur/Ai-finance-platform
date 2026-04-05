@@ -15,6 +15,13 @@ export type MonthlyExpenseItem = {
   value: number;
 };
 
+export type MonthlyCategoryExpenseSum = {
+  category: string;
+  _sum: {
+    amount: Prisma.Decimal | null;
+  };
+};
+
 export type MonthlyExpenseSummary = {
   formatted: MonthlyExpenseItem[];
   month: string;

@@ -1,14 +1,20 @@
-import { type Account } from "@prisma/client";
+import { Prisma, type Account } from "@prisma/client";
 import { BadRequestError, NotFoundError } from "../../shared/types/errors.js";
-import { ACCOUNT_ERROR_MESSAGES } from "./account.constants.js";
+import { sendEmail } from "../../shared/integrations/email/sendEmail.js";
+import {
+  ACCOUNT_BUDGET_ALERT,
+  ACCOUNT_ERROR_MESSAGES,
+} from "./account.constants.js";
 import {
   canDeleteAccount,
   hasUpdateAccountData,
   mapUpdateAccountData,
 } from "./account.helper.js";
 import {
+  createBudgetAlertSentRecord,
   createAccountRecord,
   deleteAccountById,
+  findBudgetAlertSentTodayByAccountId,
   findAccountById,
   findAccountByIdWithTransactions,
   findAccountsByUserId,
@@ -17,6 +23,7 @@ import {
 } from "./account.repository.js";
 import type {
   CreateAccountInput,
+  SendBudgetAlertInput,
   UpdateAccountInput,
 } from "./account.types.js";
 
@@ -88,4 +95,42 @@ export const deleteAccountService = async (
   }
 
   await deleteAccountById(accountId);
+};
+
+export const sendBudgetAlertIfNeededService = async (
+  input: SendBudgetAlertInput,
+): Promise<void> => {
+  if (
+    input.type !== "EXPENSE" ||
+    !input.account.budget ||
+    !input.account.user.email
+  ) {
+    return;
+  }
+
+  const threshold = new Prisma.Decimal(input.account.budget).mul(0.9);
+  if (!input.newUsedAmount.gte(threshold)) {
+    return;
+  }
+
+  const today = new Date();
+  const alreadySent = await findBudgetAlertSentTodayByAccountId(
+    input.accountId,
+    today,
+  );
+  if (alreadySent) {
+    return;
+  }
+
+  await sendEmail({
+    to: input.account.user.email,
+    subject: `${ACCOUNT_BUDGET_ALERT.SUBJECT_PREFIX} ${input.account.name}`,
+    html: `Hi ${
+      input.account.user.name || "there"
+    },<br/><br/>You've used over 90% of your budget for <strong>${
+      input.account.name
+    }</strong>.<br/>Try to hold back a bit to avoid going over!`,
+  });
+
+  await createBudgetAlertSentRecord(input.userId, input.accountId);
 };

@@ -23,3 +23,9 @@ export const ACCOUNT_ERROR_MESSAGES = {
   UPDATE_ACCOUNT_FAILED: "Error updating account:",
   DELETE_ACCOUNT_FAILED: "Error deleting account:",
 } as const;
+
+export const ACCOUNT_BUDGET_ALERT = {
+  TYPE: "BUDGET_ALERT",
+  STATUS_SENT: "SENT",
+  SUBJECT_PREFIX: "Budget Alert for",
+} as const;

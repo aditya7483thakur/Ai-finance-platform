@@ -22,8 +22,9 @@ export async function sendEmail({ to, subject, html }) {
       subject,
       html,
     });
-    console.log(`✅ Email sent to ${to}`);
+    console.log(`Email sent to ${to}`);
   } catch (err) {
-    console.error("❌ Failed to send email:", err);
+    console.error("Failed to send email:", err);
+    throw err;
   }
 }

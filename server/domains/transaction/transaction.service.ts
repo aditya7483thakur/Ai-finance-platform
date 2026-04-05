@@ -1,8 +1,11 @@
 import { Prisma, type Transaction } from "@prisma/client";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import fs from "fs/promises";
+import {
+  extractReceiptDataWithGemini,
+  GEMINI_API_MISSING_ERROR,
+} from "../../shared/integrations/ai/gemini.js";
 import { BadRequestError, NotFoundError } from "../../shared/types/errors.js";
-import checkAndSendBudgetAlert from "../../utils/checkAndSendBudgetAlert.js";
+import { sendBudgetAlertIfNeededService } from "../account/account.service.js";
 import {
   countTransactionsByFilter,
   createTransactionRecord,
@@ -65,7 +68,7 @@ export const createTransactionService = async (
     return record;
   });
 
-  await checkAndSendBudgetAlert({
+  await sendBudgetAlertIfNeededService({
     account,
     userId: input.userId,
     accountId: input.accountId,
@@ -132,7 +135,7 @@ export const updateTransactionService = async (
     return record;
   });
 
-  await checkAndSendBudgetAlert({
+  await sendBudgetAlertIfNeededService({
     account,
     userId: existingTransaction.userId,
     accountId: existingTransaction.accountId,
@@ -258,52 +261,23 @@ export const aiFormReceiptService = async (
   filePath: string,
   mimeType: string,
 ): Promise<AiReceiptResult> => {
-  if (!process.env.GEMINI_API) {
-    throw new BadRequestError(
-      TRANSACTION_ERROR_MESSAGES.GEMINI_API_KEY_MISSING,
-    );
-  }
-
-  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API);
   const fileBuffer = await fs.readFile(filePath);
   const base64Image = fileBuffer.toString("base64");
 
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-
-    const prompt = `
-			You're a smart assistant that extracts fields from receipts.
-			From the uploaded image, return this object:
-			{
-				"type": "INCOME" or "EXPENSE",
-				"amount": "number as string",
-				"category": "One of: SALARY, INVESTMENTS, FOOD, TRANSPORT, HOUSING, ENTERTAINMENT, TRAVEL, HEALTH, SHOPPING, MISCELLANEOUS",
-				"date": "yyyy-mm-dd",
-				"description": "short merchant or transaction description"
-			}
-			If it's not a receipt, return an empty object {}
-		`;
-
-    const result = await model.generateContent({
-      contents: [
-        {
-          role: "user",
-          parts: [
-            { text: prompt },
-            {
-              inlineData: {
-                mimeType,
-                data: base64Image,
-              },
-            },
-          ],
-        },
-      ],
-    });
-
-    const parsed = parseGeminiJson(result.response.text().trim());
+    const extractedText = await extractReceiptDataWithGemini(
+      mimeType,
+      base64Image,
+    );
+    const parsed = parseGeminiJson(extractedText);
     return parsed;
   } catch (error) {
+    if (error instanceof Error && error.message === GEMINI_API_MISSING_ERROR) {
+      throw new BadRequestError(
+        TRANSACTION_ERROR_MESSAGES.GEMINI_API_KEY_MISSING,
+      );
+    }
+
     console.error(TRANSACTION_ERROR_MESSAGES.PARSE_RECEIPT_FAILED, error);
     throw new BadRequestError(TRANSACTION_ERROR_MESSAGES.RECEIPT_PARSE_FAILED);
   } finally {

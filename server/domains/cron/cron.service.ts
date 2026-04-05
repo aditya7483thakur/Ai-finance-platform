@@ -1,10 +1,10 @@
 import { Prisma } from "@prisma/client";
+import { endOfMonth, startOfMonth } from "date-fns";
+import { sendBudgetAlertIfNeededService } from "../account/account.service.js";
 import prisma from "../../config/prisma.js";
+import { sendEmail } from "../../shared/integrations/email/sendEmail.js";
+import { generateFinancialTipWithGemini } from "../../shared/integrations/ai/gemini.js";
 import { BadRequestError, NotFoundError } from "../../shared/types/errors.js";
-import checkAndSendBudgetAlert from "../../utils/checkAndSendBudgetAlert.js";
-import { generateFinancialTip } from "../../utils/generateFinancialTip.js";
-import { getMonthlyCategoryExpenses } from "../../utils/getMonthlyCategoryExpenses.js";
-import { sendEmail } from "../../utils/sendEmail.js";
 import { CRON_ERROR_MESSAGES } from "./cron.constants.js";
 import {
   buildMonthlySummaryHtml,
@@ -15,6 +15,7 @@ import {
   findAccountById,
   findAccountWithUserById,
   findDueRecurringTransactions,
+  findMonthlyCategoryExpenseSums,
   findUsersForMonthlySummary,
   updateAccountForRecurringTransaction,
   updateTransactionNextRecurringDate,
@@ -85,7 +86,7 @@ export const runRecurringTransactionsService = async (
       continue;
     }
 
-    await checkAndSendBudgetAlert({
+    await sendBudgetAlertIfNeededService({
       account: accountWithUser,
       userId: transaction.userId,
       accountId: transaction.accountId,
@@ -102,6 +103,11 @@ export const runRecurringTransactionsService = async (
 export const sendMonthlySummariesService =
   async (): Promise<SendMonthlySummariesResult> => {
     const users = await findUsersForMonthlySummary();
+    const now = new Date();
+    const firstDayOfMonth = startOfMonth(now);
+    const lastDayOfMonth = endOfMonth(now);
+    const month = now.toLocaleString("default", { month: "long" });
+    const year = now.getFullYear();
 
     let sentCount = 0;
     let skippedCount = 0;
@@ -114,16 +120,23 @@ export const sendMonthlySummariesService =
       }
 
       try {
-        const { formatted, month, year } = await getMonthlyCategoryExpenses(
+        const categoryExpenses = await findMonthlyCategoryExpenseSums(
           user.id,
+          firstDayOfMonth,
+          lastDayOfMonth,
         );
+
+        const formatted = categoryExpenses.map((item) => ({
+          name: item.category,
+          value: Number(item._sum.amount),
+        }));
 
         if (!formatted || formatted.length === 0) {
           skippedCount += 1;
           continue;
         }
 
-        const tip = await generateFinancialTip(formatted);
+        const tip = await generateFinancialTipWithGemini(formatted);
         const html = buildMonthlySummaryHtml(formatted, month, year, tip);
 
         await sendEmail({

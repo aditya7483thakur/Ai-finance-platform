@@ -1,6 +1,7 @@
 import { Prisma, type Account, type User } from "@prisma/client";
 import prisma from "../../config/prisma.js";
 import type { CreateAccountInput, UpdateAccountData } from "./account.types.js";
+import { ACCOUNT_BUDGET_ALERT } from "./account.constants.js";
 
 type DbClient = typeof prisma | Prisma.TransactionClient;
 
@@ -72,4 +73,35 @@ export const deleteAccountById = async (
   db: DbClient = prisma,
 ): Promise<Account> => {
   return db.account.delete({ where: { id: accountId } });
+};
+
+export const findBudgetAlertSentTodayByAccountId = async (
+  accountId: string,
+  today: Date,
+  db: DbClient = prisma,
+) => {
+  return db.scheduledEmail.findFirst({
+    where: {
+      accountId,
+      type: ACCOUNT_BUDGET_ALERT.TYPE,
+      createdAt: {
+        gte: new Date(today.getFullYear(), today.getMonth(), today.getDate()),
+      },
+    },
+  });
+};
+
+export const createBudgetAlertSentRecord = async (
+  userId: string,
+  accountId: string,
+  db: DbClient = prisma,
+) => {
+  return db.scheduledEmail.create({
+    data: {
+      userId,
+      accountId,
+      type: ACCOUNT_BUDGET_ALERT.TYPE,
+      status: ACCOUNT_BUDGET_ALERT.STATUS_SENT,
+    },
+  });
 };
