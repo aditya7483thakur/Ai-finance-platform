@@ -7,7 +7,6 @@ import graphRouter from "./domains/graph/graph.routes.js";
 import accountRouter from "./domains/account/account.routes.js";
 import cronRoutes from "./domains/cron/cron.routes.js";
 import userRouter from "./domains/user/user.routes.js";
-import aiRouter from "./domains/ai/ai.routes.js";
 import { requireAuth } from "./domains/auth/requireAuth.middleware.js";
 
 // Initialize Express
@@ -36,7 +35,6 @@ app.use("/users", userRouter);
 app.use("/accounts", requireAuth, accountRouter);
 app.use("/transactions", requireAuth, transactionRouter);
 app.use("/graphs", requireAuth, graphRouter);
-app.use("/ai", requireAuth, aiRouter);
 app.use("/cron", cronRoutes);
 
 // Start Server

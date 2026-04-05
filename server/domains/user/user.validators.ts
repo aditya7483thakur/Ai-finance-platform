@@ -2,6 +2,20 @@ import { BadRequestError } from "../../shared/types/errors.js";
 import { USER_ERROR_MESSAGES } from "./user.constants.js";
 import type { AuthUserPayload } from "./user.types.js";
 
+const parseOptionalNullableString = (
+  value: unknown,
+): string | null | undefined => {
+  if (typeof value === "string") {
+    return value;
+  }
+
+  if (value === null) {
+    return null;
+  }
+
+  return undefined;
+};
+
 const parseAuthUserPayload = (payload: unknown): AuthUserPayload => {
   const data = payload as Record<string, unknown>;
 
@@ -23,18 +37,9 @@ const parseAuthUserPayload = (payload: unknown): AuthUserPayload => {
   return {
     id,
     email,
-    first_name:
-      typeof data.first_name === "string" || data.first_name === null
-        ? data.first_name
-        : undefined,
-    last_name:
-      typeof data.last_name === "string" || data.last_name === null
-        ? data.last_name
-        : undefined,
-    image_url:
-      typeof data.image_url === "string" || data.image_url === null
-        ? data.image_url
-        : undefined,
+    first_name: parseOptionalNullableString(data.first_name),
+    last_name: parseOptionalNullableString(data.last_name),
+    image_url: parseOptionalNullableString(data.image_url),
   };
 };
 
