@@ -1,10 +1,43 @@
+import { Prisma } from "@prisma/client";
 import prisma from "../../config/prisma.js";
 
-export const getGroupedTransactions = async (whereClause: any) => {
-  return prisma.transaction.groupBy({
+type DbClient = typeof prisma | Prisma.TransactionClient;
+
+export const getGroupedTransactions = async (
+  where: Prisma.TransactionWhereInput,
+  db: DbClient = prisma,
+) => {
+  return db.transaction.groupBy({
     by: ["date", "type"],
     _sum: { amount: true },
-    where: whereClause,
+    where,
     orderBy: { date: "asc" },
+  });
+};
+
+export const getGroupedCategoryExpenses = async (
+  userId: string,
+  firstDayOfMonth: Date,
+  lastDayOfMonth: Date,
+  db: DbClient = prisma,
+) => {
+  return db.transaction.groupBy({
+    by: ["category"],
+    where: {
+      userId,
+      type: "EXPENSE",
+      date: {
+        gte: firstDayOfMonth,
+        lte: lastDayOfMonth,
+      },
+    },
+    _sum: {
+      amount: true,
+    },
+    orderBy: {
+      _sum: {
+        amount: "desc",
+      },
+    },
   });
 };
