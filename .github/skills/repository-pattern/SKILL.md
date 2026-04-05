@@ -152,3 +152,19 @@ Operations: <CREATE|READ|UPDATE|DELETE|CUSTOM>
 - No layer violations
 - No `any`
 - Types and return contracts are explicit
+
+## Project Learnings (Ai finance platform)
+
+Use these repository-specific conventions when generating or refactoring domains in this workspace:
+
+- Controller must parse and validate transport inputs before calling service:
+  - Parse `req.body` into typed DTO inputs in `<domain>.validators.ts`
+  - Parse and validate `req.params` (for this codebase, params can be `string | string[]`)
+  - Parse and normalize pagination/filter query into a typed parsed object before service call
+- Service should accept typed validated inputs (not raw `unknown`) and focus on business invariants + orchestration.
+- Keep reusable pure utilities in `<domain>.helper.ts` when they are used in multiple service flows (for example date recurrence math or decimal clamping).
+- Repository methods that may run in and out of transactions should accept a union DB client:
+  - `type DbClient = typeof prisma | Prisma.TransactionClient`
+  - Default to global prisma, but allow passing transaction client from `prisma.$transaction(async (tx) => ...)`
+- Keep Prisma decimals in service/repository math paths; avoid converting to JS number for persisted balance/amount calculations.
+- Preserve response shaping in controller (`{ message, data }` and optional `pagination`) and delegate error mapping through shared controller error utility.
