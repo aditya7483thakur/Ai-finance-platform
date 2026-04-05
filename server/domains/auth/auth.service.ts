@@ -1,86 +1,80 @@
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
+import {
+  BadRequestError,
+  ConflictError,
+  NotFoundError,
+} from "../../shared/types/errors.js";
 import {
   createUser,
   findUserByEmail,
   findUserById,
 } from "./auth.repository.js";
+import { AUTH_ERROR_MESSAGES } from "./auth.constants.js";
+import type {
+  AccessTokenPayload,
+  AuthSessionData,
+  PublicAuthUser,
+  SigninInput,
+  SignupInput,
+} from "./auth.types.js";
+import {
+  signToken,
+  toPublicUser,
+  verifyAccessTokenPayload,
+} from "./auth.helper.js";
 
 const SALT_ROUNDS = 10;
 
-const signToken = (payload: { userId: string; email: string }) => {
-  return jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "7d" });
-};
-
-export const signupUser = async (input: {
-  name: string;
-  email: string;
-  password: string;
-}) => {
+export const signupUserService = async (
+  input: SignupInput,
+): Promise<AuthSessionData> => {
   const existingUser = await findUserByEmail(input.email);
 
   if (existingUser) {
-    return {
-      status: 409,
-      body: { error: "User with this email already exists" },
-    };
+    throw new ConflictError(AUTH_ERROR_MESSAGES.USER_ALREADY_EXISTS);
   }
 
   const hashedPassword = await bcrypt.hash(input.password, SALT_ROUNDS);
   const newUser = await createUser({ ...input, password: hashedPassword });
   const token = signToken({ userId: newUser.id, email: newUser.email });
-  const { password: _, ...userWithoutPassword } = newUser;
+  const user = toPublicUser(newUser);
 
-  return {
-    status: 201,
-    body: {
-      message: "User created successfully",
-      user: userWithoutPassword,
-      token,
-    },
-  };
+  return { user, token };
 };
 
-export const signinUser = async (input: {
-  email: string;
-  password: string;
-}) => {
+export const signinUserService = async (
+  input: SigninInput,
+): Promise<AuthSessionData> => {
   const user = await findUserByEmail(input.email);
 
   if (!user) {
-    return { status: 401, body: { error: "Invalid email or password" } };
+    throw new BadRequestError(AUTH_ERROR_MESSAGES.INVALID_EMAIL_OR_PASSWORD);
   }
 
   const isPasswordValid = await bcrypt.compare(input.password, user.password);
 
   if (!isPasswordValid) {
-    return { status: 401, body: { error: "Invalid email or password" } };
+    throw new BadRequestError(AUTH_ERROR_MESSAGES.INVALID_EMAIL_OR_PASSWORD);
   }
 
   const token = signToken({ userId: user.id, email: user.email });
-  const { password: _, ...userWithoutPassword } = user;
+  const publicUser = toPublicUser(user);
 
-  return {
-    status: 200,
-    body: {
-      message: "Sign in successful",
-      user: userWithoutPassword,
-      token,
-    },
-  };
+  return { user: publicUser, token };
 };
 
-export const getUserProfile = async (userId: string) => {
+export const getUserProfileService = async (
+  userId: string,
+): Promise<PublicAuthUser> => {
   const user = await findUserById(userId);
 
   if (!user) {
-    return { status: 404, body: { error: "User not found" } };
+    throw new NotFoundError(AUTH_ERROR_MESSAGES.USER_NOT_FOUND);
   }
 
-  const { password: _, ...userWithoutPassword } = user;
-  return { status: 200, body: { user: userWithoutPassword } };
+  return toPublicUser(user);
 };
 
-export const verifyAccessToken = (token: string) => {
-  return jwt.verify(token, process.env.JWT_SECRET as string) as jwt.JwtPayload;
+export const verifyAccessToken = (token: string): AccessTokenPayload => {
+  return verifyAccessTokenPayload(token);
 };
