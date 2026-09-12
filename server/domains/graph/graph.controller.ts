@@ -6,13 +6,13 @@ import {
 } from "./graph.constants.js";
 import { graphService } from "./graph.service.js";
 import {
-  parseCategoryExpensesQuery,
-  parseTransactionSummaryQuery,
+  categoryExpensesQuerySchema,
+  transactionSummaryQuerySchema,
 } from "./graph.validators.js";
 
 export const getTransactionSummary = async (req: Request, res: Response) => {
   try {
-    const input = parseTransactionSummaryQuery(req.query);
+    const input = transactionSummaryQuerySchema.parse(req.query);
     const result = await graphService.getTransactionSummary(input);
 
     return res.status(200).json({
@@ -34,7 +34,7 @@ export const getCurrentMonthCategoryExpenses = async (
   res: Response,
 ) => {
   try {
-    const { userId } = parseCategoryExpensesQuery(req.query);
+    const { userId } = categoryExpensesQuerySchema.parse(req.query);
     const result = await graphService.getCurrentMonthCategoryExpenses(userId);
 
     return res.status(200).json({

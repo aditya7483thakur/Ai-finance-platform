@@ -7,11 +7,11 @@ import {
 import { transactionService } from "./transaction.service.js";
 import { BadRequestError } from "../../shared/types/errors.js";
 import {
-  parseCreateTransactionPayload,
-  parseDeleteManyPayload,
-  parseFilterQuery,
-  parseTransactionIdParam,
-  parseUpdateTransactionPayload,
+  createTransactionInputSchema,
+  deleteManyTransactionsSchema,
+  filterQuerySchema,
+  transactionIdParamSchema,
+  updateTransactionInputSchema,
 } from "./transaction.validators.js";
 
 type ReceiptRequest = Request & {
@@ -20,7 +20,7 @@ type ReceiptRequest = Request & {
 
 export const createTransaction = async (req: Request, res: Response) => {
   try {
-    const input = parseCreateTransactionPayload(req.body);
+    const input = createTransactionInputSchema.parse(req.body);
     const transaction = await transactionService.create(input);
     return res.status(201).json({
       message: TRANSACTION_SUCCESS_MESSAGES.TRANSACTION_CREATED,
@@ -37,8 +37,8 @@ export const createTransaction = async (req: Request, res: Response) => {
 
 export const editTransaction = async (req: Request, res: Response) => {
   try {
-    const transactionId = parseTransactionIdParam(req.params.transactionId);
-    const input = parseUpdateTransactionPayload(req.body);
+    const transactionId = transactionIdParamSchema.parse(req.params.transactionId);
+    const input = updateTransactionInputSchema.parse(req.body);
     const transaction = await transactionService.update(transactionId, input);
 
     return res.status(200).json({
@@ -56,7 +56,7 @@ export const editTransaction = async (req: Request, res: Response) => {
 
 export const deleteTransaction = async (req: Request, res: Response) => {
   try {
-    const transactionId = parseTransactionIdParam(req.params.transactionId);
+    const transactionId = transactionIdParamSchema.parse(req.params.transactionId);
     await transactionService.delete(transactionId);
 
     return res.status(200).json({
@@ -77,7 +77,7 @@ export const deleteMultipleTransactions = async (
   res: Response,
 ) => {
   try {
-    const transactionIds = parseDeleteManyPayload(req.body);
+    const { transactionIds } = deleteManyTransactionsSchema.parse(req.body);
     const deletedCount = await transactionService.deleteMany(transactionIds);
 
     return res.status(200).json({
@@ -95,7 +95,7 @@ export const deleteMultipleTransactions = async (
 
 export const getFilteredTransactions = async (req: Request, res: Response) => {
   try {
-    const filters = parseFilterQuery(req.query);
+    const filters = filterQuerySchema.parse(req.query);
     const result = await transactionService.getFiltered(filters);
 
     return res.status(200).json({

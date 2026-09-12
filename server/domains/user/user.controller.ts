@@ -7,10 +7,9 @@ import {
   USER_SUCCESS_MESSAGES,
 } from "./user.constants.js";
 import {
-  parseCreateAuthUserPayload,
-  parseDeleteAuthUserPayload,
-  parseUpdateAuthUserPayload,
-  parseUserIdParam,
+  authUserPayloadSchema,
+  deleteAuthUserSchema,
+  userIdParamSchema,
 } from "./user.validators.js";
 
 const toPublicUser = (user: User): Omit<User, "password"> => {
@@ -20,7 +19,7 @@ const toPublicUser = (user: User): Omit<User, "password"> => {
 
 export const createAuthUser = async (req: Request, res: Response) => {
   try {
-    const payload = parseCreateAuthUserPayload(req.body?.data);
+    const payload = authUserPayloadSchema.parse(req.body?.data);
     const user = await userService.createAuthUser(payload);
     return res.status(201).json({
       message: USER_SUCCESS_MESSAGES.USER_CREATED,
@@ -37,7 +36,7 @@ export const createAuthUser = async (req: Request, res: Response) => {
 
 export const updateAuthUser = async (req: Request, res: Response) => {
   try {
-    const payload = parseUpdateAuthUserPayload(req.body?.data);
+    const payload = authUserPayloadSchema.parse(req.body?.data);
     const user = await userService.updateAuthUser(payload);
     return res.status(200).json({
       message: USER_SUCCESS_MESSAGES.USER_UPDATED,
@@ -54,7 +53,7 @@ export const updateAuthUser = async (req: Request, res: Response) => {
 
 export const deleteAuthUser = async (req: Request, res: Response) => {
   try {
-    const userId = parseDeleteAuthUserPayload(req.body?.data);
+    const userId = deleteAuthUserSchema.parse(req.body?.data).id;
     const user = await userService.deleteAuthUser(userId);
     return res.status(200).json({
       message: USER_SUCCESS_MESSAGES.USER_DELETED,
@@ -78,7 +77,7 @@ export const getAuthUser = async (
   res: Response,
 ) => {
   try {
-    const userId = parseUserIdParam(req.params.userId);
+    const userId = userIdParamSchema.parse(req.params.userId);
     const user = await userService.getAuthUser(userId);
     return res.status(200).json({
       message: USER_SUCCESS_MESSAGES.USER_FOUND,

@@ -6,16 +6,15 @@ import {
 } from "./account.constants.js";
 import { accountService } from "./account.service.js";
 import {
-  parseAccountIdParam,
-  parseCreateAccountPayload,
-  parseDeleteAccountIdParam,
-  parseUpdateAccountPayload,
-  parseUserIdParam,
+  accountIdParamSchema,
+  createAccountInputSchema,
+  updateAccountInputSchema,
+  userIdParamSchema,
 } from "./account.validators.js";
 
 export const createAccount = async (req: Request, res: Response) => {
   try {
-    const input = parseCreateAccountPayload(req.body);
+    const input = createAccountInputSchema.parse(req.body);
     const account = await accountService.create(input);
 
     return res.status(201).json({
@@ -33,7 +32,7 @@ export const createAccount = async (req: Request, res: Response) => {
 
 export const getSingleAccount = async (req: Request, res: Response) => {
   try {
-    const accountId = parseAccountIdParam(req.params.accountId);
+    const accountId = accountIdParamSchema.parse(req.params.accountId);
     const account = await accountService.getSingle(accountId);
 
     return res.status(200).json({
@@ -51,7 +50,7 @@ export const getSingleAccount = async (req: Request, res: Response) => {
 
 export const getAllAccounts = async (req: Request, res: Response) => {
   try {
-    const userId = parseUserIdParam(req.params.userId);
+    const userId = userIdParamSchema.parse(req.params.userId);
     const accounts = await accountService.getAll(userId);
 
     return res.status(200).json({
@@ -69,7 +68,7 @@ export const getAllAccounts = async (req: Request, res: Response) => {
 
 export const updateAccount = async (req: Request, res: Response) => {
   try {
-    const input = parseUpdateAccountPayload(req.body);
+    const input = updateAccountInputSchema.parse(req.body);
     const account = await accountService.update(input);
 
     return res.status(200).json({
@@ -87,7 +86,7 @@ export const updateAccount = async (req: Request, res: Response) => {
 
 export const deleteAccount = async (req: Request, res: Response) => {
   try {
-    const accountId = parseDeleteAccountIdParam(req.params.id);
+    const accountId = accountIdParamSchema.parse(req.params.id);
     await accountService.delete(accountId);
 
     return res.status(200).json({

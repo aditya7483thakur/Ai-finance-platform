@@ -9,14 +9,14 @@ import {
 } from "./auth.service.js";
 import type { AuthenticatedRequest } from "./auth.types.js";
 import {
-  parseAuthenticatedUserId,
-  parseSigninInput,
-  parseSignupInput,
+  authenticatedUserIdSchema,
+  signinInputSchema,
+  signupInputSchema,
 } from "./auth.validators.js";
 
 export const signup = async (req: Request, res: Response) => {
   try {
-    const input = parseSignupInput(req.body);
+    const input = signupInputSchema.parse(req.body);
     const data = await authService.signup(input);
     return res.status(201).json({
       message: AUTH_SUCCESS_MESSAGES.USER_CREATED,
@@ -29,7 +29,7 @@ export const signup = async (req: Request, res: Response) => {
 
 export const signin = async (req: Request, res: Response) => {
   try {
-    const input = parseSigninInput(req.body);
+    const input = signinInputSchema.parse(req.body);
     const data = await authService.signin(input);
     return res.status(200).json({
       message: AUTH_SUCCESS_MESSAGES.SIGNIN_SUCCESSFUL,
@@ -42,7 +42,7 @@ export const signin = async (req: Request, res: Response) => {
 
 export const getMe = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const userId = parseAuthenticatedUserId(req.userId);
+    const userId = authenticatedUserIdSchema.parse(req.userId);
     const user = await authService.getUserProfile(userId);
     return res.status(200).json({
       message: AUTH_SUCCESS_MESSAGES.USER_FETCHED,

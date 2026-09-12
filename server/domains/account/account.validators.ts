@@ -1,8 +1,5 @@
 import { z } from "zod";
-import {
-  parseWithZod,
-  routeParam,
-} from "../../shared/utils/parseWithZod.js";
+import { routeParam } from "../../shared/utils/parseWithZod.js";
 import { ACCOUNT_ERROR_MESSAGES } from "./account.constants.js";
 
 const objectPayload = {
@@ -82,60 +79,10 @@ export const updateAccountInputSchema = z
     ACCOUNT_ERROR_MESSAGES.UPDATE_FIELDS_REQUIRED,
   );
 
-const accountIdParamSchema = routeParam(
+export const accountIdParamSchema = routeParam(
   ACCOUNT_ERROR_MESSAGES.ACCOUNT_ID_REQUIRED,
 );
-const userIdParamSchema = routeParam(ACCOUNT_ERROR_MESSAGES.USER_ID_REQUIRED);
+export const userIdParamSchema = routeParam(ACCOUNT_ERROR_MESSAGES.USER_ID_REQUIRED);
 
 export type CreateAccountInput = z.infer<typeof createAccountInputSchema>;
 export type UpdateAccountInput = z.infer<typeof updateAccountInputSchema>;
-
-export const parseCreateAccountPayload = (
-  payload: unknown,
-): CreateAccountInput => {
-  return parseWithZod<CreateAccountInput>(
-    createAccountInputSchema,
-    payload,
-    ACCOUNT_ERROR_MESSAGES.INVALID_REQUEST_PAYLOAD,
-  );
-};
-
-export const parseUpdateAccountPayload = (
-  payload: unknown,
-): UpdateAccountInput => {
-  return parseWithZod<UpdateAccountInput>(
-    updateAccountInputSchema,
-    payload,
-    ACCOUNT_ERROR_MESSAGES.INVALID_REQUEST_PAYLOAD,
-  );
-};
-
-export const parseAccountIdParam = (
-  accountId: string | string[] | undefined,
-): string => {
-  return parseWithZod<string>(
-    accountIdParamSchema,
-    accountId,
-    ACCOUNT_ERROR_MESSAGES.ACCOUNT_ID_REQUIRED,
-  );
-};
-
-export const parseDeleteAccountIdParam = (
-  accountId: string | string[] | undefined,
-): string => {
-  return parseWithZod<string>(
-    accountIdParamSchema,
-    accountId,
-    ACCOUNT_ERROR_MESSAGES.ACCOUNT_ID_REQUIRED,
-  );
-};
-
-export const parseUserIdParam = (
-  userId: string | string[] | undefined,
-): string => {
-  return parseWithZod<string>(
-    userIdParamSchema,
-    userId,
-    ACCOUNT_ERROR_MESSAGES.USER_ID_REQUIRED,
-  );
-};

@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { parseWithZod } from "../../shared/utils/parseWithZod.js";
 import { AUTH_ERROR_MESSAGES } from "./auth.constants.js";
 
 const objectPayload = {
@@ -39,7 +38,7 @@ export const signinInputSchema = z.object(
   objectPayload,
 );
 
-const authenticatedUserIdSchema = z
+export const authenticatedUserIdSchema = z
   .string({
     required_error: AUTH_ERROR_MESSAGES.USER_ID_REQUIRED,
     invalid_type_error: AUTH_ERROR_MESSAGES.USER_ID_REQUIRED,
@@ -49,27 +48,3 @@ const authenticatedUserIdSchema = z
 
 export type SignupInput = z.infer<typeof signupInputSchema>;
 export type SigninInput = z.infer<typeof signinInputSchema>;
-
-export const parseSignupInput = (payload: unknown): SignupInput => {
-  return parseWithZod<SignupInput>(
-    signupInputSchema,
-    payload,
-    AUTH_ERROR_MESSAGES.NAME_EMAIL_PASSWORD_REQUIRED,
-  );
-};
-
-export const parseSigninInput = (payload: unknown): SigninInput => {
-  return parseWithZod<SigninInput>(
-    signinInputSchema,
-    payload,
-    AUTH_ERROR_MESSAGES.EMAIL_PASSWORD_REQUIRED,
-  );
-};
-
-export const parseAuthenticatedUserId = (userId: unknown): string => {
-  return parseWithZod<string>(
-    authenticatedUserIdSchema,
-    userId,
-    AUTH_ERROR_MESSAGES.USER_ID_REQUIRED,
-  );
-};

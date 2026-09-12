@@ -1,8 +1,5 @@
 import { z } from "zod";
-import {
-  parseWithZod,
-  requiredQueryString,
-} from "../../shared/utils/parseWithZod.js";
+import { requiredQueryString } from "../../shared/utils/parseWithZod.js";
 import { GRAPH_ERROR_MESSAGES } from "./graph.constants.js";
 
 export const graphFilterSchema = z.enum(
@@ -30,23 +27,3 @@ export type TransactionSummaryQueryInput = z.infer<
 export type CategoryExpensesQueryInput = z.infer<
   typeof categoryExpensesQuerySchema
 >;
-
-export const parseTransactionSummaryQuery = (
-  query: unknown,
-): TransactionSummaryQueryInput => {
-  return parseWithZod<TransactionSummaryQueryInput>(
-    transactionSummaryQuerySchema,
-    query,
-    GRAPH_ERROR_MESSAGES.FILTER_REQUIRED,
-  );
-};
-
-export const parseCategoryExpensesQuery = (
-  query: unknown,
-): CategoryExpensesQueryInput => {
-  return parseWithZod<CategoryExpensesQueryInput>(
-    categoryExpensesQuerySchema,
-    query,
-    GRAPH_ERROR_MESSAGES.USER_ID_REQUIRED,
-  );
-};

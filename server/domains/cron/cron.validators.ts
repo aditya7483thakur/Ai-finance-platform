@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { parseWithZod, queryString } from "../../shared/utils/parseWithZod.js";
+import { queryString } from "../../shared/utils/parseWithZod.js";
 import { CRON_ERROR_MESSAGES } from "./cron.constants.js";
 
 export const parsedCronQuerySchema = z
@@ -25,11 +25,3 @@ export const parsedCronQuerySchema = z
   });
 
 export type ParsedCronQuery = z.infer<typeof parsedCronQuerySchema>;
-
-export const parseCronQuery = (query: unknown): ParsedCronQuery => {
-  return parseWithZod<ParsedCronQuery>(
-    parsedCronQuerySchema,
-    query,
-    CRON_ERROR_MESSAGES.INVALID_DATE_QUERY,
-  );
-};

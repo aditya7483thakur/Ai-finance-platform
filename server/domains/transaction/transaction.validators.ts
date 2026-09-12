@@ -1,9 +1,5 @@
 import { z } from "zod";
-import {
-  parseWithZod,
-  queryString,
-  routeParam,
-} from "../../shared/utils/parseWithZod.js";
+import { queryString, routeParam } from "../../shared/utils/parseWithZod.js";
 import { TRANSACTION_ERROR_MESSAGES } from "./transaction.constants.js";
 
 export const transactionTypeSchema = z.enum(["INCOME", "EXPENSE"], {
@@ -123,7 +119,7 @@ export const updateTransactionInputSchema = withRecurringRules(
   z.object(transactionWriteFields, objectPayload),
 );
 
-const deleteManySchema = z.object(
+export const deleteManyTransactionsSchema = z.object(
   {
     transactionIds: z
       .array(z.string().min(1), {
@@ -140,7 +136,7 @@ const deleteManySchema = z.object(
 
 const optionalFilterValue = queryString.optional();
 
-const filterQuerySchema = z
+export const filterQuerySchema = z
   .object({
     category: optionalFilterValue,
     type: optionalFilterValue,
@@ -166,20 +162,12 @@ const filterQuerySchema = z
       filter: {
         ...(query.category && query.category !== "ALL"
           ? {
-              category: parseWithZod<TransactionCategory>(
-                transactionCategorySchema,
-                query.category,
-                TRANSACTION_ERROR_MESSAGES.INVALID_TRANSACTION_CATEGORY,
-              ),
+              category: transactionCategorySchema.parse(query.category),
             }
           : {}),
         ...(query.type && query.type !== "ALL"
           ? {
-              type: parseWithZod<TransactionType>(
-                transactionTypeSchema,
-                query.type,
-                TRANSACTION_ERROR_MESSAGES.INVALID_TRANSACTION_TYPE,
-              ),
+              type: transactionTypeSchema.parse(query.type),
             }
           : {}),
         ...(query.isRecurring && query.isRecurring !== "ALL"
@@ -193,7 +181,7 @@ const filterQuerySchema = z
     };
   });
 
-const transactionIdParamSchema = routeParam(
+export const transactionIdParamSchema = routeParam(
   TRANSACTION_ERROR_MESSAGES.TRANSACTION_ID_REQUIRED,
 );
 
@@ -203,49 +191,3 @@ export type TransactionCategory = z.infer<typeof transactionCategorySchema>;
 export type CreateTransactionInput = z.infer<typeof createTransactionInputSchema>;
 export type UpdateTransactionInput = z.infer<typeof updateTransactionInputSchema>;
 export type ParsedTransactionFilters = z.infer<typeof filterQuerySchema>;
-
-export const parseTransactionIdParam = (
-  value: string | string[] | undefined,
-): string => {
-  return parseWithZod<string>(
-    transactionIdParamSchema,
-    value,
-    TRANSACTION_ERROR_MESSAGES.TRANSACTION_ID_REQUIRED,
-  );
-};
-
-export const parseCreateTransactionPayload = (
-  payload: unknown,
-): CreateTransactionInput => {
-  return parseWithZod<CreateTransactionInput>(
-    createTransactionInputSchema,
-    payload,
-    TRANSACTION_ERROR_MESSAGES.MISSING_REQUIRED_FIELDS,
-  );
-};
-
-export const parseUpdateTransactionPayload = (
-  payload: unknown,
-): UpdateTransactionInput => {
-  return parseWithZod<UpdateTransactionInput>(
-    updateTransactionInputSchema,
-    payload,
-    TRANSACTION_ERROR_MESSAGES.MISSING_REQUIRED_FIELDS,
-  );
-};
-
-export const parseDeleteManyPayload = (payload: unknown): string[] => {
-  return parseWithZod<{ transactionIds: string[] }>(
-    deleteManySchema,
-    payload,
-    TRANSACTION_ERROR_MESSAGES.INVALID_TRANSACTION_IDS,
-  ).transactionIds;
-};
-
-export const parseFilterQuery = (query: unknown): ParsedTransactionFilters => {
-  return parseWithZod<ParsedTransactionFilters>(
-    filterQuerySchema,
-    query,
-    TRANSACTION_ERROR_MESSAGES.FETCH_FILTERED_TRANSACTIONS_FAILED,
-  );
-};

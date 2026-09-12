@@ -1,21 +1,4 @@
 import { z } from "zod";
-import { BadRequestError } from "../types/errors.js";
-
-export const parseWithZod = <T>(
-  schema: z.ZodTypeAny,
-  payload: unknown,
-  fallbackMessage: string,
-): T => {
-  const result = schema.safeParse(payload);
-
-  if (!result.success) {
-    throw new BadRequestError(
-      result.error.issues[0]?.message ?? fallbackMessage,
-    );
-  }
-
-  return result.data as T;
-};
 
 export const queryString = z
   .union([z.string(), z.array(z.string())])

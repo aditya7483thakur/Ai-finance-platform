@@ -7,11 +7,11 @@ import {
 import {
   cronService,
 } from "./cron.service.js";
-import { parseCronQuery } from "./cron.validators.js";
+import { parsedCronQuerySchema } from "./cron.validators.js";
 
 export const runRecurringTransactions = async (req: Request, res: Response) => {
   try {
-    const { referenceDate } = parseCronQuery(req.query);
+    const { referenceDate } = parsedCronQuerySchema.parse(req.query);
     const result = await cronService.runRecurringTransactions(referenceDate);
 
     return res.status(200).json({
@@ -29,7 +29,7 @@ export const runRecurringTransactions = async (req: Request, res: Response) => {
 
 export const sendMonthlySummaries = async (req: Request, res: Response) => {
   try {
-    parseCronQuery(req.query);
+    parsedCronQuerySchema.parse(req.query);
     const result = await cronService.sendMonthlySummaries();
 
     return res.status(200).json({
