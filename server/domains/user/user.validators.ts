@@ -1,77 +1,76 @@
-import { BadRequestError } from "../../shared/types/errors.js";
+import { z } from "zod";
+import {
+  parseWithZod,
+  routeParam,
+} from "../../shared/utils/parseWithZod.js";
 import { USER_ERROR_MESSAGES } from "./user.constants.js";
-import type { AuthUserPayload } from "./user.types.js";
 
-const parseOptionalNullableString = (
-  value: unknown,
-): string | null | undefined => {
-  if (typeof value === "string") {
-    return value;
-  }
+const nullableString = z.union([z.string(), z.null()]).optional();
 
-  if (value === null) {
-    return null;
-  }
+export const authUserPayloadSchema = z.object(
+  {
+    id: z.string().trim().min(1, USER_ERROR_MESSAGES.USER_ID_REQUIRED),
+    email: z.string().trim().min(1, USER_ERROR_MESSAGES.EMAIL_REQUIRED),
+    first_name: nullableString,
+    last_name: nullableString,
+    image_url: nullableString,
+  },
+  {
+    required_error: USER_ERROR_MESSAGES.MISSING_USER_PAYLOAD,
+    invalid_type_error: USER_ERROR_MESSAGES.MISSING_USER_PAYLOAD,
+  },
+);
 
-  return undefined;
-};
+const deleteAuthUserSchema = z.object(
+  {
+    id: z.string().trim().min(1, USER_ERROR_MESSAGES.USER_ID_REQUIRED),
+  },
+  {
+    required_error: USER_ERROR_MESSAGES.MISSING_USER_PAYLOAD,
+    invalid_type_error: USER_ERROR_MESSAGES.MISSING_USER_PAYLOAD,
+  },
+);
 
-const parseAuthUserPayload = (payload: unknown): AuthUserPayload => {
-  const data = payload as Record<string, unknown>;
+const userIdParamSchema = routeParam(
+  USER_ERROR_MESSAGES.USER_ID_REQUIRED_CAPITALIZED,
+);
 
-  if (!data || typeof data !== "object") {
-    throw new BadRequestError(USER_ERROR_MESSAGES.MISSING_USER_PAYLOAD);
-  }
-
-  const id = data.id;
-  const email = data.email;
-
-  if (typeof id !== "string" || !id) {
-    throw new BadRequestError(USER_ERROR_MESSAGES.USER_ID_REQUIRED);
-  }
-
-  if (typeof email !== "string" || !email) {
-    throw new BadRequestError(USER_ERROR_MESSAGES.EMAIL_REQUIRED);
-  }
-
-  return {
-    id,
-    email,
-    first_name: parseOptionalNullableString(data.first_name),
-    last_name: parseOptionalNullableString(data.last_name),
-    image_url: parseOptionalNullableString(data.image_url),
-  };
-};
+export type AuthUserPayload = z.infer<typeof authUserPayloadSchema>;
 
 export const parseCreateAuthUserPayload = (
   payload: unknown,
 ): AuthUserPayload => {
-  return parseAuthUserPayload(payload);
+  return parseWithZod<AuthUserPayload>(
+    authUserPayloadSchema,
+    payload,
+    USER_ERROR_MESSAGES.MISSING_USER_PAYLOAD,
+  );
 };
 
 export const parseUpdateAuthUserPayload = (
   payload: unknown,
 ): AuthUserPayload => {
-  return parseAuthUserPayload(payload);
+  return parseWithZod<AuthUserPayload>(
+    authUserPayloadSchema,
+    payload,
+    USER_ERROR_MESSAGES.MISSING_USER_PAYLOAD,
+  );
 };
 
 export const parseDeleteAuthUserPayload = (payload: unknown): string => {
-  const data = payload as Record<string, unknown>;
-  const id = data?.id;
-
-  if (typeof id !== "string" || !id) {
-    throw new BadRequestError(USER_ERROR_MESSAGES.USER_ID_REQUIRED);
-  }
-
-  return id;
+  return parseWithZod<{ id: string }>(
+    deleteAuthUserSchema,
+    payload,
+    USER_ERROR_MESSAGES.USER_ID_REQUIRED,
+  ).id;
 };
 
 export const parseUserIdParam = (
   userId: string | string[] | undefined,
 ): string => {
-  const parsedId = Array.isArray(userId) ? userId[0] : userId;
-  if (!parsedId) {
-    throw new BadRequestError(USER_ERROR_MESSAGES.USER_ID_REQUIRED_CAPITALIZED);
-  }
-  return parsedId;
+  return parseWithZod<string>(
+    userIdParamSchema,
+    userId,
+    USER_ERROR_MESSAGES.USER_ID_REQUIRED_CAPITALIZED,
+  );
 };

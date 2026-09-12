@@ -1,61 +1,52 @@
-import { BadRequestError } from "../../shared/types/errors.js";
+import { z } from "zod";
+import {
+  parseWithZod,
+  requiredQueryString,
+} from "../../shared/utils/parseWithZod.js";
 import { GRAPH_ERROR_MESSAGES } from "./graph.constants.js";
-import type {
-  CategoryExpensesQueryInput,
-  GraphFilter,
-  TransactionSummaryQueryInput,
-} from "./graph.types.js";
 
-const GRAPH_FILTERS: GraphFilter[] = [
-  "last_7_days",
-  "last_month",
-  "last_6_months",
-];
+export const graphFilterSchema = z.enum(
+  ["last_7_days", "last_month", "last_6_months"],
+  {
+    errorMap: () => ({ message: GRAPH_ERROR_MESSAGES.INVALID_FILTER_OPTION }),
+  },
+);
 
-const parseStringField = (value: unknown, missingMessage: string): string => {
-  const parsedValue = Array.isArray(value) ? value[0] : value;
-  if (typeof parsedValue !== "string" || !parsedValue.trim()) {
-    throw new BadRequestError(missingMessage);
-  }
+export const transactionSummaryQuerySchema = z.object({
+  accountId: requiredQueryString(GRAPH_ERROR_MESSAGES.ACCOUNT_ID_REQUIRED),
+  filter: requiredQueryString(GRAPH_ERROR_MESSAGES.FILTER_REQUIRED).pipe(
+    graphFilterSchema,
+  ),
+});
 
-  return parsedValue.trim();
-};
+export const categoryExpensesQuerySchema = z.object({
+  userId: requiredQueryString(GRAPH_ERROR_MESSAGES.USER_ID_REQUIRED),
+});
 
-const parseFilter = (value: unknown): GraphFilter => {
-  const parsedFilter = parseStringField(
-    value,
-    GRAPH_ERROR_MESSAGES.FILTER_REQUIRED,
-  );
-  if (!GRAPH_FILTERS.includes(parsedFilter as GraphFilter)) {
-    throw new BadRequestError(GRAPH_ERROR_MESSAGES.INVALID_FILTER_OPTION);
-  }
-
-  return parsedFilter as GraphFilter;
-};
+export type GraphFilter = z.infer<typeof graphFilterSchema>;
+export type TransactionSummaryQueryInput = z.infer<
+  typeof transactionSummaryQuerySchema
+>;
+export type CategoryExpensesQueryInput = z.infer<
+  typeof categoryExpensesQuerySchema
+>;
 
 export const parseTransactionSummaryQuery = (
   query: unknown,
 ): TransactionSummaryQueryInput => {
-  const data = query as Record<string, unknown>;
-
-  return {
-    accountId: parseStringField(
-      data.accountId,
-      GRAPH_ERROR_MESSAGES.ACCOUNT_ID_REQUIRED,
-    ),
-    filter: parseFilter(data.filter),
-  };
+  return parseWithZod<TransactionSummaryQueryInput>(
+    transactionSummaryQuerySchema,
+    query,
+    GRAPH_ERROR_MESSAGES.FILTER_REQUIRED,
+  );
 };
 
 export const parseCategoryExpensesQuery = (
   query: unknown,
 ): CategoryExpensesQueryInput => {
-  const data = query as Record<string, unknown>;
-
-  return {
-    userId: parseStringField(
-      data.userId,
-      GRAPH_ERROR_MESSAGES.USER_ID_REQUIRED,
-    ),
-  };
+  return parseWithZod<CategoryExpensesQueryInput>(
+    categoryExpensesQuerySchema,
+    query,
+    GRAPH_ERROR_MESSAGES.USER_ID_REQUIRED,
+  );
 };

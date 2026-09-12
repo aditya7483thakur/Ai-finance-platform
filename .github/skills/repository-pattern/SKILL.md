@@ -1,170 +1,194 @@
 ---
 name: repository-pattern
-description: "Use when generating domain modules in Express.js + TypeScript + Prisma with strict Controller -> Service -> Repository architecture, custom error classes, and production-ready typed code."
+description: "Use when adding or refactoring server domains. This repo uses ports + Prisma adapters + class services with constructor injection. Ports never import Prisma."
 ---
 
-# Repository Pattern Skill
+# Repository Pattern
 
-Generate scalable domain modules for this backend using Express.js, TypeScript, and Prisma.
+This backend keeps domain folders flat. Persistence is hidden behind a port. Prisma lives only in adapter files.
 
 ## Use When
 
-- User asks for domain scaffolding in backend architecture
-- User wants strict clean architecture separation
-- User wants controller/service/repository files with Prisma
-- User asks for production-grade, interview-ready backend module code
-- User wants new domains to match the existing `server/domains/user` + `server/shared` patterns
+- Scaffolding or changing a domain under `server/domains/`
+- Adding a new table or query
+- Deciding whether a domain gets its own Prisma file
+- Reviewing a PR that touches services, ports, or repositories
 
-## Required Stack
-
-- Express.js
-- TypeScript (strict typing, no `any`)
-- Prisma
-- ESM-style TypeScript imports with `.js` extension in relative imports
-
-## Canonical Domain File Set
-
-For domain `<domain>` inside `server/domains/<domain>/`:
-
-- `<domain>.constants.ts`
-- `<domain>.types.ts`
-- `<domain>.repository.ts`
-- `<domain>.service.ts`
-- `<domain>.controller.ts`
-- `<domain>.routes.ts`
-
-Use constants file to remove hardcoded strings from controller/service.
-
-## Strict Architecture Rules
-
-### 1) Controller Layer
-
-- Handle HTTP only (`req`, `res`)
-- Call service layer
-- Delegate error mapping to shared controller error helper
-- Return proper HTTP status codes
-- Must not contain business logic
-- Must not call Prisma or database directly
-- Shape API responses as `{ message, data }` for success
-- Remove sensitive fields before response (for example strip `password` from `User`)
-
-Controller pattern (required):
-
-- Wrap every handler in `try/catch`
-- On success: return explicit status (`201`, `200`) and message from `<domain>.constants.ts`
-- On failure: call `handleControllerError(res, error, <CONTEXT_MESSAGE>)` from `server/shared/utils/controllerError.ts`
-
-### 2) Service Layer
-
-- Contain business logic only
-- Validate input and coordinate operations
-- Call repository layer
-- Return plain domain data
-- Throw shared domain errors (do not return HTTP-shaped objects)
-- Remain reusable outside HTTP (cron, queues, workers)
-- Add explicit TypeScript return types for all exported service methods
-- Use message constants for all thrown error messages (no hardcoded text)
-- Keep helper functions private in service (payload parsing/normalization)
-
-#### Service Return Contract Strategy (mandatory)
-
-- Services must return typed domain data only (entity or service DTO), never HTTP envelopes.
-- Do not return `message` fields.
-- Keep return shape consistent across service methods.
-
-### 3) Repository Layer
-
-- Contain database access only
-- Use Prisma queries only
-- No business logic or validation
-- Use strict Prisma and TypeScript types
-- Keep one repository function per data access use case (`findById`, `findByEmail`, `create`, `updateById`, `deleteById`)
-
-### 4) Types and Constants Layer
-
-- Define input payload and repository input types in `<domain>.types.ts`
-- Define user-facing success and failure message catalogs in `<domain>.constants.ts`
-- Export constants with `as const`
-- Service/controller must consume these constants instead of inline strings
-
-## Error Handling Rules
-
-- Use shared error classes from `server/shared/types/errors.ts`:
-  - `DomainError`
-  - `BadRequestError`
-  - `NotFoundError`
-  - `ConflictError`
-- Service throws these errors with constants-based messages
-- Controller delegates mapping to `handleControllerError` from `server/shared/utils/controllerError.ts`
-- Unknown errors must log context and map to `500`
-
-## Routing Rules
-
-- Keep routes in `<domain>.routes.ts` using `express.Router()`
-- Route handlers import only controller functions
-- Use explicit route paths and match existing project naming conventions
-
-## Implementation Rules
-
-- Use async/await consistently
-- Keep functions small and focused
-- Export clear, reusable functions
-- Add minimal useful comments only where necessary
-- Avoid framework-specific coupling in service/repository
-- Prefer strongly typed helper functions over inline complex expressions
-- Keep repository/service/controller layering strict (no violations)
-
-## Input Template
+## Layout
 
 ```text
-Domain: <DOMAIN_NAME>
-Prisma Model: <MODEL_NAME>
-Fields: <FIELDS>
-Operations: <CREATE|READ|UPDATE|DELETE|CUSTOM>
+server/
+  config/prisma.ts                         # Prisma client, DbClient, runInTransaction
+  shared/types/errors.ts                   # DomainError, BadRequestError, NotFoundError, ConflictError
+  shared/types/persistence.ts              # PersistenceContext (opaque tx handle)
+  shared/utils/controllerError.ts          # HTTP error mapping
+  domains/<name>/
+    <name>.constants.ts
+    <name>.types.ts                        # domain types only — no @prisma/client
+    <name>.port.ts                         # repository contract — no @prisma/client
+    <name>.repository.prisma.ts            # Prisma adapter (owner tables only)
+    <name>.helper.ts                       # optional pure helpers
+    <name>.validators.ts                   # parse/validate HTTP input
+    <name>.service.ts                      # class + singleton
+    <name>.controller.ts                   # HTTP only
+    <name>.routes.ts
 ```
 
-## Output Order
+Not every domain owns a table. Those domains have **no** `*.port.ts` and **no** `*.repository.prisma.ts`.
 
-1. `<domain>.constants.ts`
-2. `<domain>.types.ts`
-3. `<domain>.repository.ts`
-4. `<domain>.service.ts`
-5. `<domain>.controller.ts`
-6. `<domain>.routes.ts`
+| Domain        | Owns tables                         | Prisma adapter? |
+| ------------- | ----------------------------------- | --------------- |
+| `user`        | `users`                             | yes             |
+| `account`     | `accounts`, `scheduledEmail`        | yes             |
+| `transaction` | `transactions`                      | yes             |
+| `auth`        | none — uses `UserRepository`        | no              |
+| `graph`       | none — uses `TransactionRepository` | no              |
+| `cron`        | none — uses user/account/transaction ports | no       |
 
-## Output Constraints
+## Layers
 
-- Output code only
-- No explanations outside code
-- Production-ready style
-- Designed for scalability and maintainability
-- Must match existing import style and shared-layer integrations used in this repo
+### Port (`<name>.port.ts`)
 
-## Generation Checklist
+A TypeScript type. This is the persistence contract the service depends on.
 
-- Repository has only Prisma queries
-- Service has only business logic and throws shared typed errors
-- Controller handles only HTTP mapping and delegates errors via `handleControllerError`
-- Service methods use explicit return types and consistent return contracts
-- Controller performs all response shaping (messages, envelope, public field filtering)
-- No hardcoded response/error strings in controller or service
-- Messages are centralized in `<domain>.constants.ts`
-- No layer violations
-- No `any`
-- Types and return contracts are explicit
+- Import only domain types and `PersistenceContext`
+- Never import `@prisma/client`
+- Never import `DbClient` from `config/prisma.ts`
+- Money on the port is `string` (or `number` for inbound write DTOs), never `Prisma.Decimal`
+- Optional `ctx?: PersistenceContext` on methods that may run inside `runInTransaction`
 
-## Project Learnings (Ai finance platform)
+```ts
+import type { PersistenceContext } from "../../shared/types/persistence.js";
+import type { Account, CreateAccountInput } from "./account.types.js";
 
-Use these repository-specific conventions when generating or refactoring domains in this workspace:
+export type AccountRepository = {
+  findAccountById: (
+    accountId: string,
+    ctx?: PersistenceContext,
+  ) => Promise<Account | null>;
+  createAccountRecord: (
+    data: CreateAccountInput,
+    ctx?: PersistenceContext,
+  ) => Promise<Account>;
+};
+```
 
-- Controller must parse and validate transport inputs before calling service:
-  - Parse `req.body` into typed DTO inputs in `<domain>.validators.ts`
-  - Parse and validate `req.params` (for this codebase, params can be `string | string[]`)
-  - Parse and normalize pagination/filter query into a typed parsed object before service call
-- Service should accept typed validated inputs (not raw `unknown`) and focus on business invariants + orchestration.
-- Keep reusable pure utilities in `<domain>.helper.ts` when they are used in multiple service flows (for example date recurrence math or decimal clamping).
-- Repository methods that may run in and out of transactions should accept a union DB client:
-  - `type DbClient = typeof prisma | Prisma.TransactionClient`
-  - Default to global prisma, but allow passing transaction client from `prisma.$transaction(async (tx) => ...)`
-- Keep Prisma decimals in service/repository math paths; avoid converting to JS number for persisted balance/amount calculations.
-- Preserve response shaping in controller (`{ message, data }` and optional `pagination`) and delegate error mapping through shared controller error utility.
+### Prisma adapter (`<name>.repository.prisma.ts`)
+
+The only file in the domain that may import Prisma.
+
+- Implements the port
+- Maps Prisma rows → domain types (`balance.toString()`, pick only the user fields the domain needs)
+- Converts domain write values → `Prisma.Decimal` / Prisma enums before `create`/`update`
+- Casts `PersistenceContext` to `DbClient` internally
+- Queries **only** the tables this domain owns
+
+```ts
+const dbOf = (ctx?: PersistenceContext): DbClient => {
+  return (ctx as DbClient | undefined) ?? prisma;
+};
+
+const toAccount = (row: PrismaAccount): Account => ({
+  id: row.id,
+  name: row.name,
+  balance: row.balance.toString(),
+  budget: row.budget === null ? null : row.budget.toString(),
+  usedAmount: row.usedAmount.toString(),
+  userId: row.userId,
+  createdAt: row.createdAt,
+  updatedAt: row.updatedAt,
+});
+```
+
+### Service (`<name>.service.ts`)
+
+A class. Ports are constructor arguments. Wire the Prisma adapter once at the bottom of the same file.
+
+- Business rules and orchestration only
+- Talk to `this.accounts` / `this.users` / `this.transactions` (the port)
+- Throw shared domain errors (`NotFoundError`, `BadRequestError`, …)
+- Return domain data, never `{ message, data }`
+- Do not import `@prisma/client` once that domain is decoupled
+- Other domains: import the **owner port/adapter**, do not copy queries
+
+```ts
+export class AccountService {
+  constructor(
+    private readonly accounts: AccountRepository,
+    private readonly users: UserRepository,
+  ) {}
+
+  async getSingle(accountId: string): Promise<Account> {
+    const account = await this.accounts.findAccountById(accountId);
+    if (!account) {
+      throw new NotFoundError(ACCOUNT_ERROR_MESSAGES.ACCOUNT_NOT_FOUND);
+    }
+    return account;
+  }
+}
+
+export const accountService = new AccountService(
+  accountPrismaRepository,
+  userPrismaRepository,
+);
+```
+
+### Controller
+
+- HTTP only: parse input, call the **service singleton**, shape `{ message, data }`
+- `try/catch` + `handleControllerError(res, error, CONTEXT_MESSAGE)`
+- Never import a port, Prisma, or a repository file
+
+### Validators and helpers
+
+- Validators parse `req.body` / `params` / `query` into typed DTOs
+- Helpers stay pure (date math, field mapping). No Prisma.
+
+## Ownership Rules
+
+One table → one Prisma adapter file.
+
+- Need a user? Inject `UserRepository`. Do not add `findUserById` to account/transaction.
+- Need an account write? Call `AccountRepository.updateAccountAmounts`. Do not `db.account.update` from transaction/cron.
+- Aggregations over transactions (`groupBy`) belong on `TransactionRepository`. Graph and cron call that port.
+- Cron is an entry point, not an aggregate. It has no repository file.
+- Auth is a use-case over users. It has no repository file.
+
+## Transactions
+
+`runInTransaction` from `config/prisma.ts` is the only way to start a transaction.
+
+Services pass the `tx` handle through as `PersistenceContext`. Adapters unwrap it. Ports never mention `Prisma.TransactionClient`.
+
+```ts
+await runInTransaction(async (tx) => {
+  await this.transactions.createTransactionRecord(input, nextDate, tx);
+  await this.accounts.updateAccountAmounts(accountId, balance, usedAmount, tx);
+});
+```
+
+## Types
+
+- Domain types live in `<name>.types.ts` and do not import Prisma models
+- Money on persisted entities is `string`; inbound create/update DTOs may use `number`
+- Adapter maps both directions
+- Message catalogs live in `<name>.constants.ts` as `as const`
+
+## Adding a New Domain
+
+1. If it owns a table: `types` → `port` → `repository.prisma` → class `Service` + singleton → controller → routes
+2. If it does not own a table: `types` → class `Service` that takes owner ports → controller → routes
+3. Put new queries on the owner port, not on the caller
+4. Keep the Prisma import inside `*.repository.prisma.ts` (and `config/prisma.ts`)
+
+## Checklist
+
+- [ ] Port and domain types have no `@prisma/client` import
+- [ ] Prisma queries exist only in the owner `*.repository.prisma.ts`
+- [ ] Service is a class; singleton is constructed at the bottom of the service file
+- [ ] Controller imports the service singleton only
+- [ ] Cross-domain reads/writes go through the owner port
+- [ ] Optional transaction argument is `PersistenceContext`, not `DbClient`
+- [ ] Adapter maps Prisma rows to domain types
+- [ ] Errors are shared classes; strings come from constants
+- [ ] No `any`

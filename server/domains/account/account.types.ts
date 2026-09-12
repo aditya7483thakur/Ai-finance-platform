@@ -25,18 +25,10 @@ export type AccountWithTransactionIds = Account & {
   transactions: { id: string }[];
 };
 
-export type CreateAccountInput = {
-  userId: string;
-  name: string;
-  balance: number;
-  budget: number | null;
-};
-
-export type UpdateAccountInput = {
-  id: string;
-  name?: string;
-  budget?: number | null;
-};
+export type {
+  CreateAccountInput,
+  UpdateAccountInput,
+} from "./account.validators.js";
 
 export type UpdateAccountData = {
   name?: string;

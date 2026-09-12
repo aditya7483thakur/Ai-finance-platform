@@ -1,18 +1,20 @@
-export type TransactionType = "INCOME" | "EXPENSE";
+import type {
+  CreateTransactionInput,
+  ParsedTransactionFilters,
+  RecurringInterval,
+  TransactionCategory,
+  TransactionType,
+  UpdateTransactionInput,
+} from "./transaction.validators.js";
 
-export type RecurringInterval = "DAILY" | "WEEKLY" | "MONTHLY" | "YEARLY";
-
-export type TransactionCategory =
-  | "SALARY"
-  | "INVESTMENTS"
-  | "FOOD"
-  | "TRANSPORT"
-  | "HOUSING"
-  | "ENTERTAINMENT"
-  | "TRAVEL"
-  | "HEALTH"
-  | "SHOPPING"
-  | "MISCELLANEOUS";
+export type {
+  CreateTransactionInput,
+  ParsedTransactionFilters,
+  RecurringInterval,
+  TransactionCategory,
+  TransactionType,
+  UpdateTransactionInput,
+};
 
 export type Transaction = {
   id: string;
@@ -31,40 +33,6 @@ export type Transaction = {
   updatedAt: Date;
 };
 
-export type TransactionId = string;
-
-export type CreateTransactionInput = {
-  type: TransactionType;
-  amount: number;
-  description?: string;
-  date: Date;
-  category: TransactionCategory;
-  accountId: string;
-  userId: string;
-  isRecurring: boolean;
-  recurringInterval: RecurringInterval | null;
-};
-
-export type UpdateTransactionInput = {
-  type: TransactionType;
-  amount: number;
-  description?: string;
-  date: Date;
-  category: TransactionCategory;
-  isRecurring: boolean;
-  recurringInterval: RecurringInterval | null;
-};
-
-export type TransactionFilterQuery = {
-  category?: string;
-  type?: string;
-  isRecurring?: string;
-  description?: string;
-  accountId?: string;
-  page?: string;
-  limit?: string;
-};
-
 export type TransactionListFilter = {
   category?: TransactionCategory;
   type?: TransactionType;
@@ -75,12 +43,6 @@ export type TransactionListFilter = {
     gte?: Date;
     lte?: Date;
   };
-};
-
-export type ParsedTransactionFilters = {
-  filter: TransactionListFilter;
-  page: number;
-  limit: number;
 };
 
 export type FilteredTransactionsResult<T> = {

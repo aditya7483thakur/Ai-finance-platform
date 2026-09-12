@@ -1,144 +1,141 @@
-import { BadRequestError } from "../../shared/types/errors.js";
+import { z } from "zod";
+import {
+  parseWithZod,
+  routeParam,
+} from "../../shared/utils/parseWithZod.js";
 import { ACCOUNT_ERROR_MESSAGES } from "./account.constants.js";
-import type {
-  CreateAccountInput,
-  UpdateAccountInput,
-} from "./account.types.js";
 
-const parsePayloadObject = (payload: unknown): Record<string, unknown> => {
-  if (!payload || typeof payload !== "object") {
-    throw new BadRequestError(ACCOUNT_ERROR_MESSAGES.INVALID_REQUEST_PAYLOAD);
-  }
-
-  return payload as Record<string, unknown>;
+const objectPayload = {
+  required_error: ACCOUNT_ERROR_MESSAGES.INVALID_REQUEST_PAYLOAD,
+  invalid_type_error: ACCOUNT_ERROR_MESSAGES.INVALID_REQUEST_PAYLOAD,
 };
 
-const parseNonEmptyString = (value: unknown): string | undefined => {
-  if (typeof value !== "string") {
-    return undefined;
-  }
+const optionalFiniteNumber = (message: string) =>
+  z.preprocess((value) => {
+    if (value === undefined || value === null) {
+      return undefined;
+    }
 
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : undefined;
-};
+    if (typeof value === "string" && value.trim() === "") {
+      return undefined;
+    }
 
-const parseNumericValue = (
-  value: unknown,
-  errorMessage: string,
-): number | undefined => {
-  if (value === undefined || value === null) {
-    return undefined;
-  }
+    const numericValue = Number(value);
+    return Number.isNaN(numericValue) ? value : numericValue;
+  }, z.number({ invalid_type_error: message }).finite({ message }).optional());
 
-  if (typeof value === "string" && value.trim() === "") {
-    return undefined;
-  }
+const nullableFiniteNumber = (message: string) =>
+  z.preprocess((value) => {
+    if (value === undefined || value === null) {
+      return null;
+    }
 
-  const numericValue = Number(value);
+    if (typeof value === "string" && value.trim() === "") {
+      return null;
+    }
 
-  if (Number.isNaN(numericValue) || !Number.isFinite(numericValue)) {
-    throw new BadRequestError(errorMessage);
-  }
+    const numericValue = Number(value);
+    return Number.isNaN(numericValue) ? value : numericValue;
+  }, z.union([z.null(), z.number({ invalid_type_error: message }).finite({ message })]));
 
-  return numericValue;
-};
+export const createAccountInputSchema = z.object(
+  {
+    userId: z
+      .string()
+      .trim()
+      .min(1, ACCOUNT_ERROR_MESSAGES.USER_ID_REQUIRED),
+    name: z
+      .string()
+      .trim()
+      .min(1, ACCOUNT_ERROR_MESSAGES.ACCOUNT_NAME_REQUIRED),
+    balance: optionalFiniteNumber(ACCOUNT_ERROR_MESSAGES.INVALID_BALANCE),
+    budget: nullableFiniteNumber(ACCOUNT_ERROR_MESSAGES.INVALID_BUDGET),
+  },
+  objectPayload,
+).transform((data) => ({
+  userId: data.userId,
+  name: data.name,
+  balance: data.balance ?? 0,
+  budget: data.budget ?? null,
+}));
 
-const parseAccountId = (value: string | string[] | undefined): string => {
-  const accountId = Array.isArray(value) ? value[0] : value;
+export const updateAccountInputSchema = z
+  .object(
+    {
+      id: z.string().trim().min(1, ACCOUNT_ERROR_MESSAGES.ACCOUNT_ID_REQUIRED),
+      name: z
+        .string()
+        .trim()
+        .min(1, ACCOUNT_ERROR_MESSAGES.ACCOUNT_NAME_REQUIRED)
+        .optional(),
+      budget: z
+        .union([
+          z.null(),
+          optionalFiniteNumber(ACCOUNT_ERROR_MESSAGES.INVALID_BUDGET),
+        ])
+        .optional(),
+    },
+    objectPayload,
+  )
+  .refine(
+    (data) => data.name !== undefined || data.budget !== undefined,
+    ACCOUNT_ERROR_MESSAGES.UPDATE_FIELDS_REQUIRED,
+  );
 
-  if (!accountId) {
-    throw new BadRequestError(ACCOUNT_ERROR_MESSAGES.ACCOUNT_ID_REQUIRED);
-  }
+const accountIdParamSchema = routeParam(
+  ACCOUNT_ERROR_MESSAGES.ACCOUNT_ID_REQUIRED,
+);
+const userIdParamSchema = routeParam(ACCOUNT_ERROR_MESSAGES.USER_ID_REQUIRED);
 
-  return accountId;
-};
-
-const parseUserId = (value: string | string[] | undefined): string => {
-  const userId = Array.isArray(value) ? value[0] : value;
-
-  if (!userId) {
-    throw new BadRequestError(ACCOUNT_ERROR_MESSAGES.USER_ID_REQUIRED);
-  }
-
-  return userId;
-};
+export type CreateAccountInput = z.infer<typeof createAccountInputSchema>;
+export type UpdateAccountInput = z.infer<typeof updateAccountInputSchema>;
 
 export const parseCreateAccountPayload = (
   payload: unknown,
 ): CreateAccountInput => {
-  const data = parsePayloadObject(payload);
-
-  const userId = parseNonEmptyString(data.userId);
-  const name = parseNonEmptyString(data.name);
-  const balance =
-    parseNumericValue(data.balance, ACCOUNT_ERROR_MESSAGES.INVALID_BALANCE) ??
-    0;
-  const parsedBudget = parseNumericValue(
-    data.budget,
-    ACCOUNT_ERROR_MESSAGES.INVALID_BUDGET,
+  return parseWithZod<CreateAccountInput>(
+    createAccountInputSchema,
+    payload,
+    ACCOUNT_ERROR_MESSAGES.INVALID_REQUEST_PAYLOAD,
   );
-
-  if (!userId) {
-    throw new BadRequestError(ACCOUNT_ERROR_MESSAGES.USER_ID_REQUIRED);
-  }
-
-  if (!name) {
-    throw new BadRequestError(ACCOUNT_ERROR_MESSAGES.ACCOUNT_NAME_REQUIRED);
-  }
-
-  return {
-    userId,
-    name,
-    balance,
-    budget: parsedBudget ?? null,
-  };
 };
 
 export const parseUpdateAccountPayload = (
   payload: unknown,
 ): UpdateAccountInput => {
-  const data = parsePayloadObject(payload);
-
-  const id = parseNonEmptyString(data.id);
-  const name = parseNonEmptyString(data.name);
-  let budget: number | null | undefined;
-
-  if (Object.prototype.hasOwnProperty.call(data, "budget")) {
-    budget =
-      data.budget === null
-        ? null
-        : parseNumericValue(data.budget, ACCOUNT_ERROR_MESSAGES.INVALID_BUDGET);
-  }
-
-  if (!id) {
-    throw new BadRequestError(ACCOUNT_ERROR_MESSAGES.ACCOUNT_ID_REQUIRED);
-  }
-
-  if (name === undefined && budget === undefined) {
-    throw new BadRequestError(ACCOUNT_ERROR_MESSAGES.UPDATE_FIELDS_REQUIRED);
-  }
-
-  return {
-    id,
-    ...(name !== undefined ? { name } : {}),
-    ...(budget !== undefined ? { budget } : {}),
-  };
+  return parseWithZod<UpdateAccountInput>(
+    updateAccountInputSchema,
+    payload,
+    ACCOUNT_ERROR_MESSAGES.INVALID_REQUEST_PAYLOAD,
+  );
 };
 
 export const parseAccountIdParam = (
   accountId: string | string[] | undefined,
 ): string => {
-  return parseAccountId(accountId);
+  return parseWithZod<string>(
+    accountIdParamSchema,
+    accountId,
+    ACCOUNT_ERROR_MESSAGES.ACCOUNT_ID_REQUIRED,
+  );
 };
 
 export const parseDeleteAccountIdParam = (
   accountId: string | string[] | undefined,
 ): string => {
-  return parseAccountId(accountId);
+  return parseWithZod<string>(
+    accountIdParamSchema,
+    accountId,
+    ACCOUNT_ERROR_MESSAGES.ACCOUNT_ID_REQUIRED,
+  );
 };
 
 export const parseUserIdParam = (
   userId: string | string[] | undefined,
 ): string => {
-  return parseUserId(userId);
+  return parseWithZod<string>(
+    userIdParamSchema,
+    userId,
+    ACCOUNT_ERROR_MESSAGES.USER_ID_REQUIRED,
+  );
 };

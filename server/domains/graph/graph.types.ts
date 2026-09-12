@@ -1,15 +1,10 @@
-export type GraphFilter = "last_7_days" | "last_month" | "last_6_months";
+export type {
+  CategoryExpensesQueryInput,
+  GraphFilter,
+  TransactionSummaryQueryInput,
+} from "./graph.validators.js";
 
 export type GraphTransactionType = "INCOME" | "EXPENSE";
-
-export type TransactionSummaryQueryInput = {
-  accountId: string;
-  filter: GraphFilter;
-};
-
-export type CategoryExpensesQueryInput = {
-  userId: string;
-};
 
 export type DateRange = {
   startDate: Date;

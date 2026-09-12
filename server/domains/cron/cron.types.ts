@@ -20,10 +20,4 @@ export type SendMonthlySummariesResult = {
   failedCount: number;
 };
 
-export type CronQuery = {
-  date?: string | string[];
-};
-
-export type ParsedCronQuery = {
-  referenceDate?: Date;
-};
+export type { ParsedCronQuery } from "./cron.validators.js";
