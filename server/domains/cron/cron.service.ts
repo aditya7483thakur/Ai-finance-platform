@@ -1,4 +1,3 @@
-import { Prisma } from "@prisma/client";
 import { endOfMonth, startOfMonth } from "date-fns";
 import { accountService } from "../account/account.service.js";
 import { sendEmail } from "../../shared/integrations/email/sendEmail.js";
@@ -36,7 +35,7 @@ export class CronService {
     );
 
     for (const transaction of dueTransactions) {
-      let newUsedAmount = new Prisma.Decimal(0);
+      let newUsedAmount = 0;
 
       await runInTransaction(async (tx) => {
         await this.transactions.createRecurringTransactionRecord(
@@ -50,20 +49,21 @@ export class CronService {
           throw new NotFoundError(CRON_ERROR_MESSAGES.ACCOUNT_NOT_FOUND);
         }
 
-        let newBalance = new Prisma.Decimal(account.balance);
-        newUsedAmount = new Prisma.Decimal(account.usedAmount);
+        const amount = Number(transaction.amount);
+        let newBalance = Number(account.balance);
+        newUsedAmount = Number(account.usedAmount);
 
         if (transaction.type === "INCOME") {
-          newBalance = newBalance.plus(transaction.amount);
+          newBalance += amount;
         } else {
-          newBalance = newBalance.minus(transaction.amount);
-          newUsedAmount = newUsedAmount.plus(transaction.amount);
+          newBalance -= amount;
+          newUsedAmount += amount;
         }
 
         await this.accounts.updateAccountAmounts(
           transaction.accountId,
-          newBalance,
-          newUsedAmount,
+          String(newBalance),
+          String(newUsedAmount),
           tx,
         );
 
@@ -134,7 +134,7 @@ export class CronService {
 
         const formatted = categoryExpenses.map((item) => ({
           name: item.category,
-          value: Number(item._sum.amount),
+          value: Number(item.amount),
         }));
 
         if (!formatted || formatted.length === 0) {

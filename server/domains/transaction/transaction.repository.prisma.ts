@@ -1,22 +1,75 @@
-import { Prisma } from "@prisma/client";
+import { Prisma, type Transaction as PrismaTransaction } from "@prisma/client";
 import prisma, { type DbClient } from "../../config/prisma.js";
+import type { PersistenceContext } from "../../shared/types/persistence.js";
 import type { TransactionRepository } from "./transaction.port.js";
+import type {
+  Transaction,
+  TransactionListFilter,
+} from "./transaction.types.js";
+
+const dbOf = (ctx?: PersistenceContext): DbClient => {
+  return (ctx as DbClient | undefined) ?? prisma;
+};
+
+const toTransaction = (row: PrismaTransaction): Transaction => ({
+  id: row.id,
+  type: row.type,
+  amount: row.amount.toString(),
+  description: row.description,
+  date: row.date,
+  category: row.category,
+  receiptUrl: row.receiptUrl,
+  isRecurring: row.isRecurring,
+  recurringInterval: row.recurringInterval,
+  nextRecurringDate: row.nextRecurringDate,
+  userId: row.userId,
+  accountId: row.accountId,
+  createdAt: row.createdAt,
+  updatedAt: row.updatedAt,
+});
+
+const toPrismaWhere = (
+  filter: TransactionListFilter,
+): Prisma.TransactionWhereInput => {
+  return {
+    ...(filter.category ? { category: filter.category } : {}),
+    ...(filter.type ? { type: filter.type } : {}),
+    ...(filter.isRecurring !== undefined
+      ? { isRecurring: filter.isRecurring }
+      : {}),
+    ...(filter.description
+      ? {
+          description: {
+            contains: filter.description,
+            mode: "insensitive",
+          },
+        }
+      : {}),
+    ...(filter.accountId ? { accountId: filter.accountId } : {}),
+    ...(filter.date
+      ? {
+          date: {
+            ...(filter.date.gte ? { gte: filter.date.gte } : {}),
+            ...(filter.date.lte ? { lte: filter.date.lte } : {}),
+          },
+        }
+      : {}),
+  };
+};
 
 export const transactionPrismaRepository: TransactionRepository = {
-  findTransactionById: async (id, db: DbClient = prisma) => {
-    return db.transaction.findUnique({ where: { id } });
+  findTransactionById: async (id, ctx) => {
+    const row = await dbOf(ctx).transaction.findUnique({ where: { id } });
+    return row ? toTransaction(row) : null;
   },
-  findTransactionsByIds: async (transactionIds, db: DbClient = prisma) => {
-    return db.transaction.findMany({
+  findTransactionsByIds: async (transactionIds, ctx) => {
+    const rows = await dbOf(ctx).transaction.findMany({
       where: { id: { in: transactionIds } },
     });
+    return rows.map(toTransaction);
   },
-  createTransactionRecord: async (
-    data,
-    nextRecurringDate,
-    db: DbClient = prisma,
-  ) => {
-    return db.transaction.create({
+  createTransactionRecord: async (data, nextRecurringDate, ctx) => {
+    const row = await dbOf(ctx).transaction.create({
       data: {
         type: data.type,
         amount: new Prisma.Decimal(data.amount),
@@ -30,16 +83,13 @@ export const transactionPrismaRepository: TransactionRepository = {
         nextRecurringDate,
       },
     });
+    return toTransaction(row);
   },
-  createRecurringTransactionRecord: async (
-    transaction,
-    date,
-    db: DbClient = prisma,
-  ) => {
-    return db.transaction.create({
+  createRecurringTransactionRecord: async (transaction, date, ctx) => {
+    const row = await dbOf(ctx).transaction.create({
       data: {
         type: transaction.type,
-        amount: transaction.amount,
+        amount: new Prisma.Decimal(transaction.amount),
         description: transaction.description,
         date,
         category: transaction.category,
@@ -49,14 +99,15 @@ export const transactionPrismaRepository: TransactionRepository = {
         receiptUrl: transaction.receiptUrl,
       },
     });
+    return toTransaction(row);
   },
   updateTransactionById: async (
     transactionId,
     data,
     nextRecurringDate,
-    db: DbClient = prisma,
+    ctx,
   ) => {
-    return db.transaction.update({
+    const row = await dbOf(ctx).transaction.update({
       where: { id: transactionId },
       data: {
         type: data.type,
@@ -69,36 +120,44 @@ export const transactionPrismaRepository: TransactionRepository = {
         nextRecurringDate,
       },
     });
+    return toTransaction(row);
   },
   updateTransactionNextRecurringDate: async (
     transactionId,
     nextRecurringDate,
-    db: DbClient = prisma,
+    ctx,
   ) => {
-    return db.transaction.update({
+    const row = await dbOf(ctx).transaction.update({
       where: { id: transactionId },
       data: { nextRecurringDate },
     });
+    return toTransaction(row);
   },
-  deleteTransactionById: async (transactionId, db: DbClient = prisma) => {
-    return db.transaction.delete({ where: { id: transactionId } });
+  deleteTransactionById: async (transactionId, ctx) => {
+    const row = await dbOf(ctx).transaction.delete({
+      where: { id: transactionId },
+    });
+    return toTransaction(row);
   },
-  deleteTransactionsByIds: async (transactionIds, db: DbClient = prisma) => {
-    return db.transaction.deleteMany({ where: { id: { in: transactionIds } } });
+  deleteTransactionsByIds: async (transactionIds, ctx) => {
+    return dbOf(ctx).transaction.deleteMany({
+      where: { id: { in: transactionIds } },
+    });
   },
-  countTransactionsByFilter: async (where, db: DbClient = prisma) => {
-    return db.transaction.count({ where });
+  countTransactionsByFilter: async (filter, ctx) => {
+    return dbOf(ctx).transaction.count({ where: toPrismaWhere(filter) });
   },
-  findTransactionsByFilter: async (where, skip, take, db: DbClient = prisma) => {
-    return db.transaction.findMany({
-      where,
+  findTransactionsByFilter: async (filter, skip, take, ctx) => {
+    const rows = await dbOf(ctx).transaction.findMany({
+      where: toPrismaWhere(filter),
       orderBy: { date: "desc" },
       skip,
       take,
     });
+    return rows.map(toTransaction);
   },
-  findDueRecurringTransactions: async (today, db: DbClient = prisma) => {
-    return db.transaction.findMany({
+  findDueRecurringTransactions: async (today, ctx) => {
+    const rows = await dbOf(ctx).transaction.findMany({
       where: {
         isRecurring: true,
         nextRecurringDate: {
@@ -106,23 +165,29 @@ export const transactionPrismaRepository: TransactionRepository = {
         },
       },
     });
+    return rows.map(toTransaction);
   },
-  getGroupedTransactions: async (where, db: DbClient = prisma) => {
-    const rows = await db.transaction.groupBy({
+  getGroupedTransactions: async (filter, ctx) => {
+    const rows = await dbOf(ctx).transaction.groupBy({
       by: ["date", "type"],
       _sum: { amount: true },
-      where,
+      where: toPrismaWhere(filter),
       orderBy: { date: "asc" },
     });
-    return rows;
+
+    return rows.map((row) => ({
+      date: row.date,
+      type: row.type,
+      amount: (row._sum.amount ?? new Prisma.Decimal(0)).toString(),
+    }));
   },
   getGroupedCategoryExpenses: async (
     userId,
     firstDayOfMonth,
     lastDayOfMonth,
-    db: DbClient = prisma,
+    ctx,
   ) => {
-    const rows = await db.transaction.groupBy({
+    const rows = await dbOf(ctx).transaction.groupBy({
       by: ["category"],
       where: {
         userId,
@@ -141,6 +206,10 @@ export const transactionPrismaRepository: TransactionRepository = {
         },
       },
     });
-    return rows;
+
+    return rows.map((row) => ({
+      category: row.category,
+      amount: (row._sum.amount ?? new Prisma.Decimal(0)).toString(),
+    }));
   },
 };

@@ -1,9 +1,6 @@
-import type {
-  GroupedCategoryExpenseRow,
-  GroupedTransactionByDateRow,
-} from "../transaction/transaction.types.js";
-
 export type GraphFilter = "last_7_days" | "last_month" | "last_6_months";
+
+export type GraphTransactionType = "INCOME" | "EXPENSE";
 
 export type TransactionSummaryQueryInput = {
   accountId: string;
@@ -60,6 +57,8 @@ export type CategoryExpensesResult = {
   meta: CategoryExpensesMeta;
 };
 
-export type GraphGroupedTransactionRow = GroupedTransactionByDateRow;
-
-export type GraphGroupedCategoryExpenseRow = GroupedCategoryExpenseRow;
+export type GraphGroupedTransactionRow = {
+  date: Date;
+  type: GraphTransactionType;
+  amount: number;
+};

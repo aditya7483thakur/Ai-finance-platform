@@ -1,5 +1,5 @@
 import type { Request } from "express";
-import type { User } from "@prisma/client";
+import type { User } from "../user/user.types.js";
 
 export type AccessTokenPayload = {
   userId: string;

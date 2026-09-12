@@ -1,6 +1,5 @@
-import { Prisma, type RecurringInterval } from "@prisma/client";
 import { addDays, addMonths, addWeeks, addYears } from "date-fns";
-import type { AiReceiptResult } from "./transaction.types.js";
+import type { AiReceiptResult, RecurringInterval } from "./transaction.types.js";
 
 export const getNextRecurringDate = (
   transactionDate: Date,
@@ -25,10 +24,8 @@ export const getNextRecurringDate = (
   }
 };
 
-export const ensureNotNegativeDecimal = (
-  value: Prisma.Decimal,
-): Prisma.Decimal => {
-  return new Prisma.Decimal(Math.max(Number(value), 0));
+export const ensureNotNegativeAmount = (value: number): number => {
+  return Math.max(value, 0);
 };
 
 export const parseGeminiJson = (rawText: string): AiReceiptResult => {

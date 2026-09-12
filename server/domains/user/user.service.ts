@@ -1,6 +1,5 @@
 import bcrypt from "bcrypt";
-import type { User } from "@prisma/client";
-import { type AuthUserPayload } from "./user.types.js";
+import { type AuthUserPayload, type User } from "./user.types.js";
 import { ConflictError, NotFoundError } from "../../shared/types/errors.js";
 import { USER_ERROR_MESSAGES } from "./user.constants.js";
 import type { UserRepository } from "./user.port.js";

@@ -1,4 +1,3 @@
-import { Prisma, type Transaction } from "@prisma/client";
 import fs from "fs/promises";
 import {
   extractReceiptDataWithGemini,
@@ -6,15 +5,14 @@ import {
 } from "../../shared/integrations/ai/gemini.js";
 import { BadRequestError, NotFoundError } from "../../shared/types/errors.js";
 import { accountService } from "../account/account.service.js";
-import {
-  accountPrismaRepository,
-} from "../account/account.repository.prisma.js";
+import { accountPrismaRepository } from "../account/account.repository.prisma.js";
 import { TRANSACTION_ERROR_MESSAGES } from "./transaction.constants.js";
 import type {
   AiReceiptResult,
   CreateTransactionInput,
   FilteredTransactionsResult,
   ParsedTransactionFilters,
+  Transaction,
   UpdateTransactionInput,
 } from "./transaction.types.js";
 import type { TransactionRepository } from "./transaction.port.js";
@@ -22,7 +20,7 @@ import { transactionPrismaRepository } from "./transaction.repository.prisma.js"
 import type { AccountRepository } from "../account/account.port.js";
 import { runInTransaction } from "../../config/prisma.js";
 import {
-  ensureNotNegativeDecimal,
+  ensureNotNegativeAmount,
   getNextRecurringDate,
   parseGeminiJson,
 } from "./transaction.helper.js";
@@ -46,7 +44,7 @@ export class TransactionService {
       input.recurringInterval,
     );
 
-    let newUsedAmount = new Prisma.Decimal(account.usedAmount);
+    let newUsedAmount = Number(account.usedAmount);
 
     const createdTransaction = await runInTransaction(async (tx) => {
       const record = await this.transactions.createTransactionRecord(
@@ -55,20 +53,20 @@ export class TransactionService {
         tx,
       );
 
-      let newBalance = new Prisma.Decimal(account.balance);
-      newUsedAmount = new Prisma.Decimal(account.usedAmount);
+      let newBalance = Number(account.balance);
+      newUsedAmount = Number(account.usedAmount);
 
       if (input.type === "INCOME") {
-        newBalance = newBalance.plus(input.amount);
+        newBalance += input.amount;
       } else {
-        newBalance = newBalance.minus(input.amount);
-        newUsedAmount = newUsedAmount.plus(input.amount);
+        newBalance -= input.amount;
+        newUsedAmount += input.amount;
       }
 
       await this.accounts.updateAccountAmounts(
         input.accountId,
-        newBalance,
-        newUsedAmount,
+        String(newBalance),
+        String(newUsedAmount),
         tx,
       );
       return record;
@@ -84,6 +82,7 @@ export class TransactionService {
 
     return createdTransaction;
   }
+
   async update(
     transactionId: string,
     input: UpdateTransactionInput,
@@ -102,24 +101,25 @@ export class TransactionService {
       throw new NotFoundError(TRANSACTION_ERROR_MESSAGES.ACCOUNT_NOT_FOUND);
     }
 
-    let newBalance = new Prisma.Decimal(account.balance);
-    let newUsedAmount = new Prisma.Decimal(account.usedAmount);
+    let newBalance = Number(account.balance);
+    let newUsedAmount = Number(account.usedAmount);
+    const existingAmount = Number(existingTransaction.amount);
 
     if (existingTransaction.type === "INCOME") {
-      newBalance = newBalance.minus(existingTransaction.amount);
+      newBalance -= existingAmount;
     } else {
-      newBalance = newBalance.plus(existingTransaction.amount);
-      newUsedAmount = newUsedAmount.minus(existingTransaction.amount);
+      newBalance += existingAmount;
+      newUsedAmount -= existingAmount;
     }
 
     if (input.type === "INCOME") {
-      newBalance = newBalance.plus(input.amount);
+      newBalance += input.amount;
     } else {
-      newBalance = newBalance.minus(input.amount);
-      newUsedAmount = newUsedAmount.plus(input.amount);
+      newBalance -= input.amount;
+      newUsedAmount += input.amount;
     }
 
-    newUsedAmount = ensureNotNegativeDecimal(newUsedAmount);
+    newUsedAmount = ensureNotNegativeAmount(newUsedAmount);
 
     const nextRecurringDate = getNextRecurringDate(
       input.date,
@@ -137,8 +137,8 @@ export class TransactionService {
 
       await this.accounts.updateAccountAmounts(
         existingTransaction.accountId,
-        newBalance,
-        newUsedAmount,
+        String(newBalance),
+        String(newUsedAmount),
         tx,
       );
       return record;
@@ -170,24 +170,25 @@ export class TransactionService {
       throw new NotFoundError(TRANSACTION_ERROR_MESSAGES.ACCOUNT_NOT_FOUND);
     }
 
-    let newBalance = new Prisma.Decimal(account.balance);
-    let newUsedAmount = new Prisma.Decimal(account.usedAmount);
+    let newBalance = Number(account.balance);
+    let newUsedAmount = Number(account.usedAmount);
+    const existingAmount = Number(existingTransaction.amount);
 
     if (existingTransaction.type === "INCOME") {
-      newBalance = newBalance.minus(existingTransaction.amount);
+      newBalance -= existingAmount;
     } else {
-      newBalance = newBalance.plus(existingTransaction.amount);
-      newUsedAmount = newUsedAmount.minus(existingTransaction.amount);
+      newBalance += existingAmount;
+      newUsedAmount -= existingAmount;
     }
 
-    newUsedAmount = ensureNotNegativeDecimal(newUsedAmount);
+    newUsedAmount = ensureNotNegativeAmount(newUsedAmount);
 
     await runInTransaction(async (tx) => {
       await this.transactions.deleteTransactionById(transactionId, tx);
       await this.accounts.updateAccountAmounts(
         existingTransaction.accountId,
-        newBalance,
-        newUsedAmount,
+        String(newBalance),
+        String(newUsedAmount),
         tx,
       );
     });
@@ -205,20 +206,21 @@ export class TransactionService {
 
     const accountDeltas = new Map<
       string,
-      { balanceDelta: Prisma.Decimal; usedAmountDelta: Prisma.Decimal }
+      { balanceDelta: number; usedAmountDelta: number }
     >();
 
     for (const txn of transactions) {
       const current = accountDeltas.get(txn.accountId) ?? {
-        balanceDelta: new Prisma.Decimal(0),
-        usedAmountDelta: new Prisma.Decimal(0),
+        balanceDelta: 0,
+        usedAmountDelta: 0,
       };
+      const amount = Number(txn.amount);
 
       if (txn.type === "INCOME") {
-        current.balanceDelta = current.balanceDelta.minus(txn.amount);
+        current.balanceDelta -= amount;
       } else {
-        current.balanceDelta = current.balanceDelta.plus(txn.amount);
-        current.usedAmountDelta = current.usedAmountDelta.minus(txn.amount);
+        current.balanceDelta += amount;
+        current.usedAmountDelta -= amount;
       }
 
       accountDeltas.set(txn.accountId, current);
@@ -231,14 +233,17 @@ export class TransactionService {
           throw new NotFoundError(TRANSACTION_ERROR_MESSAGES.ACCOUNT_NOT_FOUND);
         }
 
-        const newBalance = new Prisma.Decimal(account.balance).plus(
-          delta.balanceDelta,
-        );
-        const newUsedAmount = ensureNotNegativeDecimal(
-          new Prisma.Decimal(account.usedAmount).plus(delta.usedAmountDelta),
+        const newBalance = Number(account.balance) + delta.balanceDelta;
+        const newUsedAmount = ensureNotNegativeAmount(
+          Number(account.usedAmount) + delta.usedAmountDelta,
         );
 
-        await this.accounts.updateAccountAmounts(accountId, newBalance, newUsedAmount, tx);
+        await this.accounts.updateAccountAmounts(
+          accountId,
+          String(newBalance),
+          String(newUsedAmount),
+          tx,
+        );
       }
 
       await this.transactions.deleteTransactionsByIds(transactionIds, tx);
@@ -250,11 +255,11 @@ export class TransactionService {
   async getFiltered(
     filters: ParsedTransactionFilters,
   ): Promise<FilteredTransactionsResult<Transaction>> {
-    const { where, page, limit } = filters;
-    const totalCount = await this.transactions.countTransactionsByFilter(where);
+    const { filter, page, limit } = filters;
+    const totalCount = await this.transactions.countTransactionsByFilter(filter);
     const offset = (page - 1) * limit;
     const transactions = await this.transactions.findTransactionsByFilter(
-      where,
+      filter,
       offset,
       limit,
     );

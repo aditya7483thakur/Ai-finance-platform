@@ -1,11 +1,41 @@
-import { Prisma } from "@prisma/client";
+import { Prisma, type Account as PrismaAccount, type User } from "@prisma/client";
 import prisma, { type DbClient } from "../../config/prisma.js";
+import type { PersistenceContext } from "../../shared/types/persistence.js";
 import { ACCOUNT_BUDGET_ALERT } from "./account.constants.js";
 import type { AccountRepository } from "./account.port.js";
+import type { Account, AccountUser, AccountWithUser } from "./account.types.js";
+
+const dbOf = (ctx?: PersistenceContext): DbClient => {
+  return (ctx as DbClient | undefined) ?? prisma;
+};
+
+const toAccount = (row: PrismaAccount): Account => ({
+  id: row.id,
+  name: row.name,
+  balance: row.balance.toString(),
+  budget: row.budget === null ? null : row.budget.toString(),
+  usedAmount: row.usedAmount.toString(),
+  userId: row.userId,
+  createdAt: row.createdAt,
+  updatedAt: row.updatedAt,
+});
+
+const toAccountUser = (user: User): AccountUser => ({
+  id: user.id,
+  email: user.email,
+  name: user.name,
+});
+
+const toAccountWithUser = (
+  row: PrismaAccount & { user: User },
+): AccountWithUser => ({
+  ...toAccount(row),
+  user: toAccountUser(row.user),
+});
 
 export const accountPrismaRepository: AccountRepository = {
-  createAccountRecord: async (data, db: DbClient = prisma) => {
-    return db.account.create({
+  createAccountRecord: async (data, ctx) => {
+    const row = await dbOf(ctx).account.create({
       data: {
         name: data.name,
         balance: new Prisma.Decimal(data.balance),
@@ -14,12 +44,15 @@ export const accountPrismaRepository: AccountRepository = {
         userId: data.userId,
       },
     });
+
+    return toAccount(row);
   },
-  findAccountById: async (accountId, db: DbClient = prisma) => {
-    return db.account.findUnique({ where: { id: accountId } });
+  findAccountById: async (accountId, ctx) => {
+    const row = await dbOf(ctx).account.findUnique({ where: { id: accountId } });
+    return row ? toAccount(row) : null;
   },
-  findAccountByIdWithTransactions: async (accountId, db: DbClient = prisma) => {
-    return db.account.findUnique({
+  findAccountByIdWithTransactions: async (accountId, ctx) => {
+    const row = await dbOf(ctx).account.findUnique({
       where: { id: accountId },
       include: {
         transactions: {
@@ -29,45 +62,61 @@ export const accountPrismaRepository: AccountRepository = {
         },
       },
     });
+
+    if (!row) {
+      return null;
+    }
+
+    return {
+      ...toAccount(row),
+      transactions: row.transactions,
+    };
   },
-  findAccountsByUserId: async (userId, db: DbClient = prisma) => {
-    return db.account.findMany({ where: { userId } });
+  findAccountsByUserId: async (userId, ctx) => {
+    const rows = await dbOf(ctx).account.findMany({ where: { userId } });
+    return rows.map(toAccount);
   },
-  updateAccountById: async (accountId, data, db: DbClient = prisma) => {
-    return db.account.update({
-      where: { id: accountId },
-      data,
-    });
-  },
-  updateAccountAmounts: async (
-    accountId,
-    balance,
-    usedAmount,
-    db: DbClient = prisma,
-  ) => {
-    return db.account.update({
+  updateAccountById: async (accountId, data, ctx) => {
+    const row = await dbOf(ctx).account.update({
       where: { id: accountId },
       data: {
-        balance,
-        usedAmount,
+        ...(data.name !== undefined ? { name: data.name } : {}),
+        ...(data.budget !== undefined
+          ? {
+              budget:
+                data.budget === null ? null : new Prisma.Decimal(data.budget),
+            }
+          : {}),
       },
     });
+
+    return toAccount(row);
   },
-  deleteAccountById: async (accountId, db: DbClient = prisma) => {
-    return db.account.delete({ where: { id: accountId } });
+  updateAccountAmounts: async (accountId, balance, usedAmount, ctx) => {
+    const row = await dbOf(ctx).account.update({
+      where: { id: accountId },
+      data: {
+        balance: new Prisma.Decimal(balance),
+        usedAmount: new Prisma.Decimal(usedAmount),
+      },
+    });
+
+    return toAccount(row);
   },
-  findAccountWithUserById: async (accountId, db: DbClient = prisma) => {
-    return db.account.findUnique({
+  deleteAccountById: async (accountId, ctx) => {
+    const row = await dbOf(ctx).account.delete({ where: { id: accountId } });
+    return toAccount(row);
+  },
+  findAccountWithUserById: async (accountId, ctx) => {
+    const row = await dbOf(ctx).account.findUnique({
       where: { id: accountId },
       include: { user: true },
     });
+
+    return row ? toAccountWithUser(row) : null;
   },
-  findBudgetAlertSentTodayByAccountId: async (
-    accountId,
-    today,
-    db: DbClient = prisma,
-  ) => {
-    return db.scheduledEmail.findFirst({
+  findBudgetAlertSentTodayByAccountId: async (accountId, today, ctx) => {
+    return dbOf(ctx).scheduledEmail.findFirst({
       where: {
         accountId,
         type: ACCOUNT_BUDGET_ALERT.TYPE,
@@ -78,12 +127,8 @@ export const accountPrismaRepository: AccountRepository = {
       select: { id: true },
     });
   },
-  createBudgetAlertSentRecord: async (
-    userId,
-    accountId,
-    db: DbClient = prisma,
-  ) => {
-    return db.scheduledEmail.create({
+  createBudgetAlertSentRecord: async (userId, accountId, ctx) => {
+    await dbOf(ctx).scheduledEmail.create({
       data: {
         userId,
         accountId,

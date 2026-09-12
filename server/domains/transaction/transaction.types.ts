@@ -1,9 +1,35 @@
-import type {
-  Prisma,
-  RecurringInterval,
-  TransactionCategory,
-  TransactionType,
-} from "@prisma/client";
+export type TransactionType = "INCOME" | "EXPENSE";
+
+export type RecurringInterval = "DAILY" | "WEEKLY" | "MONTHLY" | "YEARLY";
+
+export type TransactionCategory =
+  | "SALARY"
+  | "INVESTMENTS"
+  | "FOOD"
+  | "TRANSPORT"
+  | "HOUSING"
+  | "ENTERTAINMENT"
+  | "TRAVEL"
+  | "HEALTH"
+  | "SHOPPING"
+  | "MISCELLANEOUS";
+
+export type Transaction = {
+  id: string;
+  type: TransactionType;
+  amount: string;
+  description: string | null;
+  date: Date;
+  category: TransactionCategory;
+  receiptUrl: string | null;
+  isRecurring: boolean;
+  recurringInterval: RecurringInterval | null;
+  nextRecurringDate: Date | null;
+  userId: string;
+  accountId: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
 
 export type TransactionId = string;
 
@@ -39,8 +65,20 @@ export type TransactionFilterQuery = {
   limit?: string;
 };
 
+export type TransactionListFilter = {
+  category?: TransactionCategory;
+  type?: TransactionType;
+  isRecurring?: boolean;
+  description?: string;
+  accountId?: string;
+  date?: {
+    gte?: Date;
+    lte?: Date;
+  };
+};
+
 export type ParsedTransactionFilters = {
-  where: Prisma.TransactionWhereInput;
+  filter: TransactionListFilter;
   page: number;
   limit: number;
 };
@@ -58,19 +96,9 @@ export type FilteredTransactionsResult<T> = {
 };
 
 export type AiReceiptResult = {
-  type?: "INCOME" | "EXPENSE";
+  type?: TransactionType;
   amount?: string;
-  category?:
-    | "SALARY"
-    | "INVESTMENTS"
-    | "FOOD"
-    | "TRANSPORT"
-    | "HOUSING"
-    | "ENTERTAINMENT"
-    | "TRAVEL"
-    | "HEALTH"
-    | "SHOPPING"
-    | "MISCELLANEOUS";
+  category?: TransactionCategory;
   date?: string;
   description?: string;
 };
@@ -78,14 +106,10 @@ export type AiReceiptResult = {
 export type GroupedTransactionByDateRow = {
   date: Date;
   type: TransactionType;
-  _sum: {
-    amount: Prisma.Decimal | null;
-  };
+  amount: string;
 };
 
 export type GroupedCategoryExpenseRow = {
   category: string;
-  _sum: {
-    amount: Prisma.Decimal | null;
-  };
+  amount: string;
 };

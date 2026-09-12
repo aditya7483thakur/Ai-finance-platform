@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
-import type { User } from "@prisma/client";
 import { userService } from "./user.service.js";
+import type { User } from "./user.types.js";
 import { handleControllerError } from "../../shared/utils/controllerError.js";
 import {
   USER_ERROR_MESSAGES,

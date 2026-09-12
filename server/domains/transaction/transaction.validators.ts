@@ -1,15 +1,13 @@
-import type {
-  Prisma,
-  RecurringInterval,
-  TransactionCategory,
-  TransactionType,
-} from "@prisma/client";
 import { BadRequestError } from "../../shared/types/errors.js";
 import { TRANSACTION_ERROR_MESSAGES } from "./transaction.constants.js";
 import type {
   CreateTransactionInput,
   ParsedTransactionFilters,
+  RecurringInterval,
+  TransactionCategory,
   TransactionFilterQuery,
+  TransactionListFilter,
+  TransactionType,
   UpdateTransactionInput,
 } from "./transaction.types.js";
 
@@ -179,33 +177,30 @@ export const parseFilterQuery = (query: unknown): ParsedTransactionFilters => {
     limit = 10;
   }
 
-  const where: Prisma.TransactionWhereInput = {};
+  const filter: TransactionListFilter = {};
 
   if (rawQuery.category && rawQuery.category !== "ALL") {
-    where.category = parseTransactionCategory(rawQuery.category);
+    filter.category = parseTransactionCategory(rawQuery.category);
   }
 
   if (rawQuery.type && rawQuery.type !== "ALL") {
-    where.type = parseTransactionType(rawQuery.type);
+    filter.type = parseTransactionType(rawQuery.type);
   }
 
   if (rawQuery.isRecurring && rawQuery.isRecurring !== "ALL") {
-    where.isRecurring = rawQuery.isRecurring === "true";
+    filter.isRecurring = rawQuery.isRecurring === "true";
   }
 
   if (rawQuery.description) {
-    where.description = {
-      contains: rawQuery.description,
-      mode: "insensitive",
-    };
+    filter.description = rawQuery.description;
   }
 
   if (rawQuery.accountId) {
-    where.accountId = rawQuery.accountId;
+    filter.accountId = rawQuery.accountId;
   }
 
   return {
-    where,
+    filter,
     page,
     limit,
   };

@@ -1,6 +1,7 @@
-import type { Account, Prisma } from "@prisma/client";
-import type { DbClient } from "../../config/prisma.js";
+import type { PersistenceContext } from "../../shared/types/persistence.js";
 import type {
+  Account,
+  AccountWithTransactionIds,
   AccountWithUser,
   CreateAccountInput,
   UpdateAccountData,
@@ -9,38 +10,47 @@ import type {
 export type AccountRepository = {
   createAccountRecord: (
     data: CreateAccountInput,
-    db?: DbClient,
+    ctx?: PersistenceContext,
   ) => Promise<Account>;
-  findAccountById: (accountId: string, db?: DbClient) => Promise<Account | null>;
+  findAccountById: (
+    accountId: string,
+    ctx?: PersistenceContext,
+  ) => Promise<Account | null>;
   findAccountByIdWithTransactions: (
     accountId: string,
-    db?: DbClient,
-  ) => Promise<(Account & { transactions: { id: string }[] }) | null>;
-  findAccountsByUserId: (userId: string, db?: DbClient) => Promise<Account[]>;
+    ctx?: PersistenceContext,
+  ) => Promise<AccountWithTransactionIds | null>;
+  findAccountsByUserId: (
+    userId: string,
+    ctx?: PersistenceContext,
+  ) => Promise<Account[]>;
   updateAccountById: (
     accountId: string,
     data: UpdateAccountData,
-    db?: DbClient,
+    ctx?: PersistenceContext,
   ) => Promise<Account>;
   updateAccountAmounts: (
     accountId: string,
-    balance: Prisma.Decimal,
-    usedAmount: Prisma.Decimal,
-    db?: DbClient,
+    balance: string,
+    usedAmount: string,
+    ctx?: PersistenceContext,
   ) => Promise<Account>;
-  deleteAccountById: (accountId: string, db?: DbClient) => Promise<Account>;
+  deleteAccountById: (
+    accountId: string,
+    ctx?: PersistenceContext,
+  ) => Promise<Account>;
   findAccountWithUserById: (
     accountId: string,
-    db?: DbClient,
+    ctx?: PersistenceContext,
   ) => Promise<AccountWithUser | null>;
   findBudgetAlertSentTodayByAccountId: (
     accountId: string,
     today: Date,
-    db?: DbClient,
+    ctx?: PersistenceContext,
   ) => Promise<{ id: string } | null>;
   createBudgetAlertSentRecord: (
     userId: string,
     accountId: string,
-    db?: DbClient,
-  ) => Promise<unknown>;
+    ctx?: PersistenceContext,
+  ) => Promise<void>;
 };

@@ -1,4 +1,3 @@
-import { Prisma } from "@prisma/client";
 import type { UpdateAccountData, UpdateAccountInput } from "./account.types.js";
 
 export const canDeleteAccount = (transactionCount: number): boolean => {
@@ -15,8 +14,7 @@ export const mapUpdateAccountData = (
   }
 
   if (input.budget !== undefined) {
-    data.budget =
-      input.budget === null ? null : new Prisma.Decimal(input.budget);
+    data.budget = input.budget;
   }
 
   return data;

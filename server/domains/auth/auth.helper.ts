@@ -1,5 +1,5 @@
-import type { User } from "@prisma/client";
 import jwt from "jsonwebtoken";
+import type { User } from "../user/user.types.js";
 import { BadRequestError } from "../../shared/types/errors.js";
 import { AUTH_ERROR_MESSAGES } from "./auth.constants.js";
 import type { AccessTokenPayload, PublicAuthUser } from "./auth.types.js";

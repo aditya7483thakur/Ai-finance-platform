@@ -28,7 +28,13 @@ export class GraphService {
       },
     });
 
-    const summaryMap = buildDailySummaryMap(rows as GraphGroupedTransactionRow[]);
+    const mappedRows: GraphGroupedTransactionRow[] = rows.map((row) => ({
+      date: row.date,
+      type: row.type,
+      amount: Number(row.amount),
+    }));
+
+    const summaryMap = buildDailySummaryMap(mappedRows);
 
     const summary = buildCompleteDailySeries(startDate, endDate, summaryMap);
 
@@ -71,7 +77,7 @@ export class GraphService {
     return {
       expenses: rows.map((row) => ({
         name: row.category,
-        value: Number(row._sum.amount ?? 0),
+        value: Number(row.amount),
       })),
       meta: {
         month: now.toLocaleString("default", { month: "long" }),

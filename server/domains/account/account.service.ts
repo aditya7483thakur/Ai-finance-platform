@@ -1,4 +1,3 @@
-import { Prisma, type Account } from "@prisma/client";
 import { BadRequestError, NotFoundError } from "../../shared/types/errors.js";
 import { sendEmail } from "../../shared/integrations/email/sendEmail.js";
 import {
@@ -11,6 +10,7 @@ import {
   mapUpdateAccountData,
 } from "./account.helper.js";
 import type {
+  Account,
   CreateAccountInput,
   SendBudgetAlertInput,
   UpdateAccountInput,
@@ -95,8 +95,8 @@ export class AccountService {
       return;
     }
 
-    const threshold = new Prisma.Decimal(input.account.budget).mul(0.9);
-    if (!input.newUsedAmount.gte(threshold)) {
+    const threshold = Number(input.account.budget) * 0.9;
+    if (input.newUsedAmount < threshold) {
       return;
     }
 

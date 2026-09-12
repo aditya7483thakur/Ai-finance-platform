@@ -1,4 +1,12 @@
-import type { Account } from "@prisma/client";
+export type User = {
+  id: string;
+  email: string;
+  password: string;
+  name: string;
+  imageUrl: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
 
 export type AuthUserId = string;
 
@@ -26,6 +34,5 @@ export type UpdateUserInput = {
 
 export type UserForMonthlySummary = {
   id: string;
-  email: string | null;
-  accounts: Account[];
+  email: string;
 };

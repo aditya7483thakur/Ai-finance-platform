@@ -1,6 +1,5 @@
 import { addDays, addMonths, addWeeks, addYears, isBefore } from "date-fns";
-import type { RecurringInterval } from "@prisma/client";
-import type { MonthlyExpenseItem } from "./cron.types.js";
+import type { MonthlyExpenseItem, RecurringInterval } from "./cron.types.js";
 
 export const getNextRecurringDate = (
   currentDate: Date,

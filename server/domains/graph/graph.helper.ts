@@ -45,7 +45,7 @@ export const buildDailySummaryMap = (
       summaryMap[dateKey] = { income: 0, expense: 0 };
     }
 
-    const amount = Number(row._sum.amount ?? 0);
+    const amount = row.amount;
     if (row.type === "INCOME") {
       summaryMap[dateKey].income += amount;
     } else {
