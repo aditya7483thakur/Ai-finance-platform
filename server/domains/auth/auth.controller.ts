@@ -5,9 +5,7 @@ import {
   AUTH_SUCCESS_MESSAGES,
 } from "./auth.constants.js";
 import {
-  getUserProfileService,
-  signinUserService,
-  signupUserService,
+  authService,
 } from "./auth.service.js";
 import type { AuthenticatedRequest } from "./auth.types.js";
 import {
@@ -19,7 +17,7 @@ import {
 export const signup = async (req: Request, res: Response) => {
   try {
     const input = parseSignupInput(req.body);
-    const data = await signupUserService(input);
+    const data = await authService.signup(input);
     return res.status(201).json({
       message: AUTH_SUCCESS_MESSAGES.USER_CREATED,
       data,
@@ -32,7 +30,7 @@ export const signup = async (req: Request, res: Response) => {
 export const signin = async (req: Request, res: Response) => {
   try {
     const input = parseSigninInput(req.body);
-    const data = await signinUserService(input);
+    const data = await authService.signin(input);
     return res.status(200).json({
       message: AUTH_SUCCESS_MESSAGES.SIGNIN_SUCCESSFUL,
       data,
@@ -45,7 +43,7 @@ export const signin = async (req: Request, res: Response) => {
 export const getMe = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const userId = parseAuthenticatedUserId(req.userId);
-    const user = await getUserProfileService(userId);
+    const user = await authService.getUserProfile(userId);
     return res.status(200).json({
       message: AUTH_SUCCESS_MESSAGES.USER_FETCHED,
       data: { user },

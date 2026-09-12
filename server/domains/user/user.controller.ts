@@ -1,11 +1,6 @@
 import type { Request, Response } from "express";
 import type { User } from "@prisma/client";
-import {
-  createAuthUserService,
-  deleteAuthUserService,
-  getAuthUserService,
-  updateAuthUserService,
-} from "./user.service.js";
+import { userService } from "./user.service.js";
 import { handleControllerError } from "../../shared/utils/controllerError.js";
 import {
   USER_ERROR_MESSAGES,
@@ -26,7 +21,7 @@ const toPublicUser = (user: User): Omit<User, "password"> => {
 export const createAuthUser = async (req: Request, res: Response) => {
   try {
     const payload = parseCreateAuthUserPayload(req.body?.data);
-    const user = await createAuthUserService(payload);
+    const user = await userService.createAuthUser(payload);
     return res.status(201).json({
       message: USER_SUCCESS_MESSAGES.USER_CREATED,
       data: toPublicUser(user),
@@ -43,7 +38,7 @@ export const createAuthUser = async (req: Request, res: Response) => {
 export const updateAuthUser = async (req: Request, res: Response) => {
   try {
     const payload = parseUpdateAuthUserPayload(req.body?.data);
-    const user = await updateAuthUserService(payload);
+    const user = await userService.updateAuthUser(payload);
     return res.status(200).json({
       message: USER_SUCCESS_MESSAGES.USER_UPDATED,
       data: toPublicUser(user),
@@ -60,7 +55,7 @@ export const updateAuthUser = async (req: Request, res: Response) => {
 export const deleteAuthUser = async (req: Request, res: Response) => {
   try {
     const userId = parseDeleteAuthUserPayload(req.body?.data);
-    const user = await deleteAuthUserService(userId);
+    const user = await userService.deleteAuthUser(userId);
     return res.status(200).json({
       message: USER_SUCCESS_MESSAGES.USER_DELETED,
       data: toPublicUser(user),
@@ -84,7 +79,7 @@ export const getAuthUser = async (
 ) => {
   try {
     const userId = parseUserIdParam(req.params.userId);
-    const user = await getAuthUserService(userId);
+    const user = await userService.getAuthUser(userId);
     return res.status(200).json({
       message: USER_SUCCESS_MESSAGES.USER_FOUND,
       data: toPublicUser(user),

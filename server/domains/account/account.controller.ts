@@ -4,13 +4,7 @@ import {
   ACCOUNT_ERROR_MESSAGES,
   ACCOUNT_SUCCESS_MESSAGES,
 } from "./account.constants.js";
-import {
-  createAccountService,
-  deleteAccountService,
-  getAllAccountsService,
-  getSingleAccountService,
-  updateAccountService,
-} from "./account.service.js";
+import { accountService } from "./account.service.js";
 import {
   parseAccountIdParam,
   parseCreateAccountPayload,
@@ -22,7 +16,7 @@ import {
 export const createAccount = async (req: Request, res: Response) => {
   try {
     const input = parseCreateAccountPayload(req.body);
-    const account = await createAccountService(input);
+    const account = await accountService.create(input);
 
     return res.status(201).json({
       message: ACCOUNT_SUCCESS_MESSAGES.ACCOUNT_CREATED,
@@ -40,7 +34,7 @@ export const createAccount = async (req: Request, res: Response) => {
 export const getSingleAccount = async (req: Request, res: Response) => {
   try {
     const accountId = parseAccountIdParam(req.params.accountId);
-    const account = await getSingleAccountService(accountId);
+    const account = await accountService.getSingle(accountId);
 
     return res.status(200).json({
       message: ACCOUNT_SUCCESS_MESSAGES.ACCOUNT_FETCHED,
@@ -58,7 +52,7 @@ export const getSingleAccount = async (req: Request, res: Response) => {
 export const getAllAccounts = async (req: Request, res: Response) => {
   try {
     const userId = parseUserIdParam(req.params.userId);
-    const accounts = await getAllAccountsService(userId);
+    const accounts = await accountService.getAll(userId);
 
     return res.status(200).json({
       message: ACCOUNT_SUCCESS_MESSAGES.ACCOUNTS_FETCHED,
@@ -76,7 +70,7 @@ export const getAllAccounts = async (req: Request, res: Response) => {
 export const updateAccount = async (req: Request, res: Response) => {
   try {
     const input = parseUpdateAccountPayload(req.body);
-    const account = await updateAccountService(input);
+    const account = await accountService.update(input);
 
     return res.status(200).json({
       message: ACCOUNT_SUCCESS_MESSAGES.ACCOUNT_UPDATED,
@@ -94,7 +88,7 @@ export const updateAccount = async (req: Request, res: Response) => {
 export const deleteAccount = async (req: Request, res: Response) => {
   try {
     const accountId = parseDeleteAccountIdParam(req.params.id);
-    await deleteAccountService(accountId);
+    await accountService.delete(accountId);
 
     return res.status(200).json({
       message: ACCOUNT_SUCCESS_MESSAGES.ACCOUNT_DELETED,

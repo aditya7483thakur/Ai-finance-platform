@@ -4,10 +4,7 @@ import {
   GRAPH_ERROR_MESSAGES,
   GRAPH_SUCCESS_MESSAGES,
 } from "./graph.constants.js";
-import {
-  getCurrentMonthCategoryExpensesService,
-  getTransactionSummaryService,
-} from "./graph.service.js";
+import { graphService } from "./graph.service.js";
 import {
   parseCategoryExpensesQuery,
   parseTransactionSummaryQuery,
@@ -16,7 +13,7 @@ import {
 export const getTransactionSummary = async (req: Request, res: Response) => {
   try {
     const input = parseTransactionSummaryQuery(req.query);
-    const result = await getTransactionSummaryService(input);
+    const result = await graphService.getTransactionSummary(input);
 
     return res.status(200).json({
       message: GRAPH_SUCCESS_MESSAGES.TRANSACTION_SUMMARY_FETCHED,
@@ -38,7 +35,7 @@ export const getCurrentMonthCategoryExpenses = async (
 ) => {
   try {
     const { userId } = parseCategoryExpensesQuery(req.query);
-    const result = await getCurrentMonthCategoryExpensesService(userId);
+    const result = await graphService.getCurrentMonthCategoryExpenses(userId);
 
     return res.status(200).json({
       message: GRAPH_SUCCESS_MESSAGES.CATEGORY_EXPENSES_FETCHED,

@@ -74,3 +74,18 @@ export type AiReceiptResult = {
   date?: string;
   description?: string;
 };
+
+export type GroupedTransactionByDateRow = {
+  date: Date;
+  type: TransactionType;
+  _sum: {
+    amount: Prisma.Decimal | null;
+  };
+};
+
+export type GroupedCategoryExpenseRow = {
+  category: string;
+  _sum: {
+    amount: Prisma.Decimal | null;
+  };
+};

@@ -1,4 +1,7 @@
-import type { Prisma, TransactionType } from "@prisma/client";
+import type {
+  GroupedCategoryExpenseRow,
+  GroupedTransactionByDateRow,
+} from "../transaction/transaction.types.js";
 
 export type GraphFilter = "last_7_days" | "last_month" | "last_6_months";
 
@@ -57,17 +60,6 @@ export type CategoryExpensesResult = {
   meta: CategoryExpensesMeta;
 };
 
-export type GraphGroupedTransactionRow = {
-  date: Date;
-  type: TransactionType;
-  _sum: {
-    amount: Prisma.Decimal | null;
-  };
-};
+export type GraphGroupedTransactionRow = GroupedTransactionByDateRow;
 
-export type GraphGroupedCategoryExpenseRow = {
-  category: string;
-  _sum: {
-    amount: Prisma.Decimal | null;
-  };
-};
+export type GraphGroupedCategoryExpenseRow = GroupedCategoryExpenseRow;

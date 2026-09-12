@@ -1,8 +1,4 @@
 import {
-  getGroupedCategoryExpenses,
-  getGroupedTransactions,
-} from "./graph.repository.js";
-import {
   buildCompleteDailySeries,
   buildDailySummaryMap,
   getDateRangeByFilter,
@@ -13,69 +9,77 @@ import type {
   TransactionSummaryQueryInput,
   TransactionSummaryResult,
 } from "./graph.types.js";
+import type { TransactionRepository } from "../transaction/transaction.port.js";
+import { transactionPrismaRepository } from "../transaction/transaction.repository.prisma.js";
 
-export const getTransactionSummaryService = async (
-  input: TransactionSummaryQueryInput,
-): Promise<TransactionSummaryResult> => {
-  const { startDate, endDate } = getDateRangeByFilter(input.filter);
+export class GraphService {
+  constructor(private readonly transactions: TransactionRepository) {}
 
-  const rows = await getGroupedTransactions({
-    accountId: input.accountId,
-    date: {
-      gte: startDate,
-      lte: endDate,
-    },
-  });
+  async getTransactionSummary(
+    input: TransactionSummaryQueryInput,
+  ): Promise<TransactionSummaryResult> {
+    const { startDate, endDate } = getDateRangeByFilter(input.filter);
 
-  const summaryMap = buildDailySummaryMap(rows as GraphGroupedTransactionRow[]);
+    const rows = await this.transactions.getGroupedTransactions({
+      accountId: input.accountId,
+      date: {
+        gte: startDate,
+        lte: endDate,
+      },
+    });
 
-  const summary = buildCompleteDailySeries(startDate, endDate, summaryMap);
+    const summaryMap = buildDailySummaryMap(rows as GraphGroupedTransactionRow[]);
 
-  const totals = summary.reduce(
-    (acc, day) => {
-      acc.totalIncome += day.income;
-      acc.totalExpense += day.expense;
-      return acc;
-    },
-    { totalIncome: 0, totalExpense: 0 },
-  );
+    const summary = buildCompleteDailySeries(startDate, endDate, summaryMap);
 
-  return {
-    summary,
-    meta: {
-      startDate: startDate.toISOString(),
-      endDate: endDate.toISOString(),
-      count: summary.length,
-      totalIncome: totals.totalIncome,
-      totalExpense: totals.totalExpense,
-      net: totals.totalIncome - totals.totalExpense,
-    },
-  };
-};
+    const totals = summary.reduce(
+      (acc, day) => {
+        acc.totalIncome += day.income;
+        acc.totalExpense += day.expense;
+        return acc;
+      },
+      { totalIncome: 0, totalExpense: 0 },
+    );
 
-export const getCurrentMonthCategoryExpensesService = async (
-  userId: string,
-): Promise<CategoryExpensesResult> => {
-  const now = new Date();
-  const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-  const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-  lastDayOfMonth.setHours(23, 59, 59, 999);
+    return {
+      summary,
+      meta: {
+        startDate: startDate.toISOString(),
+        endDate: endDate.toISOString(),
+        count: summary.length,
+        totalIncome: totals.totalIncome,
+        totalExpense: totals.totalExpense,
+        net: totals.totalIncome - totals.totalExpense,
+      },
+    };
+  }
 
-  const rows = await getGroupedCategoryExpenses(
-    userId,
-    firstDayOfMonth,
-    lastDayOfMonth,
-  );
+  async getCurrentMonthCategoryExpenses(
+    userId: string,
+  ): Promise<CategoryExpensesResult> {
+    const now = new Date();
+    const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    lastDayOfMonth.setHours(23, 59, 59, 999);
 
-  return {
-    expenses: rows.map((row) => ({
-      name: row.category,
-      value: Number(row._sum.amount ?? 0),
-    })),
-    meta: {
-      month: now.toLocaleString("default", { month: "long" }),
-      year: now.getFullYear(),
+    const rows = await this.transactions.getGroupedCategoryExpenses(
       userId,
-    },
-  };
-};
+      firstDayOfMonth,
+      lastDayOfMonth,
+    );
+
+    return {
+      expenses: rows.map((row) => ({
+        name: row.category,
+        value: Number(row._sum.amount ?? 0),
+      })),
+      meta: {
+        month: now.toLocaleString("default", { month: "long" }),
+        year: now.getFullYear(),
+        userId,
+      },
+    };
+  }
+}
+
+export const graphService = new GraphService(transactionPrismaRepository);

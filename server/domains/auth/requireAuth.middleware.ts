@@ -1,6 +1,6 @@
 import type { NextFunction, Response } from "express";
 import { AUTH_ERROR_MESSAGES } from "./auth.constants.js";
-import { verifyAccessToken } from "./auth.service.js";
+import { authService } from "./auth.service.js";
 import type { AuthenticatedRequest } from "./auth.types.js";
 
 export const requireAuth = (
@@ -18,7 +18,7 @@ export const requireAuth = (
     }
 
     const token = authHeader.split(" ")[1];
-    const decoded = verifyAccessToken(token);
+    const decoded = authService.verifyAccessToken(token);
 
     req.userId = decoded.userId;
     req.userEmail = decoded.email;

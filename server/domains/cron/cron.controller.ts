@@ -5,15 +5,14 @@ import {
   CRON_SUCCESS_MESSAGES,
 } from "./cron.constants.js";
 import {
-  runRecurringTransactionsService,
-  sendMonthlySummariesService,
+  cronService,
 } from "./cron.service.js";
 import { parseCronQuery } from "./cron.validators.js";
 
 export const runRecurringTransactions = async (req: Request, res: Response) => {
   try {
     const { referenceDate } = parseCronQuery(req.query);
-    const result = await runRecurringTransactionsService(referenceDate);
+    const result = await cronService.runRecurringTransactions(referenceDate);
 
     return res.status(200).json({
       message: CRON_SUCCESS_MESSAGES.RECURRING_TRANSACTIONS_PROCESSED,
@@ -31,7 +30,7 @@ export const runRecurringTransactions = async (req: Request, res: Response) => {
 export const sendMonthlySummaries = async (req: Request, res: Response) => {
   try {
     parseCronQuery(req.query);
-    const result = await sendMonthlySummariesService();
+    const result = await cronService.sendMonthlySummaries();
 
     return res.status(200).json({
       message: CRON_SUCCESS_MESSAGES.MONTHLY_SUMMARIES_SENT,

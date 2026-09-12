@@ -5,20 +5,10 @@ import {
   GEMINI_API_MISSING_ERROR,
 } from "../../shared/integrations/ai/gemini.js";
 import { BadRequestError, NotFoundError } from "../../shared/types/errors.js";
-import { sendBudgetAlertIfNeededService } from "../account/account.service.js";
+import { accountService } from "../account/account.service.js";
 import {
-  countTransactionsByFilter,
-  createTransactionRecord,
-  deleteTransactionById,
-  deleteTransactionsByIds,
-  findAccountById,
-  findAccountWithUserById,
-  findTransactionById,
-  findTransactionsByFilter,
-  findTransactionsByIds,
-  updateAccountAmounts,
-  updateTransactionById,
-} from "./transaction.repository.js";
+  accountPrismaRepository,
+} from "../account/account.repository.prisma.js";
 import { TRANSACTION_ERROR_MESSAGES } from "./transaction.constants.js";
 import type {
   AiReceiptResult,
@@ -27,35 +17,100 @@ import type {
   ParsedTransactionFilters,
   UpdateTransactionInput,
 } from "./transaction.types.js";
-import prisma from "../../config/prisma.js";
+import type { TransactionRepository } from "./transaction.port.js";
+import { transactionPrismaRepository } from "./transaction.repository.prisma.js";
+import type { AccountRepository } from "../account/account.port.js";
+import { runInTransaction } from "../../config/prisma.js";
 import {
   ensureNotNegativeDecimal,
   getNextRecurringDate,
   parseGeminiJson,
 } from "./transaction.helper.js";
 
-export const createTransactionService = async (
-  input: CreateTransactionInput,
-): Promise<Transaction> => {
-  const account = await findAccountWithUserById(input.accountId);
+export class TransactionService {
+  constructor(
+    private readonly transactions: TransactionRepository,
+    private readonly accounts: AccountRepository,
+  ) {}
 
-  if (!account) {
-    throw new NotFoundError(TRANSACTION_ERROR_MESSAGES.ACCOUNT_NOT_FOUND);
+  async create(input: CreateTransactionInput): Promise<Transaction> {
+    const account = await this.accounts.findAccountWithUserById(input.accountId);
+
+    if (!account) {
+      throw new NotFoundError(TRANSACTION_ERROR_MESSAGES.ACCOUNT_NOT_FOUND);
+    }
+
+    const nextRecurringDate = getNextRecurringDate(
+      input.date,
+      input.isRecurring,
+      input.recurringInterval,
+    );
+
+    let newUsedAmount = new Prisma.Decimal(account.usedAmount);
+
+    const createdTransaction = await runInTransaction(async (tx) => {
+      const record = await this.transactions.createTransactionRecord(
+        input,
+        nextRecurringDate,
+        tx,
+      );
+
+      let newBalance = new Prisma.Decimal(account.balance);
+      newUsedAmount = new Prisma.Decimal(account.usedAmount);
+
+      if (input.type === "INCOME") {
+        newBalance = newBalance.plus(input.amount);
+      } else {
+        newBalance = newBalance.minus(input.amount);
+        newUsedAmount = newUsedAmount.plus(input.amount);
+      }
+
+      await this.accounts.updateAccountAmounts(
+        input.accountId,
+        newBalance,
+        newUsedAmount,
+        tx,
+      );
+      return record;
+    });
+
+    await accountService.sendBudgetAlertIfNeeded({
+      account,
+      userId: input.userId,
+      accountId: input.accountId,
+      newUsedAmount,
+      type: input.type,
+    });
+
+    return createdTransaction;
   }
+  async update(
+    transactionId: string,
+    input: UpdateTransactionInput,
+  ): Promise<Transaction> {
+    const existingTransaction = await this.transactions.findTransactionById(
+      transactionId,
+    );
+    if (!existingTransaction) {
+      throw new NotFoundError(TRANSACTION_ERROR_MESSAGES.TRANSACTION_NOT_FOUND);
+    }
+    const account = await this.accounts.findAccountWithUserById(
+      existingTransaction.accountId,
+    );
 
-  const nextRecurringDate = getNextRecurringDate(
-    input.date,
-    input.isRecurring,
-    input.recurringInterval,
-  );
-
-  let newUsedAmount = new Prisma.Decimal(account.usedAmount);
-
-  const createdTransaction = await prisma.$transaction(async (tx) => {
-    const record = await createTransactionRecord(input, nextRecurringDate, tx);
+    if (!account) {
+      throw new NotFoundError(TRANSACTION_ERROR_MESSAGES.ACCOUNT_NOT_FOUND);
+    }
 
     let newBalance = new Prisma.Decimal(account.balance);
-    newUsedAmount = new Prisma.Decimal(account.usedAmount);
+    let newUsedAmount = new Prisma.Decimal(account.usedAmount);
+
+    if (existingTransaction.type === "INCOME") {
+      newBalance = newBalance.minus(existingTransaction.amount);
+    } else {
+      newBalance = newBalance.plus(existingTransaction.amount);
+      newUsedAmount = newUsedAmount.minus(existingTransaction.amount);
+    }
 
     if (input.type === "INCOME") {
       newBalance = newBalance.plus(input.amount);
@@ -64,223 +119,186 @@ export const createTransactionService = async (
       newUsedAmount = newUsedAmount.plus(input.amount);
     }
 
-    await updateAccountAmounts(input.accountId, newBalance, newUsedAmount, tx);
-    return record;
-  });
+    newUsedAmount = ensureNotNegativeDecimal(newUsedAmount);
 
-  await sendBudgetAlertIfNeededService({
-    account,
-    userId: input.userId,
-    accountId: input.accountId,
-    newUsedAmount,
-    type: input.type,
-  });
+    const nextRecurringDate = getNextRecurringDate(
+      input.date,
+      input.isRecurring,
+      input.recurringInterval,
+    );
 
-  return createdTransaction;
-};
+    const updatedTransaction = await runInTransaction(async (tx) => {
+      const record = await this.transactions.updateTransactionById(
+        transactionId,
+        input,
+        nextRecurringDate,
+        tx,
+      );
 
-export const updateTransactionService = async (
-  transactionId: string,
-  input: UpdateTransactionInput,
-): Promise<Transaction> => {
-  const existingTransaction = await findTransactionById(transactionId);
-  if (!existingTransaction) {
-    throw new NotFoundError(TRANSACTION_ERROR_MESSAGES.TRANSACTION_NOT_FOUND);
-  }
-  const account = await findAccountWithUserById(existingTransaction.accountId);
+      await this.accounts.updateAccountAmounts(
+        existingTransaction.accountId,
+        newBalance,
+        newUsedAmount,
+        tx,
+      );
+      return record;
+    });
 
-  if (!account) {
-    throw new NotFoundError(TRANSACTION_ERROR_MESSAGES.ACCOUNT_NOT_FOUND);
-  }
+    await accountService.sendBudgetAlertIfNeeded({
+      account,
+      userId: existingTransaction.userId,
+      accountId: existingTransaction.accountId,
+      newUsedAmount,
+      type: input.type,
+    });
 
-  let newBalance = new Prisma.Decimal(account.balance);
-  let newUsedAmount = new Prisma.Decimal(account.usedAmount);
-
-  if (existingTransaction.type === "INCOME") {
-    newBalance = newBalance.minus(existingTransaction.amount);
-  } else {
-    newBalance = newBalance.plus(existingTransaction.amount);
-    newUsedAmount = newUsedAmount.minus(existingTransaction.amount);
+    return updatedTransaction;
   }
 
-  if (input.type === "INCOME") {
-    newBalance = newBalance.plus(input.amount);
-  } else {
-    newBalance = newBalance.minus(input.amount);
-    newUsedAmount = newUsedAmount.plus(input.amount);
-  }
-
-  newUsedAmount = ensureNotNegativeDecimal(newUsedAmount);
-
-  const nextRecurringDate = getNextRecurringDate(
-    input.date,
-    input.isRecurring,
-    input.recurringInterval,
-  );
-
-  const updatedTransaction = await prisma.$transaction(async (tx) => {
-    const record = await updateTransactionById(
+  async delete(transactionId: string): Promise<void> {
+    const existingTransaction = await this.transactions.findTransactionById(
       transactionId,
-      input,
-      nextRecurringDate,
-      tx,
     );
-
-    await updateAccountAmounts(
-      existingTransaction.accountId,
-      newBalance,
-      newUsedAmount,
-      tx,
-    );
-    return record;
-  });
-
-  await sendBudgetAlertIfNeededService({
-    account,
-    userId: existingTransaction.userId,
-    accountId: existingTransaction.accountId,
-    newUsedAmount,
-    type: input.type,
-  });
-
-  return updatedTransaction;
-};
-
-export const deleteTransactionService = async (
-  transactionId: string,
-): Promise<void> => {
-  const existingTransaction = await findTransactionById(transactionId);
-  if (!existingTransaction) {
-    throw new NotFoundError(TRANSACTION_ERROR_MESSAGES.TRANSACTION_NOT_FOUND);
-  }
-
-  const account = await findAccountById(existingTransaction.accountId);
-  if (!account) {
-    throw new NotFoundError(TRANSACTION_ERROR_MESSAGES.ACCOUNT_NOT_FOUND);
-  }
-
-  let newBalance = new Prisma.Decimal(account.balance);
-  let newUsedAmount = new Prisma.Decimal(account.usedAmount);
-
-  if (existingTransaction.type === "INCOME") {
-    newBalance = newBalance.minus(existingTransaction.amount);
-  } else {
-    newBalance = newBalance.plus(existingTransaction.amount);
-    newUsedAmount = newUsedAmount.minus(existingTransaction.amount);
-  }
-
-  newUsedAmount = ensureNotNegativeDecimal(newUsedAmount);
-
-  await prisma.$transaction(async (tx) => {
-    await deleteTransactionById(transactionId, tx);
-    await updateAccountAmounts(
-      existingTransaction.accountId,
-      newBalance,
-      newUsedAmount,
-      tx,
-    );
-  });
-};
-
-export const deleteMultipleTransactionsService = async (
-  transactionIds: string[],
-): Promise<number> => {
-  const transactions = await findTransactionsByIds(transactionIds);
-  if (transactions.length !== transactionIds.length) {
-    throw new NotFoundError(
-      TRANSACTION_ERROR_MESSAGES.SOME_TRANSACTIONS_NOT_FOUND,
-    );
-  }
-
-  const accountDeltas = new Map<
-    string,
-    { balanceDelta: Prisma.Decimal; usedAmountDelta: Prisma.Decimal }
-  >();
-
-  for (const txn of transactions) {
-    const current = accountDeltas.get(txn.accountId) ?? {
-      balanceDelta: new Prisma.Decimal(0),
-      usedAmountDelta: new Prisma.Decimal(0),
-    };
-
-    if (txn.type === "INCOME") {
-      current.balanceDelta = current.balanceDelta.minus(txn.amount);
-    } else {
-      current.balanceDelta = current.balanceDelta.plus(txn.amount);
-      current.usedAmountDelta = current.usedAmountDelta.minus(txn.amount);
+    if (!existingTransaction) {
+      throw new NotFoundError(TRANSACTION_ERROR_MESSAGES.TRANSACTION_NOT_FOUND);
     }
 
-    accountDeltas.set(txn.accountId, current);
+    const account = await this.accounts.findAccountById(
+      existingTransaction.accountId,
+    );
+    if (!account) {
+      throw new NotFoundError(TRANSACTION_ERROR_MESSAGES.ACCOUNT_NOT_FOUND);
+    }
+
+    let newBalance = new Prisma.Decimal(account.balance);
+    let newUsedAmount = new Prisma.Decimal(account.usedAmount);
+
+    if (existingTransaction.type === "INCOME") {
+      newBalance = newBalance.minus(existingTransaction.amount);
+    } else {
+      newBalance = newBalance.plus(existingTransaction.amount);
+      newUsedAmount = newUsedAmount.minus(existingTransaction.amount);
+    }
+
+    newUsedAmount = ensureNotNegativeDecimal(newUsedAmount);
+
+    await runInTransaction(async (tx) => {
+      await this.transactions.deleteTransactionById(transactionId, tx);
+      await this.accounts.updateAccountAmounts(
+        existingTransaction.accountId,
+        newBalance,
+        newUsedAmount,
+        tx,
+      );
+    });
   }
 
-  await prisma.$transaction(async (tx) => {
-    for (const [accountId, delta] of accountDeltas.entries()) {
-      const account = await findAccountById(accountId, tx);
-      if (!account) {
-        throw new NotFoundError(TRANSACTION_ERROR_MESSAGES.ACCOUNT_NOT_FOUND);
+  async deleteMany(transactionIds: string[]): Promise<number> {
+    const transactions = await this.transactions.findTransactionsByIds(
+      transactionIds,
+    );
+    if (transactions.length !== transactionIds.length) {
+      throw new NotFoundError(
+        TRANSACTION_ERROR_MESSAGES.SOME_TRANSACTIONS_NOT_FOUND,
+      );
+    }
+
+    const accountDeltas = new Map<
+      string,
+      { balanceDelta: Prisma.Decimal; usedAmountDelta: Prisma.Decimal }
+    >();
+
+    for (const txn of transactions) {
+      const current = accountDeltas.get(txn.accountId) ?? {
+        balanceDelta: new Prisma.Decimal(0),
+        usedAmountDelta: new Prisma.Decimal(0),
+      };
+
+      if (txn.type === "INCOME") {
+        current.balanceDelta = current.balanceDelta.minus(txn.amount);
+      } else {
+        current.balanceDelta = current.balanceDelta.plus(txn.amount);
+        current.usedAmountDelta = current.usedAmountDelta.minus(txn.amount);
       }
 
-      const newBalance = new Prisma.Decimal(account.balance).plus(
-        delta.balanceDelta,
-      );
-      const newUsedAmount = ensureNotNegativeDecimal(
-        new Prisma.Decimal(account.usedAmount).plus(delta.usedAmountDelta),
-      );
-
-      await updateAccountAmounts(accountId, newBalance, newUsedAmount, tx);
+      accountDeltas.set(txn.accountId, current);
     }
 
-    await deleteTransactionsByIds(transactionIds, tx);
-  });
+    await runInTransaction(async (tx) => {
+      for (const [accountId, delta] of accountDeltas.entries()) {
+        const account = await this.accounts.findAccountById(accountId, tx);
+        if (!account) {
+          throw new NotFoundError(TRANSACTION_ERROR_MESSAGES.ACCOUNT_NOT_FOUND);
+        }
 
-  return transactionIds.length;
-};
+        const newBalance = new Prisma.Decimal(account.balance).plus(
+          delta.balanceDelta,
+        );
+        const newUsedAmount = ensureNotNegativeDecimal(
+          new Prisma.Decimal(account.usedAmount).plus(delta.usedAmountDelta),
+        );
 
-export const getFilteredTransactionsService = async (
-  filters: ParsedTransactionFilters,
-): Promise<FilteredTransactionsResult<Transaction>> => {
-  const { where, page, limit } = filters;
-  const totalCount = await countTransactionsByFilter(where);
-  const offset = (page - 1) * limit;
-  const transactions = await findTransactionsByFilter(where, offset, limit);
+        await this.accounts.updateAccountAmounts(accountId, newBalance, newUsedAmount, tx);
+      }
 
-  return {
-    transactions,
-    pagination: {
-      currentPage: page,
-      pageSize: limit,
-      totalTransactions: totalCount,
-      totalPages: Math.ceil(totalCount / limit),
-      hasNextPage: page * limit < totalCount,
-      hasPrevPage: page > 1,
-    },
-  };
-};
+      await this.transactions.deleteTransactionsByIds(transactionIds, tx);
+    });
 
-export const aiFormReceiptService = async (
-  filePath: string,
-  mimeType: string,
-): Promise<AiReceiptResult> => {
-  const fileBuffer = await fs.readFile(filePath);
-  const base64Image = fileBuffer.toString("base64");
-
-  try {
-    const extractedText = await extractReceiptDataWithGemini(
-      mimeType,
-      base64Image,
-    );
-    const parsed = parseGeminiJson(extractedText);
-    return parsed;
-  } catch (error) {
-    if (error instanceof Error && error.message === GEMINI_API_MISSING_ERROR) {
-      throw new BadRequestError(
-        TRANSACTION_ERROR_MESSAGES.GEMINI_API_KEY_MISSING,
-      );
-    }
-
-    console.error(TRANSACTION_ERROR_MESSAGES.PARSE_RECEIPT_FAILED, error);
-    throw new BadRequestError(TRANSACTION_ERROR_MESSAGES.RECEIPT_PARSE_FAILED);
-  } finally {
-    await fs.unlink(filePath).catch(() => undefined);
+    return transactionIds.length;
   }
-};
+
+  async getFiltered(
+    filters: ParsedTransactionFilters,
+  ): Promise<FilteredTransactionsResult<Transaction>> {
+    const { where, page, limit } = filters;
+    const totalCount = await this.transactions.countTransactionsByFilter(where);
+    const offset = (page - 1) * limit;
+    const transactions = await this.transactions.findTransactionsByFilter(
+      where,
+      offset,
+      limit,
+    );
+
+    return {
+      transactions,
+      pagination: {
+        currentPage: page,
+        pageSize: limit,
+        totalTransactions: totalCount,
+        totalPages: Math.ceil(totalCount / limit),
+        hasNextPage: page * limit < totalCount,
+        hasPrevPage: page > 1,
+      },
+    };
+  }
+
+  async aiFormReceipt(filePath: string, mimeType: string): Promise<AiReceiptResult> {
+    const fileBuffer = await fs.readFile(filePath);
+    const base64Image = fileBuffer.toString("base64");
+
+    try {
+      const extractedText = await extractReceiptDataWithGemini(
+        mimeType,
+        base64Image,
+      );
+      const parsed = parseGeminiJson(extractedText);
+      return parsed;
+    } catch (error) {
+      if (error instanceof Error && error.message === GEMINI_API_MISSING_ERROR) {
+        throw new BadRequestError(
+          TRANSACTION_ERROR_MESSAGES.GEMINI_API_KEY_MISSING,
+        );
+      }
+
+      console.error(TRANSACTION_ERROR_MESSAGES.PARSE_RECEIPT_FAILED, error);
+      throw new BadRequestError(TRANSACTION_ERROR_MESSAGES.RECEIPT_PARSE_FAILED);
+    } finally {
+      await fs.unlink(filePath).catch(() => undefined);
+    }
+  }
+}
+
+export const transactionService = new TransactionService(
+  transactionPrismaRepository,
+  accountPrismaRepository,
+);

@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 
 let prisma: PrismaClient;
 
@@ -12,3 +12,11 @@ if (process.env.NODE_ENV === "production") {
 }
 
 export default prisma;
+
+export type DbClient = PrismaClient | Prisma.TransactionClient;
+
+export const runInTransaction = async <T>(
+  callback: (tx: Prisma.TransactionClient) => Promise<T>,
+): Promise<T> => {
+  return prisma.$transaction(callback);
+};

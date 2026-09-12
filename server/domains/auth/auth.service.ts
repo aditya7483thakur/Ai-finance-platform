@@ -4,16 +4,10 @@ import {
   ConflictError,
   NotFoundError,
 } from "../../shared/types/errors.js";
-import {
-  createUser,
-  findUserByEmail,
-  findUserById,
-} from "./auth.repository.js";
 import { AUTH_ERROR_MESSAGES } from "./auth.constants.js";
 import type {
   AccessTokenPayload,
   AuthSessionData,
-  PublicAuthUser,
   SigninInput,
   SignupInput,
 } from "./auth.types.js";
@@ -22,59 +16,66 @@ import {
   toPublicUser,
   verifyAccessTokenPayload,
 } from "./auth.helper.js";
+import type { UserRepository } from "../user/user.port.js";
+import { userPrismaRepository } from "../user/user.repository.prisma.js";
 
 const SALT_ROUNDS = 10;
 
-export const signupUserService = async (
-  input: SignupInput,
-): Promise<AuthSessionData> => {
-  const existingUser = await findUserByEmail(input.email);
+export class AuthService {
+  constructor(private readonly users: UserRepository) {}
 
-  if (existingUser) {
-    throw new ConflictError(AUTH_ERROR_MESSAGES.USER_ALREADY_EXISTS);
+  async signup(input: SignupInput): Promise<AuthSessionData> {
+    const existingUser = await this.users.findUserByEmail(input.email);
+
+    if (existingUser) {
+      throw new ConflictError(AUTH_ERROR_MESSAGES.USER_ALREADY_EXISTS);
+    }
+
+    const hashedPassword = await bcrypt.hash(input.password, SALT_ROUNDS);
+    const newUser = await this.users.createUser({
+      name: input.name,
+      email: input.email,
+      password: hashedPassword,
+      imageUrl: null,
+    });
+    const token = signToken({ userId: newUser.id, email: newUser.email });
+    const user = toPublicUser(newUser);
+
+    return { user, token };
   }
 
-  const hashedPassword = await bcrypt.hash(input.password, SALT_ROUNDS);
-  const newUser = await createUser({ ...input, password: hashedPassword });
-  const token = signToken({ userId: newUser.id, email: newUser.email });
-  const user = toPublicUser(newUser);
+  async signin(input: SigninInput): Promise<AuthSessionData> {
+    const user = await this.users.findUserByEmail(input.email);
 
-  return { user, token };
-};
+    if (!user) {
+      throw new BadRequestError(AUTH_ERROR_MESSAGES.INVALID_EMAIL_OR_PASSWORD);
+    }
 
-export const signinUserService = async (
-  input: SigninInput,
-): Promise<AuthSessionData> => {
-  const user = await findUserByEmail(input.email);
+    const isPasswordValid = await bcrypt.compare(input.password, user.password);
 
-  if (!user) {
-    throw new BadRequestError(AUTH_ERROR_MESSAGES.INVALID_EMAIL_OR_PASSWORD);
+    if (!isPasswordValid) {
+      throw new BadRequestError(AUTH_ERROR_MESSAGES.INVALID_EMAIL_OR_PASSWORD);
+    }
+
+    const token = signToken({ userId: user.id, email: user.email });
+    const publicUser = toPublicUser(user);
+
+    return { user: publicUser, token };
   }
 
-  const isPasswordValid = await bcrypt.compare(input.password, user.password);
+  async getUserProfile(userId: string) {
+    const user = await this.users.findUserById(userId);
 
-  if (!isPasswordValid) {
-    throw new BadRequestError(AUTH_ERROR_MESSAGES.INVALID_EMAIL_OR_PASSWORD);
+    if (!user) {
+      throw new NotFoundError(AUTH_ERROR_MESSAGES.USER_NOT_FOUND);
+    }
+
+    return toPublicUser(user);
   }
 
-  const token = signToken({ userId: user.id, email: user.email });
-  const publicUser = toPublicUser(user);
-
-  return { user: publicUser, token };
-};
-
-export const getUserProfileService = async (
-  userId: string,
-): Promise<PublicAuthUser> => {
-  const user = await findUserById(userId);
-
-  if (!user) {
-    throw new NotFoundError(AUTH_ERROR_MESSAGES.USER_NOT_FOUND);
+  verifyAccessToken(token: string): AccessTokenPayload {
+    return verifyAccessTokenPayload(token);
   }
+}
 
-  return toPublicUser(user);
-};
-
-export const verifyAccessToken = (token: string): AccessTokenPayload => {
-  return verifyAccessTokenPayload(token);
-};
+export const authService = new AuthService(userPrismaRepository);

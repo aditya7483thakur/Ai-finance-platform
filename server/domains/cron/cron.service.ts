@@ -1,7 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { endOfMonth, startOfMonth } from "date-fns";
-import { sendBudgetAlertIfNeededService } from "../account/account.service.js";
-import prisma from "../../config/prisma.js";
+import { accountService } from "../account/account.service.js";
 import { sendEmail } from "../../shared/integrations/email/sendEmail.js";
 import { generateFinancialTipWithGemini } from "../../shared/integrations/ai/gemini.js";
 import { BadRequestError, NotFoundError } from "../../shared/types/errors.js";
@@ -10,99 +9,106 @@ import {
   buildMonthlySummaryHtml,
   getNextRecurringDate,
 } from "./cron.helper.js";
-import {
-  createRecurringTransactionRecord,
-  findAccountById,
-  findAccountWithUserById,
-  findDueRecurringTransactions,
-  findMonthlyCategoryExpenseSums,
-  findUsersForMonthlySummary,
-  updateAccountForRecurringTransaction,
-  updateTransactionNextRecurringDate,
-} from "./cron.repository.js";
 import type {
   RunRecurringTransactionsResult,
   SendMonthlySummariesResult,
 } from "./cron.types.js";
+import { runInTransaction } from "../../config/prisma.js";
+import type { TransactionRepository } from "../transaction/transaction.port.js";
+import { transactionPrismaRepository } from "../transaction/transaction.repository.prisma.js";
+import type { AccountRepository } from "../account/account.port.js";
+import { accountPrismaRepository } from "../account/account.repository.prisma.js";
+import type { UserRepository } from "../user/user.port.js";
+import { userPrismaRepository } from "../user/user.repository.prisma.js";
 
-export const runRecurringTransactionsService = async (
-  referenceDate: Date = new Date(),
-): Promise<RunRecurringTransactionsResult> => {
-  const dueTransactions = await findDueRecurringTransactions(referenceDate);
+export class CronService {
+  constructor(
+    private readonly transactions: TransactionRepository,
+    private readonly accounts: AccountRepository,
+    private readonly users: UserRepository,
+  ) {}
 
-  for (const transaction of dueTransactions) {
-    let newUsedAmount = new Prisma.Decimal(0);
-
-    await prisma.$transaction(async (tx) => {
-      await createRecurringTransactionRecord(transaction, referenceDate, tx);
-
-      const account = await findAccountById(transaction.accountId, tx);
-      if (!account) {
-        throw new NotFoundError(CRON_ERROR_MESSAGES.ACCOUNT_NOT_FOUND);
-      }
-
-      let newBalance = new Prisma.Decimal(account.balance);
-      newUsedAmount = new Prisma.Decimal(account.usedAmount);
-
-      if (transaction.type === "INCOME") {
-        newBalance = newBalance.plus(transaction.amount);
-      } else {
-        newBalance = newBalance.minus(transaction.amount);
-        newUsedAmount = newUsedAmount.plus(transaction.amount);
-      }
-
-      await updateAccountForRecurringTransaction(
-        transaction.accountId,
-        {
-          balance: newBalance,
-          usedAmount: newUsedAmount,
-        },
-        tx,
-      );
-
-      if (!transaction.nextRecurringDate) {
-        throw new BadRequestError(
-          CRON_ERROR_MESSAGES.NEXT_RECURRING_DATE_REQUIRED,
-        );
-      }
-
-      const nextRecurringDate = getNextRecurringDate(
-        transaction.nextRecurringDate,
-        referenceDate,
-        transaction.recurringInterval,
-      );
-
-      await updateTransactionNextRecurringDate(
-        transaction.id,
-        nextRecurringDate,
-        tx,
-      );
-    });
-
-    const accountWithUser = await findAccountWithUserById(
-      transaction.accountId,
+  async runRecurringTransactions(
+    referenceDate: Date = new Date(),
+  ): Promise<RunRecurringTransactionsResult> {
+    const dueTransactions = await this.transactions.findDueRecurringTransactions(
+      referenceDate,
     );
-    if (!accountWithUser) {
-      continue;
+
+    for (const transaction of dueTransactions) {
+      let newUsedAmount = new Prisma.Decimal(0);
+
+      await runInTransaction(async (tx) => {
+        await this.transactions.createRecurringTransactionRecord(
+          transaction,
+          referenceDate,
+          tx,
+        );
+
+        const account = await this.accounts.findAccountById(transaction.accountId, tx);
+        if (!account) {
+          throw new NotFoundError(CRON_ERROR_MESSAGES.ACCOUNT_NOT_FOUND);
+        }
+
+        let newBalance = new Prisma.Decimal(account.balance);
+        newUsedAmount = new Prisma.Decimal(account.usedAmount);
+
+        if (transaction.type === "INCOME") {
+          newBalance = newBalance.plus(transaction.amount);
+        } else {
+          newBalance = newBalance.minus(transaction.amount);
+          newUsedAmount = newUsedAmount.plus(transaction.amount);
+        }
+
+        await this.accounts.updateAccountAmounts(
+          transaction.accountId,
+          newBalance,
+          newUsedAmount,
+          tx,
+        );
+
+        if (!transaction.nextRecurringDate) {
+          throw new BadRequestError(
+            CRON_ERROR_MESSAGES.NEXT_RECURRING_DATE_REQUIRED,
+          );
+        }
+
+        const nextRecurringDate = getNextRecurringDate(
+          transaction.nextRecurringDate,
+          referenceDate,
+          transaction.recurringInterval,
+        );
+
+        await this.transactions.updateTransactionNextRecurringDate(
+          transaction.id,
+          nextRecurringDate,
+          tx,
+        );
+      });
+
+      const accountWithUser = await this.accounts.findAccountWithUserById(
+        transaction.accountId,
+      );
+      if (!accountWithUser) {
+        continue;
+      }
+
+      await accountService.sendBudgetAlertIfNeeded({
+        account: accountWithUser,
+        userId: transaction.userId,
+        accountId: transaction.accountId,
+        newUsedAmount,
+        type: transaction.type,
+      });
     }
 
-    await sendBudgetAlertIfNeededService({
-      account: accountWithUser,
-      userId: transaction.userId,
-      accountId: transaction.accountId,
-      newUsedAmount,
-      type: transaction.type,
-    });
+    return {
+      processedCount: dueTransactions.length,
+    };
   }
 
-  return {
-    processedCount: dueTransactions.length,
-  };
-};
-
-export const sendMonthlySummariesService =
-  async (): Promise<SendMonthlySummariesResult> => {
-    const users = await findUsersForMonthlySummary();
+  async sendMonthlySummaries(): Promise<SendMonthlySummariesResult> {
+    const users = await this.users.findUsersForMonthlySummary();
     const now = new Date();
     const firstDayOfMonth = startOfMonth(now);
     const lastDayOfMonth = endOfMonth(now);
@@ -120,7 +126,7 @@ export const sendMonthlySummariesService =
       }
 
       try {
-        const categoryExpenses = await findMonthlyCategoryExpenseSums(
+        const categoryExpenses = await this.transactions.getGroupedCategoryExpenses(
           user.id,
           firstDayOfMonth,
           lastDayOfMonth,
@@ -157,4 +163,11 @@ export const sendMonthlySummariesService =
       skippedCount,
       failedCount,
     };
-  };
+  }
+}
+
+export const cronService = new CronService(
+  transactionPrismaRepository,
+  accountPrismaRepository,
+  userPrismaRepository,
+);

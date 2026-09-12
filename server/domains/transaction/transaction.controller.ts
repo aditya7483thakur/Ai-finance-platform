@@ -4,14 +4,7 @@ import {
   TRANSACTION_ERROR_MESSAGES,
   TRANSACTION_SUCCESS_MESSAGES,
 } from "./transaction.constants.js";
-import {
-  aiFormReceiptService,
-  createTransactionService,
-  deleteMultipleTransactionsService,
-  deleteTransactionService,
-  getFilteredTransactionsService,
-  updateTransactionService,
-} from "./transaction.service.js";
+import { transactionService } from "./transaction.service.js";
 import { BadRequestError } from "../../shared/types/errors.js";
 import {
   parseCreateTransactionPayload,
@@ -28,7 +21,7 @@ type ReceiptRequest = Request & {
 export const createTransaction = async (req: Request, res: Response) => {
   try {
     const input = parseCreateTransactionPayload(req.body);
-    const transaction = await createTransactionService(input);
+    const transaction = await transactionService.create(input);
     return res.status(201).json({
       message: TRANSACTION_SUCCESS_MESSAGES.TRANSACTION_CREATED,
       data: transaction,
@@ -46,7 +39,7 @@ export const editTransaction = async (req: Request, res: Response) => {
   try {
     const transactionId = parseTransactionIdParam(req.params.transactionId);
     const input = parseUpdateTransactionPayload(req.body);
-    const transaction = await updateTransactionService(transactionId, input);
+    const transaction = await transactionService.update(transactionId, input);
 
     return res.status(200).json({
       message: TRANSACTION_SUCCESS_MESSAGES.TRANSACTION_UPDATED,
@@ -64,7 +57,7 @@ export const editTransaction = async (req: Request, res: Response) => {
 export const deleteTransaction = async (req: Request, res: Response) => {
   try {
     const transactionId = parseTransactionIdParam(req.params.transactionId);
-    await deleteTransactionService(transactionId);
+    await transactionService.delete(transactionId);
 
     return res.status(200).json({
       message: TRANSACTION_SUCCESS_MESSAGES.TRANSACTION_DELETED,
@@ -85,8 +78,7 @@ export const deleteMultipleTransactions = async (
 ) => {
   try {
     const transactionIds = parseDeleteManyPayload(req.body);
-    const deletedCount =
-      await deleteMultipleTransactionsService(transactionIds);
+    const deletedCount = await transactionService.deleteMany(transactionIds);
 
     return res.status(200).json({
       message: TRANSACTION_SUCCESS_MESSAGES.TRANSACTIONS_DELETED,
@@ -104,7 +96,7 @@ export const deleteMultipleTransactions = async (
 export const getFilteredTransactions = async (req: Request, res: Response) => {
   try {
     const filters = parseFilterQuery(req.query);
-    const result = await getFilteredTransactionsService(filters);
+    const result = await transactionService.getFiltered(filters);
 
     return res.status(200).json({
       message: TRANSACTION_SUCCESS_MESSAGES.TRANSACTIONS_FILTERED,
@@ -129,7 +121,7 @@ export const AiFormReceipt = async (req: Request, res: Response) => {
       );
     }
 
-    const parsedReceipt = await aiFormReceiptService(
+    const parsedReceipt = await transactionService.aiFormReceipt(
       receiptReq.file.path,
       receiptReq.file.mimetype,
     );
