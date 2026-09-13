@@ -4,7 +4,7 @@ import {
   ACCOUNT_ERROR_MESSAGES,
   ACCOUNT_SUCCESS_MESSAGES,
 } from "./account.constants.js";
-import { accountService } from "./account.service.js";
+import { accountService } from "../../composition.js";
 import {
   accountIdParamSchema,
   createAccountInputSchema,

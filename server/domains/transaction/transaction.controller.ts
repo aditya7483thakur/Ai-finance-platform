@@ -4,7 +4,7 @@ import {
   TRANSACTION_ERROR_MESSAGES,
   TRANSACTION_SUCCESS_MESSAGES,
 } from "./transaction.constants.js";
-import { transactionService } from "./transaction.service.js";
+import { transactionService } from "../../composition.js";
 import { BadRequestError } from "../../shared/types/errors.js";
 import {
   createTransactionInputSchema,

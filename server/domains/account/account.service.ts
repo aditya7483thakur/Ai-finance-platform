@@ -2,7 +2,6 @@ import { LedgerEntryType } from "../../shared/types/ledger.js";
 import { BadRequestError, NotFoundError } from "../../shared/types/errors.js";
 import { Money } from "../../shared/utils/money.js";
 import type { EmailSender } from "../../shared/integrations/email/email.port.js";
-import { emailNodemailerAdapter } from "../../shared/integrations/email/email.adapter.nodemailer.js";
 import { buildBudgetAlertEmail } from "../../shared/integrations/email/email.templates.js";
 import { ACCOUNT_ERROR_MESSAGES } from "./account.constants.js";
 import {
@@ -17,9 +16,7 @@ import type {
   UpdateAccountInput,
 } from "./account.types.js";
 import type { AccountRepository } from "./account.port.js";
-import { accountPrismaRepository } from "./account.repository.prisma.js";
 import type { UserRepository } from "../user/user.port.js";
-import { userPrismaRepository } from "../user/user.repository.prisma.js";
 
 export class AccountService {
   constructor(
@@ -126,9 +123,3 @@ export class AccountService {
     await this.accounts.createBudgetAlertSentRecord(input.userId, input.accountId);
   }
 }
-
-export const accountService = new AccountService(
-  accountPrismaRepository,
-  userPrismaRepository,
-  emailNodemailerAdapter,
-);

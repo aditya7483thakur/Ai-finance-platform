@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import { userService } from "./user.service.js";
+import { userService } from "../../composition.js";
 import type { User } from "./user.types.js";
 import { handleControllerError } from "../../shared/utils/controllerError.js";
 import {

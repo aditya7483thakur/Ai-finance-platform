@@ -14,6 +14,7 @@
   },
   "include": [
     "app.ts",
+    "composition.ts",
     "controllers/**/*.ts",
     "middlewares/**/*.ts",
     "routes/**/*.ts",

@@ -4,9 +4,7 @@ import {
   CRON_ERROR_MESSAGES,
   CRON_SUCCESS_MESSAGES,
 } from "./cron.constants.js";
-import {
-  cronService,
-} from "./cron.service.js";
+import { cronService } from "../../composition.js";
 import { parsedCronQuerySchema } from "./cron.validators.js";
 
 export const runRecurringTransactions = async (req: Request, res: Response) => {

@@ -1,9 +1,7 @@
 import { endOfMonth, startOfMonth } from "date-fns";
-import { accountService } from "../account/account.service.js";
+import type { BudgetAlerter } from "../account/account.types.js";
 import type { AiClient } from "../../shared/integrations/ai/ai.port.js";
-import { aiGeminiAdapter } from "../../shared/integrations/ai/ai.adapter.gemini.js";
 import type { EmailSender } from "../../shared/integrations/email/email.port.js";
-import { emailNodemailerAdapter } from "../../shared/integrations/email/email.adapter.nodemailer.js";
 import { buildMonthlySummaryEmail } from "../../shared/integrations/email/email.templates.js";
 import { BadRequestError, NotFoundError } from "../../shared/types/errors.js";
 import { CRON_ERROR_MESSAGES } from "./cron.constants.js";
@@ -16,11 +14,8 @@ import { runInTransaction } from "../../config/prisma.js";
 import { applyLedgerEntry } from "../../shared/utils/ledger.js";
 import { Money } from "../../shared/utils/money.js";
 import type { TransactionRepository } from "../transaction/transaction.port.js";
-import { transactionPrismaRepository } from "../transaction/transaction.repository.prisma.js";
 import type { AccountRepository } from "../account/account.port.js";
-import { accountPrismaRepository } from "../account/account.repository.prisma.js";
 import type { UserRepository } from "../user/user.port.js";
-import { userPrismaRepository } from "../user/user.repository.prisma.js";
 
 export class CronService {
   constructor(
@@ -29,6 +24,7 @@ export class CronService {
     private readonly users: UserRepository,
     private readonly ai: AiClient,
     private readonly mailer: EmailSender,
+    private readonly budgetAlerter: BudgetAlerter,
   ) {}
 
   async runRecurringTransactions(
@@ -96,7 +92,7 @@ export class CronService {
         continue;
       }
 
-      await accountService.sendBudgetAlertIfNeeded({
+      await this.budgetAlerter.sendBudgetAlertIfNeeded({
         account: accountWithUser,
         userId: transaction.userId,
         accountId: transaction.accountId,
@@ -173,11 +169,3 @@ export class CronService {
     };
   }
 }
-
-export const cronService = new CronService(
-  transactionPrismaRepository,
-  accountPrismaRepository,
-  userPrismaRepository,
-  aiGeminiAdapter,
-  emailNodemailerAdapter,
-);

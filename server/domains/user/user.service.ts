@@ -3,7 +3,6 @@ import { type AuthUserPayload, type User } from "./user.types.js";
 import { ConflictError, NotFoundError } from "../../shared/types/errors.js";
 import { USER_ERROR_MESSAGES } from "./user.constants.js";
 import type { UserRepository } from "./user.port.js";
-import { userPrismaRepository } from "./user.repository.prisma.js";
 
 const getNameFromAuthPayload = (firstName?: string, lastName?: string) => {
   return firstName ? `${firstName} ${lastName || ""}`.trim() : "Unknown User";
@@ -75,5 +74,3 @@ export class UserService {
     return userData;
   }
 }
-
-export const userService = new UserService(userPrismaRepository);

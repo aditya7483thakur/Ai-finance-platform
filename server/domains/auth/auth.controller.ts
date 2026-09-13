@@ -4,9 +4,7 @@ import {
   AUTH_ERROR_MESSAGES,
   AUTH_SUCCESS_MESSAGES,
 } from "./auth.constants.js";
-import {
-  authService,
-} from "./auth.service.js";
+import { authService } from "../../composition.js";
 import type { AuthenticatedRequest } from "./auth.types.js";
 import {
   authenticatedUserIdSchema,

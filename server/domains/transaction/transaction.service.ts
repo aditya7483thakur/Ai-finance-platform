@@ -1,10 +1,8 @@
 import fs from "fs/promises";
 import type { AiClient } from "../../shared/integrations/ai/ai.port.js";
-import { aiGeminiAdapter } from "../../shared/integrations/ai/ai.adapter.gemini.js";
 import { AI_API_MISSING_ERROR } from "../../shared/integrations/ai/ai.types.js";
 import { BadRequestError, NotFoundError } from "../../shared/types/errors.js";
-import { accountService } from "../account/account.service.js";
-import { accountPrismaRepository } from "../account/account.repository.prisma.js";
+import type { BudgetAlerter } from "../account/account.types.js";
 import { TRANSACTION_ERROR_MESSAGES } from "./transaction.constants.js";
 import type {
   AiReceiptResult,
@@ -15,7 +13,6 @@ import type {
   UpdateTransactionInput,
 } from "./transaction.types.js";
 import type { TransactionRepository } from "./transaction.port.js";
-import { transactionPrismaRepository } from "./transaction.repository.prisma.js";
 import type { AccountRepository } from "../account/account.port.js";
 import { runInTransaction } from "../../config/prisma.js";
 import {
@@ -30,6 +27,7 @@ export class TransactionService {
     private readonly transactions: TransactionRepository,
     private readonly accounts: AccountRepository,
     private readonly ai: AiClient,
+    private readonly budgetAlerter: BudgetAlerter,
   ) {}
 
   async create(input: CreateTransactionInput): Promise<Transaction> {
@@ -73,7 +71,7 @@ export class TransactionService {
       return record;
     });
 
-    await accountService.sendBudgetAlertIfNeeded({
+    await this.budgetAlerter.sendBudgetAlertIfNeeded({
       account,
       userId: input.userId,
       accountId: input.accountId,
@@ -141,7 +139,7 @@ export class TransactionService {
       return record;
     });
 
-    await accountService.sendBudgetAlertIfNeeded({
+    await this.budgetAlerter.sendBudgetAlertIfNeeded({
       account,
       userId: existingTransaction.userId,
       accountId: existingTransaction.accountId,
@@ -290,9 +288,3 @@ export class TransactionService {
     }
   }
 }
-
-export const transactionService = new TransactionService(
-  transactionPrismaRepository,
-  accountPrismaRepository,
-  aiGeminiAdapter,
-);

@@ -4,7 +4,7 @@ import {
   GRAPH_ERROR_MESSAGES,
   GRAPH_SUCCESS_MESSAGES,
 } from "./graph.constants.js";
-import { graphService } from "./graph.service.js";
+import { graphService } from "../../composition.js";
 import {
   categoryExpensesQuerySchema,
   transactionSummaryQuerySchema,

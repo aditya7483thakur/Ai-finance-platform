@@ -17,7 +17,6 @@ import {
   verifyAccessTokenPayload,
 } from "./auth.helper.js";
 import type { UserRepository } from "../user/user.port.js";
-import { userPrismaRepository } from "../user/user.repository.prisma.js";
 
 const SALT_ROUNDS = 10;
 
@@ -77,5 +76,3 @@ export class AuthService {
     return verifyAccessTokenPayload(token);
   }
 }
-
-export const authService = new AuthService(userPrismaRepository);

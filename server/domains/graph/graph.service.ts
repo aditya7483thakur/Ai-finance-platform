@@ -11,7 +11,6 @@ import type {
   TransactionSummaryResult,
 } from "./graph.types.js";
 import type { TransactionRepository } from "../transaction/transaction.port.js";
-import { transactionPrismaRepository } from "../transaction/transaction.repository.prisma.js";
 
 export class GraphService {
   constructor(private readonly transactions: TransactionRepository) {}
@@ -87,5 +86,3 @@ export class GraphService {
     };
   }
 }
-
-export const graphService = new GraphService(transactionPrismaRepository);
