@@ -15,7 +15,7 @@
 - 📬 **Monthly Summary Emails** with Gemini-generated financial tips
 - 📸 **Receipt Scanning** using Google Gemini API
 - 🕒 **Scheduled Cron Jobs** using cron-job.org
-- 🔐 **Authentication** via Clerk
+- 🔐 **Authentication** via JWT
 - 🌐 **REST API** built with Express and Prisma
 
 ## 🛠️ Tech Stack
@@ -23,7 +23,7 @@
 - **Frontend**: React.js, ShadCn UI, Tailwind CSS
 - **Backend**: Node.js, Express.js
 - **Database**: PostgreSQL, Prisma ORM
-- **Authentication**: Clerk
+- **Authentication**: JWT
 - **AI Integration**: Google Gemini API
 - **Email Service**: Nodemailer (Gmail)
 
@@ -74,7 +74,7 @@ Refer to the provided .env.example files in each folder to know which environmen
 # In server/.env
 # Refer to server/.env.example
 ```
-Make sure to fill in the necessary values (e.g., API keys, database URLs, Clerk credentials, Gmail credentials, etc.).
+Make sure to fill in the necessary values (e.g., API keys, database URLs, JWT secret, Gmail credentials, etc.).
 
 ### 5. Run the App
 Once environment variables are set up and dependencies are installed, start both the client and server.

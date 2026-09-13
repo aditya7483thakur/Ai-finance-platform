@@ -1,10 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { getUserId } from "./api";
 
-export function useGetUserId(clerkUserId: string | null) {
+export function useGetUserId(userId: string | null) {
   return useQuery({
-    queryKey: ["getUserId", clerkUserId],
-    queryFn: () => getUserId(clerkUserId as string),
-    enabled: !!clerkUserId,
+    queryKey: ["getUserId", userId],
+    queryFn: () => getUserId(userId as string),
+    enabled: !!userId,
   });
 }
