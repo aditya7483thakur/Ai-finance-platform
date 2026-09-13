@@ -1,3 +1,9 @@
+export enum GraphFilter {
+  LAST_7_DAYS = "last_7_days",
+  LAST_MONTH = "last_month",
+  LAST_6_MONTHS = "last_6_months",
+}
+
 export const GRAPH_SUCCESS_MESSAGES = {
   TRANSACTION_SUMMARY_FETCHED: "Transaction summary fetched successfully",
   CATEGORY_EXPENSES_FETCHED: "Category expenses fetched successfully",

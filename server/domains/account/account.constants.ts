@@ -24,8 +24,19 @@ export const ACCOUNT_ERROR_MESSAGES = {
   DELETE_ACCOUNT_FAILED: "Error deleting account:",
 } as const;
 
+export enum EmailType {
+  BUDGET_ALERT = "BUDGET_ALERT",
+  MONTHLY_REPORT = "MONTHLY_REPORT",
+}
+
+export enum EmailStatus {
+  PENDING = "PENDING",
+  SENT = "SENT",
+  FAILED = "FAILED",
+}
+
 export const ACCOUNT_BUDGET_ALERT = {
-  TYPE: "BUDGET_ALERT",
-  STATUS_SENT: "SENT",
+  TYPE: EmailType.BUDGET_ALERT,
+  STATUS_SENT: EmailStatus.SENT,
   SUBJECT_PREFIX: "Budget Alert for",
 } as const;

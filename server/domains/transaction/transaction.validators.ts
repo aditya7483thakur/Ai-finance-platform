@@ -3,7 +3,10 @@ import { TransactionCategory as TransactionCategoryEnum } from "../../shared/typ
 import { LedgerEntryType } from "../../shared/types/ledger.js";
 import { RecurringInterval as RecurringIntervalEnum } from "../../shared/types/recurring.js";
 import { queryString, routeParam } from "../../shared/utils/parseWithZod.js";
-import { TRANSACTION_ERROR_MESSAGES } from "./transaction.constants.js";
+import {
+  TRANSACTION_ERROR_MESSAGES,
+  TRANSACTION_FILTER_ALL,
+} from "./transaction.constants.js";
 
 export const transactionTypeSchema = z.nativeEnum(LedgerEntryType, {
   errorMap: () => ({
@@ -146,17 +149,17 @@ export const filterQuerySchema = z
 
     return {
       filter: {
-        ...(query.category && query.category !== "ALL"
+        ...(query.category && query.category !== TRANSACTION_FILTER_ALL
           ? {
               category: transactionCategorySchema.parse(query.category),
             }
           : {}),
-        ...(query.type && query.type !== "ALL"
+        ...(query.type && query.type !== TRANSACTION_FILTER_ALL
           ? {
               type: transactionTypeSchema.parse(query.type),
             }
           : {}),
-        ...(query.isRecurring && query.isRecurring !== "ALL"
+        ...(query.isRecurring && query.isRecurring !== TRANSACTION_FILTER_ALL
           ? { isRecurring: query.isRecurring === "true" }
           : {}),
         ...(query.description ? { description: query.description } : {}),

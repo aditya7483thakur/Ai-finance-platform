@@ -1,11 +1,11 @@
 import { LedgerEntryType } from "../../shared/types/ledger.js";
 import { Money } from "../../shared/utils/money.js";
-import type {
-  DailySummaryAmounts,
-  DailyTransactionSummaryItem,
-  DateRange,
+import {
   GraphFilter,
-  GraphGroupedTransactionRow,
+  type DailySummaryAmounts,
+  type DailyTransactionSummaryItem,
+  type DateRange,
+  type GraphGroupedTransactionRow,
 } from "./graph.types.js";
 
 export const getDateRangeByFilter = (filter: GraphFilter): DateRange => {
@@ -13,19 +13,19 @@ export const getDateRangeByFilter = (filter: GraphFilter): DateRange => {
   today.setHours(23, 59, 59, 999);
 
   switch (filter) {
-    case "last_7_days": {
+    case GraphFilter.LAST_7_DAYS: {
       const startDate = new Date(today);
       startDate.setDate(today.getDate() - 6);
       startDate.setHours(0, 0, 0, 0);
       return { startDate, endDate: today };
     }
-    case "last_month": {
+    case GraphFilter.LAST_MONTH: {
       const startDate = new Date(today);
       startDate.setMonth(today.getMonth() - 1);
       startDate.setHours(0, 0, 0, 0);
       return { startDate, endDate: today };
     }
-    case "last_6_months": {
+    case GraphFilter.LAST_6_MONTHS: {
       const startDate = new Date(today);
       startDate.setMonth(today.getMonth() - 5, 1);
       startDate.setHours(0, 0, 0, 0);

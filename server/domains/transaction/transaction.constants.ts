@@ -30,3 +30,5 @@ export const TRANSACTION_ERROR_MESSAGES = {
   FETCH_FILTERED_TRANSACTIONS_FAILED: "Error fetching filtered transactions:",
   PARSE_RECEIPT_FAILED: "Error parsing receipt:",
 } as const;
+
+export const TRANSACTION_FILTER_ALL = "ALL" as const;
