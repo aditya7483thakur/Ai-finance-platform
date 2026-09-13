@@ -244,17 +244,17 @@ const AddTransaction = () => {
   }, [isEdit, transaction, form]);
 
   return (
-    <div className="flex justify-center bg-slate-50 px-4 py-8">
+    <div className="flex justify-center bg-background px-4 py-8">
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
           className="w-full max-w-2xl space-y-8"
         >
           <header>
-            <h2 className="text-2xl font-semibold text-slate-900">
+            <h2 className="text-2xl font-semibold text-foreground">
               {isEdit ? "Edit Transaction" : "Add Transaction"}
             </h2>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-muted-foreground">
               {isEdit
                 ? "Update the details for this income or expense."
                 : "Record an income or expense for one of your accounts."}
@@ -302,7 +302,7 @@ const AddTransaction = () => {
           )}
 
           {extracted && (
-            <div className="rounded-xl border border-accent/20 bg-white px-4 py-3">
+            <div className="rounded-xl border border-accent/20 bg-card px-4 py-3">
               <p className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-accent">
                 <Sparkles className="size-3.5" aria-hidden />
                 Extracted from receipt
@@ -310,30 +310,30 @@ const AddTransaction = () => {
               <dl className="mt-3 grid grid-cols-1 gap-3 text-sm sm:grid-cols-3">
                 {extracted.amount && (
                   <div>
-                    <dt className="text-xs text-slate-500">Amount</dt>
-                    <dd className="mt-0.5 font-semibold text-slate-900">
+                    <dt className="text-xs text-muted-foreground">Amount</dt>
+                    <dd className="mt-0.5 font-semibold text-foreground">
                       {formatMoney(extracted.amount)}
                     </dd>
                   </div>
                 )}
                 {extracted.category && (
                   <div>
-                    <dt className="text-xs text-slate-500">Category</dt>
-                    <dd className="mt-0.5 font-semibold text-slate-900">
+                    <dt className="text-xs text-muted-foreground">Category</dt>
+                    <dd className="mt-0.5 font-semibold text-foreground">
                       {getCategoryLabel(extracted.category)}
                     </dd>
                   </div>
                 )}
                 {extracted.date && (
                   <div>
-                    <dt className="text-xs text-slate-500">Date</dt>
-                    <dd className="mt-0.5 font-semibold text-slate-900">
+                    <dt className="text-xs text-muted-foreground">Date</dt>
+                    <dd className="mt-0.5 font-semibold text-foreground">
                       {format(new Date(extracted.date), "MMM d")}
                     </dd>
                   </div>
                 )}
               </dl>
-              <p className="mt-3 text-xs text-slate-500">
+              <p className="mt-3 text-xs text-muted-foreground">
                 Review and edit these values before you submit.
               </p>
             </div>
@@ -348,7 +348,7 @@ const AddTransaction = () => {
                   <FormLabel>Amount</FormLabel>
                   <FormControl>
                     <div className="relative">
-                      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-lg text-slate-400">
+                      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-lg text-muted-foreground">
                         $
                       </span>
                       <Input
@@ -423,7 +423,7 @@ const AddTransaction = () => {
                       {CATEGORIES.map((item) => (
                         <SelectItem key={item.value} value={item.value}>
                           <span className="flex items-center gap-2">
-                            <item.icon className="size-4 text-slate-500" />
+                            <item.icon className="size-4 text-muted-foreground" />
                             {item.label}
                           </span>
                         </SelectItem>
@@ -481,7 +481,7 @@ const AddTransaction = () => {
                                 selected &&
                                 "border-success/40 bg-success/10 text-success",
                               !selected &&
-                                "border-slate-200 bg-white text-slate-600 hover:bg-slate-50",
+                                "border-border bg-card text-muted-foreground hover:bg-muted",
                             )}
                           >
                             {option.label}
@@ -580,10 +580,10 @@ const AddTransaction = () => {
             control={form.control}
             name="isRecurring"
             render={({ field }) => (
-              <FormItem className="rounded-xl border border-slate-200 bg-white p-4">
+              <FormItem className="rounded-xl border border-border bg-card p-4">
                 <div className="flex items-center justify-between gap-4">
                   <div className="space-y-1">
-                    <FormLabel className="text-sm font-medium text-slate-900">
+                    <FormLabel className="text-sm font-medium text-foreground">
                       Recurring Transaction
                     </FormLabel>
                     <FormDescription>
@@ -604,7 +604,7 @@ const AddTransaction = () => {
                 </div>
 
                 {isRecurring && (
-                  <div className="mt-4 grid grid-cols-1 gap-4 border-t border-slate-100 pt-4 sm:grid-cols-3">
+                  <div className="mt-4 grid grid-cols-1 gap-4 border-t border-border pt-4 sm:grid-cols-3">
                     <FormField
                       control={form.control}
                       name="recurringInterval"
@@ -632,18 +632,18 @@ const AddTransaction = () => {
                       )}
                     />
                     <div>
-                      <p className="text-sm font-medium text-slate-900">
+                      <p className="text-sm font-medium text-foreground">
                         Starts
                       </p>
-                      <p className="mt-2 text-sm text-slate-600">
+                      <p className="mt-2 text-sm text-muted-foreground">
                         {selectedDate
                           ? formatDateButton(selectedDate)
                           : "Transaction date"}
                       </p>
                     </div>
                     <div>
-                      <p className="text-sm font-medium text-slate-900">Ends</p>
-                      <p className="mt-2 text-sm text-slate-600">Never</p>
+                      <p className="text-sm font-medium text-foreground">Ends</p>
+                      <p className="mt-2 text-sm text-muted-foreground">Never</p>
                     </div>
                   </div>
                 )}
@@ -674,7 +674,7 @@ const AddTransaction = () => {
           </div>
 
           {!isEdit && (
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-muted-foreground">
               Need help?{" "}
               <button
                 type="button"

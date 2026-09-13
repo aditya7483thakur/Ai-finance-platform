@@ -38,3 +38,24 @@ export const getCategoryLabel = (value?: string) =>
 
 export const getCategoryBadge = (value?: string) =>
   getCategory(value)?.badge ?? "bg-muted text-muted-foreground";
+
+export const getCategoryIconClass = (value?: string) => {
+  switch (value) {
+    case "SALARY":
+    case "INVESTMENTS":
+      return "bg-success/15 text-success";
+    case "FOOD":
+    case "SHOPPING":
+      return "bg-warning/15 text-warning";
+    case "TRANSPORT":
+    case "TRAVEL":
+      return "bg-emerald-400/15 text-emerald-400";
+    case "ENTERTAINMENT":
+    case "HOUSING":
+      return "bg-violet-400/15 text-violet-400";
+    case "HEALTH":
+      return "bg-error/15 text-error";
+    default:
+      return "bg-white/5 text-muted-foreground";
+  }
+};

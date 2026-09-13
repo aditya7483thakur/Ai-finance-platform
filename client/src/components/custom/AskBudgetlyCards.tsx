@@ -37,13 +37,13 @@ const Field = ({
   children: ReactNode;
 }) => (
   <div className="flex items-center justify-between gap-4 text-sm">
-    <dt className="text-slate-500">{label}</dt>
-    <dd className="font-medium text-slate-900">{children}</dd>
+    <dt className="text-muted-foreground">{label}</dt>
+    <dd className="font-medium text-foreground">{children}</dd>
   </div>
 );
 
 export const ToolActivity = ({ steps }: { steps: string[] }) => (
-  <ul className="space-y-1.5 text-xs text-slate-500">
+  <ul className="space-y-1.5 text-xs text-muted-foreground">
     {steps.map((step) => (
       <li key={step} className="flex items-center gap-2">
         <Check className="size-3 text-accent" aria-hidden />
@@ -54,11 +54,11 @@ export const ToolActivity = ({ steps }: { steps: string[] }) => (
 );
 
 export const AnalysisCard = ({ analysis }: { analysis: AnalysisBlock }) => (
-  <div className="rounded-xl border border-slate-200 bg-white p-4">
-    <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+  <div className="rounded-xl border border-border bg-card p-4">
+    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
       AI Analysis
     </p>
-    <p className="mt-2 text-base font-semibold text-slate-900">
+    <p className="mt-2 text-base font-semibold text-foreground">
       {analysis.headline}
     </p>
     {analysis.rows.length > 0 && (
@@ -71,7 +71,7 @@ export const AnalysisCard = ({ analysis }: { analysis: AnalysisBlock }) => (
       </dl>
     )}
     {analysis.footnote && (
-      <p className="mt-4 text-sm text-slate-600">{analysis.footnote}</p>
+      <p className="mt-4 text-sm text-muted-foreground">{analysis.footnote}</p>
     )}
     {analysis.href && (
       <Link
@@ -119,7 +119,7 @@ export const ClarificationCard = ({
   onSelect: (prompt: string) => void;
 }) => (
   <div>
-    <p className="text-sm text-slate-700">{clarification.question}</p>
+    <p className="text-sm text-foreground/80">{clarification.question}</p>
     <div className="mt-3 flex flex-wrap gap-2">
       {clarification.options.map((option) =>
         option.prompt === "__dashboard__" ? (
@@ -177,7 +177,7 @@ const ProposalFields = ({
   return (
     <div className="grid gap-3">
       <label className="text-sm">
-        <span className="mb-1 block text-slate-500">Amount</span>
+        <span className="mb-1 block text-muted-foreground">Amount</span>
         <Input
           type="number"
           min="0"
@@ -189,7 +189,7 @@ const ProposalFields = ({
         />
       </label>
       <label className="text-sm">
-        <span className="mb-1 block text-slate-500">Account</span>
+        <span className="mb-1 block text-muted-foreground">Account</span>
         <Select
           value={draft.accountId}
           onValueChange={(accountId) => {
@@ -214,7 +214,7 @@ const ProposalFields = ({
         </Select>
       </label>
       <label className="text-sm">
-        <span className="mb-1 block text-slate-500">Category</span>
+        <span className="mb-1 block text-muted-foreground">Category</span>
         <Select
           value={draft.category}
           onValueChange={(category) =>
@@ -237,7 +237,7 @@ const ProposalFields = ({
         </Select>
       </label>
       <label className="text-sm">
-        <span className="mb-1 block text-slate-500">Date</span>
+        <span className="mb-1 block text-muted-foreground">Date</span>
         <Input
           type="date"
           value={draft.date.slice(0, 10)}
@@ -286,17 +286,17 @@ export const SimulationCard = ({
   const percent = budget && budget > 0 ? Math.min(100, (usedAfter / budget) * 100) : 0;
 
   if (discarded) {
-    return <p className="text-sm text-slate-500">Simulation discarded.</p>;
+    return <p className="text-sm text-muted-foreground">Simulation discarded.</p>;
   }
 
   return (
-    <div className="rounded-xl border border-accent/20 bg-white p-4">
+    <div className="rounded-xl border border-accent/20 bg-card p-4">
       <p className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-accent">
         <FlaskConical className="size-3.5" aria-hidden />
         Simulation
       </p>
-      <p className="mt-1 text-xs text-slate-500">Preview only</p>
-      <h3 className="mt-3 text-base font-semibold text-slate-900">
+      <p className="mt-1 text-xs text-muted-foreground">Preview only</p>
+      <h3 className="mt-3 text-base font-semibold text-foreground">
         {simulation.title}
       </h3>
       <div className="mt-4">
@@ -307,14 +307,14 @@ export const SimulationCard = ({
           onChange={(next) => onChange({ ...simulation, ...next })}
         />
       </div>
-      <div className="mt-4 border-t border-slate-100 pt-4">
-        <p className="text-xs uppercase tracking-wide text-slate-500">
+      <div className="mt-4 border-t border-border pt-4">
+        <p className="text-xs uppercase tracking-wide text-muted-foreground">
           Current balance
         </p>
         <p className={cn("text-lg font-semibold", balanceToneClass(current))}>
           {formatMoney(current)}
         </p>
-        <p className="mt-3 text-xs uppercase tracking-wide text-slate-500">
+        <p className="mt-3 text-xs uppercase tracking-wide text-muted-foreground">
           After purchase
         </p>
         <p className={cn("text-lg font-semibold", balanceToneClass(after))}>
@@ -322,15 +322,15 @@ export const SimulationCard = ({
         </p>
       </div>
       {budget != null && budget > 0 && (
-        <div className="mt-4 border-t border-slate-100 pt-4">
-          <p className="text-xs uppercase tracking-wide text-slate-500">
+        <div className="mt-4 border-t border-border pt-4">
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">
             Budget impact
           </p>
-          <p className="mt-1 text-sm text-slate-700">
+          <p className="mt-1 text-sm text-foreground/80">
             {formatMoney(usedAfter)} of {formatMoney(budget)} used
           </p>
           <Progress value={percent} className="mt-2 h-1.5" />
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-1 text-xs text-muted-foreground">
             {Math.max(0, Math.round(100 - percent))}% remaining
           </p>
         </div>
@@ -369,8 +369,8 @@ export const ProposalCard = ({
   onCancel: () => void;
   onConfirm: () => void;
 }) => (
-  <div className="rounded-xl border border-slate-200 bg-white p-4">
-    <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+  <div className="rounded-xl border border-border bg-card p-4">
+    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
       Proposed Transaction
     </p>
     <div className="mt-3">

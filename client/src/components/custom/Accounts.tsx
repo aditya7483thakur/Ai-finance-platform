@@ -25,6 +25,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 
+import { dashControl } from "@/lib/dashboard-chrome";
 import { Button } from "@/components/ui/button";
 import {
   Drawer,
@@ -91,7 +92,6 @@ const Accounts = ({
     },
   });
 
-  // 2. Define a submit handler.
   function onSubmit(values: z.infer<typeof formSchema>) {
     createAccount(
       { ...values, userId: userId as string },
@@ -100,7 +100,7 @@ const Accounts = ({
           form.reset();
           setIsOpen(false);
         },
-      }
+      },
     );
   }
 
@@ -142,89 +142,74 @@ const Accounts = ({
   const accountForm = (
     <Drawer open={isOpen} onOpenChange={setIsOpen}>
       <DrawerContent className="px-6 backdrop-blur-0">
-              <Form {...form}>
-                <form
-                  onSubmit={form.handleSubmit(onSubmit)}
-                  className="space-y-3"
-                >
-                  <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Account name</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Enter your account name"
-                            {...field}
-                            className="border border-black/40"
-                          />
-                        </FormControl>
-
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="balance"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Opening balance</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Enter your account balance"
-                            {...field}
-                            className="border border-black/40"
-                            type="number"
-                          />
-                        </FormControl>
-
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="budget"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Budget</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Enter your budget"
-                            {...field}
-                            className="border border-black/40"
-                            type="number"
-                          />
-                        </FormControl>
-
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <DrawerFooter className="px-0 flex">
-                    <Button
-                      type="submit"
-                      disabled={creatingAccount}
-                      className="hover:cursor-pointer"
-                    >
-                      {creatingAccount && (
-                        <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-                      )}
-                      {creatingAccount ? "Creating..." : " Create Account"}
-                    </Button>
-                    <DrawerClose asChild>
-                      <Button
-                        variant="outline"
-                        className="hover:cursor-pointer"
-                      >
-                        Cancel
-                      </Button>
-                    </DrawerClose>
-                  </DrawerFooter>
-                </form>
-              </Form>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Account name</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter your account name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="balance"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Opening balance</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Enter your account balance"
+                      {...field}
+                      type="number"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="budget"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Budget</FormLabel>
+                  <FormControl>
+                    <Input
+                      placeholder="Enter your budget"
+                      {...field}
+                      type="number"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <DrawerFooter className="flex px-0">
+              <Button
+                type="submit"
+                disabled={creatingAccount}
+                className="hover:cursor-pointer"
+              >
+                {creatingAccount && (
+                  <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                )}
+                {creatingAccount ? "Creating..." : " Create Account"}
+              </Button>
+              <DrawerClose asChild>
+                <Button variant="outline" className="hover:cursor-pointer">
+                  Cancel
+                </Button>
+              </DrawerClose>
+            </DrawerFooter>
+          </form>
+        </Form>
       </DrawerContent>
     </Drawer>
   );
@@ -234,27 +219,22 @@ const Accounts = ({
       <>
         <section id="accounts" className="scroll-mt-24">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-slate-900">Accounts</h2>
+            <div>
+              <h2 className="text-sm font-semibold text-foreground">
+                Your Accounts
+              </h2>
+              <p className="text-xs text-muted-foreground">Loading accounts</p>
+            </div>
           </div>
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+          <div className="flex gap-3 overflow-hidden">
             {[...Array(3)].map((_, index) => (
               <div
                 key={index}
-                className="rounded-xl border border-slate-200 bg-white p-4"
+                className="min-w-[220px] rounded-xl border border-border bg-background p-4"
               >
-                <div className="flex justify-between items-start mb-4">
-                  <div className="flex items-center">
-                    <Skeleton className="h-10 w-10 rounded-md mr-3" />
-                    <div>
-                      <Skeleton className="h-4 w-24 mb-1" />
-                      <Skeleton className="h-3 w-16" />
-                    </div>
-                  </div>
-                </div>
-                <div className="mt-2">
-                  <Skeleton className="h-6 w-32 mb-2" />
-                  <Skeleton className="h-3 w-20" />
-                </div>
+                <Skeleton className="mb-4 h-4 w-24" />
+                <Skeleton className="mb-2 h-6 w-32" />
+                <Skeleton className="h-3 w-20" />
               </div>
             ))}
           </div>
@@ -268,11 +248,19 @@ const Accounts = ({
     <>
       <section id="accounts" className="scroll-mt-24">
         <div className="mb-4 flex items-center justify-between gap-3">
-          <h2 className="text-lg font-semibold text-slate-900">Accounts</h2>
+          <div>
+            <h2 className="text-sm font-semibold text-foreground">
+              Your Accounts
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              {accounts.length} account{accounts.length === 1 ? "" : "s"}
+            </p>
+          </div>
           <Button
             type="button"
             variant="outline"
             size="sm"
+            className={dashControl}
             onClick={() => setIsOpen(true)}
           >
             <Plus className="size-4" aria-hidden />
@@ -280,9 +268,9 @@ const Accounts = ({
           </Button>
         </div>
         {accounts.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-slate-200 bg-white px-4 py-8 text-center">
-            <p className="font-medium text-slate-800">No accounts yet</p>
-            <p className="mt-1 text-sm text-slate-500">
+          <div className="rounded-xl border border-dashed border-border bg-background px-4 py-8 text-center">
+            <p className="font-medium text-foreground">No accounts yet</p>
+            <p className="mt-1 text-sm text-muted-foreground">
               Create a financial workspace to start tracking balances and
               budgets.
             </p>
@@ -297,59 +285,58 @@ const Accounts = ({
             </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {accounts?.map((account) => {
-            const balance = toAmount(account.balance);
-            const budget = toAmount(account.budget);
-            const used = toAmount(account.usedAmount);
-            const hasBudget = Boolean(account.budget);
-            const budgetPercent = hasBudget
-              ? Math.min(100, (used / budget) * 100)
-              : 0;
-            const isSelected = selectedAccountId === account.id;
+          <div className="flex gap-3 overflow-x-auto pb-1">
+            {accounts?.map((account) => {
+              const balance = toAmount(account.balance);
+              const budget = toAmount(account.budget);
+              const used = toAmount(account.usedAmount);
+              const hasBudget = Boolean(account.budget);
+              const budgetPercent = hasBudget
+                ? Math.min(100, (used / budget) * 100)
+                : 0;
+              const isSelected = selectedAccountId === account.id;
 
-            return (
-              <div
-                key={account.id}
-                role="button"
-                tabIndex={0}
-                onClick={() => onAccountClick(account)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" || event.key === " ") {
-                    event.preventDefault();
-                    onAccountClick(account);
-                  }
-                }}
-                className={cn(
-                  "flex flex-col rounded-xl border bg-white p-4 cursor-pointer transition-colors",
-                  isSelected
-                    ? "border-primary ring-2 ring-primary/20"
-                    : "border-slate-200 hover:border-primary/40",
-                )}
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex min-w-0 items-center gap-2.5">
-                    <div className="shrink-0 rounded-lg bg-primary/10 p-2">
-                      <Wallet className="h-4 w-4 text-primary" />
+              return (
+                <div
+                  key={account.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => onAccountClick(account)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      onAccountClick(account);
+                    }
+                  }}
+                  className={cn(
+                    "flex min-w-[220px] flex-1 cursor-pointer flex-col rounded-xl border bg-background p-4 transition-colors",
+                    isSelected
+                      ? "border-primary ring-2 ring-primary/20"
+                      : "border-border hover:border-primary/40",
+                  )}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex min-w-0 items-center gap-2.5">
+                      <div className="shrink-0 rounded-lg bg-primary/10 p-2">
+                        <Wallet className="h-4 w-4 text-primary" />
+                      </div>
+                      <div className="min-w-0">
+                        <h3 className="truncate text-sm font-semibold text-foreground">
+                          {account.name}
+                        </h3>
+                        <span
+                          className={cn(
+                            "text-[11px] font-medium",
+                            balance < 0 ? "text-error" : "text-success",
+                          )}
+                        >
+                          {balance < 0 ? "Overdrawn" : "Healthy"}
+                        </span>
+                      </div>
                     </div>
-                    <h3 className="truncate font-semibold text-slate-900">
-                      {account.name}
-                    </h3>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-2">
-                    <span
-                      className={cn(
-                        "rounded-full px-2 py-0.5 text-[11px] font-medium",
-                        balance < 0
-                          ? "bg-error/10 text-error"
-                          : "bg-success/10 text-success",
-                      )}
-                    >
-                      {balance < 0 ? "Overdrawn" : "Healthy"}
-                    </span>
                     <button
                       type="button"
-                      className="rounded-md p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                      className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                       aria-label={`Edit ${account.name}`}
                       onClick={(event) => {
                         event.stopPropagation();
@@ -359,54 +346,40 @@ const Accounts = ({
                       <Pencil className="size-4" />
                     </button>
                   </div>
-                </div>
 
-                <div className="mt-4">
-                  <p className="text-xs uppercase tracking-wide text-slate-500">
-                    Current balance
-                  </p>
                   <p
                     className={cn(
-                      "mt-1 text-2xl font-semibold leading-none",
+                      "mt-4 text-xl font-semibold leading-none",
                       balanceToneClass(balance),
                     )}
                   >
                     {formatMoney(balance)}
                   </p>
-                </div>
 
-                <div className="mt-4 space-y-1.5">
-                  <p className="text-xs uppercase tracking-wide text-slate-500">
-                    Monthly budget
-                  </p>
-                  <p className="text-sm text-slate-700">
-                    {hasBudget
-                      ? `${formatMoney(used)} spent of ${formatMoney(budget)}`
-                      : "No budget set"}
-                  </p>
-                  {hasBudget && (
-                    <>
+                  <div className="mt-4 space-y-1.5">
+                    <p className="text-xs text-muted-foreground">
+                      {hasBudget
+                        ? `${formatMoney(used)} of ${formatMoney(budget)} used`
+                        : "No budget set"}
+                    </p>
+                    {hasBudget && (
                       <Progress value={budgetPercent} className="h-1.5" />
-                      <p className="text-xs text-slate-500">
-                        {Math.round(budgetPercent)}% used
-                      </p>
-                    </>
-                  )}
-                </div>
+                    )}
+                  </div>
 
-                <button
-                  type="button"
-                  className="mt-3 text-left text-sm text-primary hover:text-primary/80"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    navigate(`/dashboard/transactions/${account.id}`);
-                  }}
-                >
-                  Transactions →
-                </button>
-              </div>
-            );
-          })}
+                  <button
+                    type="button"
+                    className="mt-3 text-left text-sm text-primary hover:text-primary/80"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      navigate(`/dashboard/transactions/${account.id}`);
+                    }}
+                  >
+                    Transactions →
+                  </button>
+                </div>
+              );
+            })}
           </div>
         )}
       </section>

@@ -245,12 +245,12 @@ const AskBudgetly = () => {
   const isEmpty = messages.length === 0 && !isWorking;
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] flex-col bg-slate-50">
+    <div className="flex min-h-[calc(100vh-4rem)] flex-col bg-background">
       <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-4 pb-6 pt-6">
         <div className="mb-4 flex items-center justify-between gap-3">
           <div>
-            <h2 className="text-xl font-semibold text-slate-900">Ask Budgetly</h2>
-            <p className="text-sm text-slate-500">Your AI financial assistant</p>
+            <h2 className="text-xl font-semibold text-foreground">Ask Budgetly</h2>
+            <p className="text-sm text-muted-foreground">Your AI financial assistant</p>
           </div>
           <Button
             type="button"
@@ -267,13 +267,13 @@ const AskBudgetly = () => {
           {isEmpty && (
             <div className="flex flex-col items-center px-4 py-16 text-center">
               <Sparkles className="size-6 text-accent" aria-hidden />
-              <h3 className="mt-4 text-2xl font-semibold text-slate-900">
+              <h3 className="mt-4 text-2xl font-semibold text-foreground">
                 Ask Budgetly
               </h3>
-              <p className="mt-1 text-sm text-slate-500">
+              <p className="mt-1 text-sm text-muted-foreground">
                 Your AI financial workspace
               </p>
-              <p className="mt-3 max-w-sm text-sm text-slate-500">
+              <p className="mt-3 max-w-sm text-sm text-muted-foreground">
                 Ask questions about your finances, analyze spending, or simulate
                 decisions.
               </p>
@@ -283,7 +283,7 @@ const AskBudgetly = () => {
                     key={action.label}
                     type="button"
                     onClick={() => void sendPrompt(action.prompt)}
-                    className="rounded-full border border-accent/25 bg-white px-3 py-1.5 text-sm text-accent hover:bg-accent/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                    className="rounded-full border border-accent/25 bg-card px-3 py-1.5 text-sm text-accent hover:bg-accent/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                   >
                     {action.label}
                   </button>
@@ -294,7 +294,7 @@ const AskBudgetly = () => {
 
           {messages.map((message) =>
             message.role === "user" ? (
-              <p key={message.id} className="text-right text-sm font-medium text-slate-900">
+              <p key={message.id} className="text-right text-sm font-medium text-foreground">
                 {message.text}
               </p>
             ) : (
@@ -303,7 +303,7 @@ const AskBudgetly = () => {
                   <ToolActivity steps={message.tools} />
                 )}
                 {message.text && message.kind !== "analysis" && (
-                  <p className="text-sm text-slate-700">{message.text}</p>
+                  <p className="text-sm text-foreground/80">{message.text}</p>
                 )}
                 {message.kind === "analysis" && message.analysis && (
                   <AnalysisCard analysis={message.analysis} />
@@ -383,7 +383,7 @@ const AskBudgetly = () => {
                   <CompletedCard accountId={message.completed.accountId} />
                 )}
                 {message.kind === "error" && (
-                  <p className="text-sm text-slate-700">{message.text}</p>
+                  <p className="text-sm text-foreground/80">{message.text}</p>
                 )}
               </div>
             ),
@@ -400,7 +400,7 @@ const AskBudgetly = () => {
         </div>
 
         <form
-          className="sticky bottom-0 rounded-xl border border-slate-200 bg-white p-2 shadow-sm"
+          className="sticky bottom-0 rounded-xl border border-border bg-card p-2"
           onSubmit={(event) => {
             event.preventDefault();
             void sendPrompt(input);
@@ -409,7 +409,7 @@ const AskBudgetly = () => {
           <div className="flex items-end gap-2">
             <button
               type="button"
-              className="mb-1 rounded-md p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              className="mb-1 rounded-md p-2 text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               aria-label="Scan a receipt"
               disabled={isScanning || isWorking}
               onClick={() => fileInputRef.current?.click()}

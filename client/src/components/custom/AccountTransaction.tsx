@@ -138,7 +138,7 @@ const AccountTransaction = ({
   return (
     <section>
       <div className="mb-4 flex items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold text-slate-900">
+        <h2 className="text-lg font-semibold text-foreground">
           Transaction History
         </h2>
         <Button size="sm" variant="outline" asChild>
@@ -186,7 +186,7 @@ const AccountTransaction = ({
               <TableRow>
                 <TableCell
                   colSpan={7}
-                  className="py-8 text-center text-slate-500"
+                  className="py-8 text-center text-muted-foreground"
                 >
                   Loading...
                 </TableCell>
@@ -209,10 +209,10 @@ const AccountTransaction = ({
                         }
                       />
                     </TableCell>
-                    <TableCell className="whitespace-nowrap text-sm text-slate-600">
+                    <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
                       {formatShortDate(transaction.date)}
                     </TableCell>
-                    <TableCell className="max-w-[220px] text-sm font-medium text-slate-900">
+                    <TableCell className="max-w-[220px] text-sm font-medium text-foreground">
                       <TooltipProvider>
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -250,7 +250,7 @@ const AccountTransaction = ({
                     >
                       {formatSignedMoney(transaction.amount, transaction.type)}
                     </TableCell>
-                    <TableCell className="text-sm text-slate-600">
+                    <TableCell className="text-sm text-muted-foreground">
                       {scheduleLabel(transaction)}
                     </TableCell>
                     <TableCell className="text-center">
@@ -258,7 +258,7 @@ const AccountTransaction = ({
                         <DropdownMenuTrigger asChild>
                           <button
                             type="button"
-                            className="rounded-md p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                            className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                             aria-label={`Actions for ${transaction.description || transaction.category}`}
                           >
                             <MoreVertical className="size-4" />
@@ -302,7 +302,7 @@ const AccountTransaction = ({
               <TableRow>
                 <TableCell
                   colSpan={7}
-                  className="py-10 text-center text-slate-500"
+                  className="py-10 text-center text-muted-foreground"
                 >
                   No transactions found.
                 </TableCell>
@@ -327,7 +327,7 @@ const AccountTransaction = ({
                 }}
               />
             </PaginationItem>
-            <span className="px-2 text-sm text-slate-500">
+            <span className="px-2 text-sm text-muted-foreground">
               {`${filters.page}/${transactionData?.pagination?.totalPages || 1}`}
             </span>
             <PaginationItem>

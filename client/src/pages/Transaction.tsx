@@ -107,7 +107,7 @@ const Transaction = () => {
   }, [ledger?.data]);
 
   return (
-    <div className="min-h-screen bg-slate-50 px-4 py-8">
+    <div className="min-h-full bg-background px-4 py-8">
       <div className="mx-auto max-w-7xl space-y-8">
         {isPending ? (
           <div className="space-y-4">
@@ -117,10 +117,10 @@ const Transaction = () => {
         ) : (
           <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h2 className="text-2xl font-semibold text-slate-900">
+              <h2 className="text-2xl font-semibold text-foreground">
                 {accountName}
               </h2>
-              <p className="mt-3 text-xs uppercase tracking-wide text-slate-500">
+              <p className="mt-3 text-xs uppercase tracking-wide text-muted-foreground">
                 Current balance
               </p>
               <p
@@ -131,7 +131,7 @@ const Transaction = () => {
               >
                 {formatMoney(balance)}
               </p>
-              <p className="mt-1 text-sm text-slate-500">
+              <p className="mt-1 text-sm text-muted-foreground">
                 {totalTransactions === 1
                   ? "1 transaction"
                   : `${totalTransactions} transactions`}
@@ -152,7 +152,7 @@ const Transaction = () => {
             onClick={() =>
               openAsk(`Analyze this account: ${accountName}`)
             }
-            className="rounded-full border border-accent/25 bg-white px-3 py-1 text-xs text-accent hover:bg-accent/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            className="rounded-full border border-accent/25 bg-card px-3 py-1 text-xs text-accent hover:bg-accent/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             Analyze this account
           </button>
@@ -161,7 +161,7 @@ const Transaction = () => {
             onClick={() =>
               openAsk(`Simulate a transaction in ${accountName}`)
             }
-            className="rounded-full border border-accent/25 bg-white px-3 py-1 text-xs text-accent hover:bg-accent/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            className="rounded-full border border-accent/25 bg-card px-3 py-1 text-xs text-accent hover:bg-accent/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             Simulate a transaction
           </button>
@@ -170,7 +170,7 @@ const Transaction = () => {
             onClick={() =>
               openAsk(`Explain my spending in ${accountName}`)
             }
-            className="rounded-full border border-accent/25 bg-white px-3 py-1 text-xs text-accent hover:bg-accent/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            className="rounded-full border border-accent/25 bg-card px-3 py-1 text-xs text-accent hover:bg-accent/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             Explain my spending
           </button>
@@ -182,7 +182,7 @@ const Transaction = () => {
               <TriangleAlert className="size-4" aria-hidden />
               Account is below zero
             </p>
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-muted-foreground">
               Current balance{" "}
               <span className={balanceToneClass(balance)}>
                 {formatMoney(balance)}
@@ -194,7 +194,7 @@ const Transaction = () => {
         {!isPending && (
           <section className="grid grid-cols-2 gap-6 lg:grid-cols-5">
             <div>
-              <p className="text-xs uppercase tracking-wide text-slate-500">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">
                 Current Balance
               </p>
               <p className={cn("mt-1 text-xl font-semibold", balanceToneClass(balance))}>
@@ -202,15 +202,15 @@ const Transaction = () => {
               </p>
             </div>
             <div>
-              <p className="text-xs uppercase tracking-wide text-slate-500">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">
                 Opening Balance
               </p>
-              <p className="mt-1 text-xl font-semibold text-slate-900">
+              <p className="mt-1 text-xl font-semibold text-foreground">
                 {totals.opening == null ? "—" : formatMoney(totals.opening)}
               </p>
             </div>
             <div>
-              <p className="text-xs uppercase tracking-wide text-slate-500">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">
                 Income
               </p>
               <p className="mt-1 text-xl font-semibold text-success">
@@ -220,7 +220,7 @@ const Transaction = () => {
               </p>
             </div>
             <div>
-              <p className="text-xs uppercase tracking-wide text-slate-500">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">
                 Expenses
               </p>
               <p className="mt-1 text-xl font-semibold text-error">
@@ -228,7 +228,7 @@ const Transaction = () => {
               </p>
             </div>
             <div>
-              <p className="text-xs uppercase tracking-wide text-slate-500">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">
                 Budget Remaining
               </p>
               <p
@@ -236,7 +236,7 @@ const Transaction = () => {
                   "mt-1 text-xl font-semibold",
                   hasBudget && budget - used < 0
                     ? "text-error"
-                    : "text-slate-900",
+                    : "text-foreground",
                 )}
               >
                 {hasBudget ? formatMoney(budget - used) : "No budget"}
