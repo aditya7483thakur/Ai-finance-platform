@@ -43,6 +43,13 @@ export type SendBudgetAlertInput = {
   type: `${LedgerEntryType}`;
 };
 
+export type ShouldSendBudgetAlertInput = {
+  type: `${LedgerEntryType}`;
+  budget: string | null;
+  email: string;
+  usedAmount: string;
+};
+
 export type BudgetAlerter = {
   sendBudgetAlertIfNeeded: (input: SendBudgetAlertInput) => Promise<void>;
 };

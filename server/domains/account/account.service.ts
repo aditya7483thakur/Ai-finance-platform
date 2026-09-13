@@ -1,6 +1,4 @@
-import { LedgerEntryType } from "../../shared/types/ledger.js";
 import { BadRequestError, NotFoundError } from "../../shared/types/errors.js";
-import { Money } from "../../shared/utils/money.js";
 import type { EmailSender } from "../../shared/integrations/email/email.port.js";
 import { buildBudgetAlertEmail } from "../../shared/integrations/email/email.templates.js";
 import { ACCOUNT_ERROR_MESSAGES } from "./account.constants.js";
@@ -8,6 +6,7 @@ import {
   canDeleteAccount,
   hasUpdateAccountData,
   mapUpdateAccountData,
+  shouldSendBudgetAlert,
 } from "./account.helper.js";
 import type {
   Account,
@@ -87,16 +86,13 @@ export class AccountService {
 
   async sendBudgetAlertIfNeeded(input: SendBudgetAlertInput): Promise<void> {
     if (
-      input.type !== LedgerEntryType.EXPENSE ||
-      !input.account.budget ||
-      !input.account.user.email
+      !shouldSendBudgetAlert({
+        type: input.type,
+        budget: input.account.budget,
+        email: input.account.user.email,
+        usedAmount: input.newUsedAmount,
+      })
     ) {
-      return;
-    }
-
-    const used = Money.fromString(input.newUsedAmount);
-    const threshold = Money.fromString(input.account.budget).multiply("0.9");
-    if (used.isLessThan(threshold)) {
       return;
     }
 
