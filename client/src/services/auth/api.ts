@@ -12,7 +12,6 @@ export interface SignInData {
 }
 
 export interface AuthResponse {
-  message: string;
   user: {
     id: string;
     email: string;
@@ -26,15 +25,15 @@ export interface AuthResponse {
 
 export const signUp = async (data: SignUpData): Promise<AuthResponse> => {
   const res = await backend.post("/auth/signup", data);
-  return res.data;
+  return res.data.data;
 };
 
 export const signIn = async (data: SignInData): Promise<AuthResponse> => {
   const res = await backend.post("/auth/signin", data);
-  return res.data;
+  return res.data.data;
 };
 
 export const getMe = async (): Promise<{ user: AuthResponse["user"] }> => {
   const res = await backend.get("/auth/me");
-  return res.data;
+  return res.data.data;
 };
