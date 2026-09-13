@@ -10,4 +10,8 @@ export const CRON_ERROR_MESSAGES = {
   NEXT_RECURRING_DATE_REQUIRED: "Recurring transaction is missing next date",
   INVALID_DATE_QUERY: "Invalid date query parameter",
   ACCOUNT_NOT_FOUND: "Account not found for recurring transaction",
+  SECRET_NOT_CONFIGURED: "Cron secret is not configured",
+  UNAUTHORIZED: "Unauthorized: Invalid cron secret",
 } as const;
+
+export const CRON_SECRET_HEADER = "x-cron-secret";

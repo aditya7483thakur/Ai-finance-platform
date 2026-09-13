@@ -6,6 +6,7 @@ import transactionRouter from "./domains/transaction/transaction.routes.js";
 import graphRouter from "./domains/graph/graph.routes.js";
 import accountRouter from "./domains/account/account.routes.js";
 import cronRoutes from "./domains/cron/cron.routes.js";
+import { requireCronSecret } from "./domains/cron/requireCronSecret.middleware.js";
 import userRouter from "./domains/user/user.routes.js";
 import { requireAuth } from "./domains/auth/requireAuth.middleware.js";
 
@@ -35,7 +36,7 @@ app.use("/users", userRouter);
 app.use("/accounts", requireAuth, accountRouter);
 app.use("/transactions", requireAuth, transactionRouter);
 app.use("/graphs", requireAuth, graphRouter);
-app.use("/cron", cronRoutes);
+app.use("/cron", requireCronSecret, cronRoutes);
 
 // Start Server
 const PORT = process.env.PORT || 5000;
