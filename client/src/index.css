@@ -35,8 +35,11 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
-  --success: #34d399;
+  --success: #16a34a;
   --error: #ef4444;
+  --warning: #d97706;
+  --ai: #4f46e5;
+  --ai-foreground: #eef2ff;
 }
 
 .dark {
@@ -88,6 +91,9 @@
   --color-secondary: var(--secondary);
   --color-error: var(--error);
   --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-ai: var(--ai);
+  --color-ai-foreground: var(--ai-foreground);
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);

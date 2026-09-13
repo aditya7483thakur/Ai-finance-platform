@@ -5,6 +5,7 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { useUserContext } from "@/contexts/userContext";
+import { useAskBudgetly } from "@/hooks/useAskBudgetly";
 import { Outlet, useLocation } from "react-router-dom";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -13,12 +14,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { LogOut, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export default function Page() {
   const location = useLocation();
   const { user, logout } = useUserContext();
+  const openAsk = useAskBudgetly();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -35,19 +38,18 @@ export default function Page() {
       .slice(0, 2);
   };
 
-  // Define static route-to-title mapping
   const pageTitles: Record<string, string> = {
-    "/dashboard": "Dashboard",
-    "/dashboard/add-transaction": "Transaction",
-    "/dashboard/transactions": "Account Details",
+    "/dashboard": "Workspace",
+    "/dashboard/ask": "Ask Budgetly",
+    "/dashboard/add-transaction": "Add transaction",
+    "/dashboard/transactions": "Account activity",
   };
 
-  // Helper to get dynamic title
   function getPageTitle(pathname: string): string {
-    if (pathname.startsWith("/dashboard/transactions/"))
-      return "Account Details";
-    if (pathname === "/dashboard/transactions") return "Account Details";
-    return pageTitles[pathname] || "Dashboard";
+    if (pathname.startsWith("/dashboard/transactions/")) {
+      return "Account activity";
+    }
+    return pageTitles[pathname] || "Workspace";
   }
 
   const currentTitle = getPageTitle(location.pathname);
@@ -56,38 +58,57 @@ export default function Page() {
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
-        <header className="sticky top-0 z-50 bg-white flex h-16 shrink-0 items-center justify-between gap-1 border-b border-border px-4 pr-8">
-          <div className="flex items-center">
+        <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center justify-between border-b border-slate-200 bg-white/90 px-4 backdrop-blur">
+          <div className="flex min-w-0 items-center gap-2">
             <SidebarTrigger className="-ml-1" />
-            <span className="font-bold text-3xl text-primary">
-              {currentTitle}
-            </span>
+            <div>
+              <h1 className="truncate text-lg font-semibold text-slate-900">
+                {currentTitle}
+              </h1>
+              <p className="hidden text-xs text-slate-500 sm:block">
+                Understand, manage, and simulate your finances
+              </p>
+            </div>
           </div>
-          {user && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Avatar className="cursor-pointer">
-                  <AvatarFallback className="bg-primary text-white">
-                    {getInitials(user.name)}
-                  </AvatarFallback>
-                </Avatar>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem className="text-sm text-gray-500">
-                  {user.email}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={handleLogout}
-                  className="cursor-pointer"
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  Sign Out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
+          <div className="flex items-center gap-3">
+            {location.pathname !== "/dashboard/ask" && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="border-indigo-200 bg-indigo-50 text-ai hover:bg-indigo-100 hover:text-ai"
+                onClick={() => openAsk()}
+              >
+                <Sparkles className="size-4" aria-hidden />
+                Ask Budgetly
+              </Button>
+            )}
+            {user && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Avatar className="cursor-pointer focus-visible:ring-2 focus-visible:ring-primary">
+                    <AvatarFallback className="bg-primary text-white">
+                      {getInitials(user.name)}
+                    </AvatarFallback>
+                  </Avatar>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem className="text-sm text-gray-500">
+                    {user.email}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={handleLogout}
+                    className="cursor-pointer"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </div>
         </header>
-        <div className="flex flex-1 flex-col gap-4 pt-0">
+        <div className="flex flex-1 flex-col">
           <Outlet />
         </div>
       </SidebarInset>

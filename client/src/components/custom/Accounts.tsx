@@ -1,7 +1,17 @@
+import { balanceToneClass, formatMoney, toAmount } from "@/lib/money";
+import { cn } from "@/lib/utils";
 import { AccountType } from "@/types";
-import { Loader2, Plus, Wallet } from "lucide-react";
+import { Loader2, Pencil, Plus, Wallet } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "../ui/skeleton";
 import { useNavigate } from "react-router-dom";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -21,16 +31,18 @@ import {
   DrawerClose,
   DrawerContent,
   DrawerFooter,
-  DrawerTrigger,
 } from "@/components/ui/drawer";
 import { useUserContext } from "@/contexts/userContext";
-import { useCreateAccount } from "@/services/accounts/mutation";
-import { useState } from "react";
+import { useCreateAccount, useUpdateAccount } from "@/services/accounts/mutation";
+import { useEffect, useState } from "react";
 
 interface props {
   accounts: AccountType[];
   accountsLoading: boolean;
+  selectedAccountId?: string | null;
   onAccountClick: (account: AccountType) => void;
+  createOpen?: boolean;
+  onCreateOpenChange?: (open: boolean) => void;
 }
 
 const formSchema = z.object({
@@ -43,12 +55,33 @@ const formSchema = z.object({
   budget: z.string().optional(),
 });
 
-const Accounts = ({ accounts, accountsLoading, onAccountClick }: props) => {
+const updateSchema = z.object({
+  name: z.string().min(3, {
+    message: "Account name must be at least 3 characters.",
+  }),
+  budget: z.string().optional(),
+});
+
+const Accounts = ({
+  accounts,
+  accountsLoading,
+  selectedAccountId,
+  onAccountClick,
+  createOpen,
+  onCreateOpenChange,
+}: props) => {
   const navigate = useNavigate();
   const { userId } = useUserContext();
-  const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [internalOpen, setInternalOpen] = useState<boolean>(false);
+  const isOpen = createOpen ?? internalOpen;
+  const setIsOpen = onCreateOpenChange ?? setInternalOpen;
+  const [editingAccount, setEditingAccount] = useState<AccountType | null>(
+    null,
+  );
   const { mutate: createAccount, isPending: creatingAccount } =
     useCreateAccount();
+  const { mutate: updateAccount, isPending: updatingAccount } =
+    useUpdateAccount();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -71,49 +104,44 @@ const Accounts = ({ accounts, accountsLoading, onAccountClick }: props) => {
     );
   }
 
-  if (accountsLoading) {
-    return (
-      <div className="mb-8 mt-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[...Array(3)].map((_, index) => (
-            <div
-              key={index}
-              className="bg-white rounded-lg p-6 shadow-md border border-gray-100"
-            >
-              <div className="flex justify-between items-start mb-4">
-                <div className="flex items-center">
-                  <Skeleton className="h-10 w-10 rounded-md mr-3" />
-                  <div>
-                    <Skeleton className="h-4 w-24 mb-1" />
-                    <Skeleton className="h-3 w-16" />
-                  </div>
-                </div>
-              </div>
-              <div className="mt-2">
-                <Skeleton className="h-6 w-32 mb-2" />
-                <Skeleton className="h-3 w-20" />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
+  const updateForm = useForm<z.infer<typeof updateSchema>>({
+    resolver: zodResolver(updateSchema),
+    defaultValues: {
+      name: "",
+      budget: "",
+    },
+  });
+
+  useEffect(() => {
+    if (!editingAccount) {
+      return;
+    }
+
+    updateForm.setValue("name", editingAccount.name);
+    updateForm.setValue(
+      "budget",
+      editingAccount.budget == null ? "" : String(editingAccount.budget),
+    );
+  }, [editingAccount, updateForm]);
+
+  function onUpdate(values: z.infer<typeof updateSchema>) {
+    if (!editingAccount) {
+      return;
+    }
+
+    updateAccount(
+      { ...values, id: editingAccount.id },
+      {
+        onSuccess: () => {
+          setEditingAccount(null);
+        },
+      },
     );
   }
 
-  return (
-    <>
-      <div className="mb-8 mt-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Drawer open={isOpen} onOpenChange={setIsOpen}>
-            <DrawerTrigger asChild>
-              <div className="bg-white rounded-xl p-5 shadow-sm hover:cursor-pointer border flex flex-col justify-center items-center border-gray-200 hover:shadow-lg hover:bg-slate-100 transition-all duration-200">
-                <Plus className="h-10 w-10 text-slate-600 group-hover:text-primary transition-colors duration-200" />
-                <span className="text-slate-600 mt-2 group-hover:text-primary transition-colors duration-200">
-                  Add account
-                </span>
-              </div>
-            </DrawerTrigger>
-            <DrawerContent className="px-6 backdrop-blur-0">
+  const accountForm = (
+    <Drawer open={isOpen} onOpenChange={setIsOpen}>
+      <DrawerContent className="px-6 backdrop-blur-0">
               <Form {...form}>
                 <form
                   onSubmit={form.handleSubmit(onSubmit)}
@@ -142,7 +170,7 @@ const Accounts = ({ accounts, accountsLoading, onAccountClick }: props) => {
                     name="balance"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Balance</FormLabel>
+                        <FormLabel>Opening balance</FormLabel>
                         <FormControl>
                           <Input
                             placeholder="Enter your account balance"
@@ -197,67 +225,254 @@ const Accounts = ({ accounts, accountsLoading, onAccountClick }: props) => {
                   </DrawerFooter>
                 </form>
               </Form>
-            </DrawerContent>
-          </Drawer>
+      </DrawerContent>
+    </Drawer>
+  );
 
-          {accounts?.map((account) => (
-            <div
-              key={account.id}
-              className="bg-white rounded-xl p-5 shadow-sm border border-gray-200 hover:shadow-md hover:border-blue-300 transition-all duration-200 transform "
-            >
-              <div className="flex justify-between items-start mb-4">
-                <div className="flex items-center space-x-3">
-                  <div className="bg-blue-100 p-2.5 rounded-lg">
-                    <Wallet className="h-5 w-5 text-blue-600" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900 text-lg">
-                      {account.name}
-                    </h3>
-                    <p className="text-xs text-gray-500 font-mono">
-                      {account.id}
-                    </p>
+  if (accountsLoading) {
+    return (
+      <>
+        <section id="accounts" className="scroll-mt-24">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-slate-900">Accounts</h2>
+          </div>
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {[...Array(3)].map((_, index) => (
+              <div
+                key={index}
+                className="rounded-xl border border-slate-200 bg-white p-4"
+              >
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex items-center">
+                    <Skeleton className="h-10 w-10 rounded-md mr-3" />
+                    <div>
+                      <Skeleton className="h-4 w-24 mb-1" />
+                      <Skeleton className="h-3 w-16" />
+                    </div>
                   </div>
                 </div>
+                <div className="mt-2">
+                  <Skeleton className="h-6 w-32 mb-2" />
+                  <Skeleton className="h-3 w-20" />
+                </div>
               </div>
+            ))}
+          </div>
+        </section>
+        {accountForm}
+      </>
+    );
+  }
 
-              <div className="mt-4 space-y-2">
-                <p className="text-2xl font-bold text-gray-900">
-                  ${account.balance.toLocaleString()}
-                </p>
-                <p className="text-xs text-gray-500">
-                  Last updated:{" "}
-                  {new Date(account.updatedAt).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </p>
-              </div>
-
-              <div className="mt-6 flex justify-end space-x-2">
-                <Button
-                  variant="outline"
-                  className="text-gray-700 border-gray-300 w-1/2 hover:bg-primary hover:text-white hover:cursor-pointer active:bg-[#164ea3] active:text-white"
-                  onClick={() => onAccountClick(account)}
-                >
-                  View Budget
-                </Button>
-                <Button
-                  variant="outline"
-                  className="text-blue-600 border-blue-200 w-1/2 hover:bg-primary hover:text-white hover:cursor-pointer active:bg-[#164ea3] active:text-white"
-                  onClick={() =>
-                    navigate(`/dashboard/transactions/${account.id}`)
-                  }
-                >
-                  View Transactions
-                </Button>
-              </div>
-            </div>
-          ))}
+  return (
+    <>
+      <section id="accounts" className="scroll-mt-24">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <h2 className="text-lg font-semibold text-slate-900">Accounts</h2>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setIsOpen(true)}
+          >
+            <Plus className="size-4" aria-hidden />
+            Add Account
+          </Button>
         </div>
-      </div>
+        {accounts.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-slate-200 bg-white px-4 py-8 text-center">
+            <p className="font-medium text-slate-800">No accounts yet</p>
+            <p className="mt-1 text-sm text-slate-500">
+              Create a financial workspace to start tracking balances and
+              budgets.
+            </p>
+            <Button
+              type="button"
+              size="sm"
+              className="mt-4"
+              onClick={() => setIsOpen(true)}
+            >
+              <Plus className="size-4" aria-hidden />
+              Add Account
+            </Button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {accounts?.map((account) => {
+            const balance = toAmount(account.balance);
+            const budget = toAmount(account.budget);
+            const used = toAmount(account.usedAmount);
+            const hasBudget = Boolean(account.budget);
+            const budgetPercent = hasBudget
+              ? Math.min(100, (used / budget) * 100)
+              : 0;
+            const isSelected = selectedAccountId === account.id;
+
+            return (
+              <div
+                key={account.id}
+                role="button"
+                tabIndex={0}
+                onClick={() => onAccountClick(account)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    onAccountClick(account);
+                  }
+                }}
+                className={cn(
+                  "flex flex-col rounded-xl border bg-white p-4 cursor-pointer transition-colors",
+                  isSelected
+                    ? "border-blue-500 ring-2 ring-blue-100"
+                    : "border-slate-200 hover:border-blue-300",
+                )}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-2.5">
+                    <div className="shrink-0 rounded-lg bg-blue-50 p-2">
+                      <Wallet className="h-4 w-4 text-blue-600" />
+                    </div>
+                    <h3 className="truncate font-semibold text-slate-900">
+                      {account.name}
+                    </h3>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <span
+                      className={cn(
+                        "rounded-full px-2 py-0.5 text-[11px] font-medium",
+                        balance < 0
+                          ? "bg-red-50 text-red-700"
+                          : "bg-emerald-50 text-emerald-700",
+                      )}
+                    >
+                      {balance < 0 ? "Overdrawn" : "Healthy"}
+                    </span>
+                    <button
+                      type="button"
+                      className="rounded-md p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                      aria-label={`Edit ${account.name}`}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setEditingAccount(account);
+                      }}
+                    >
+                      <Pencil className="size-4" />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="mt-4">
+                  <p className="text-xs uppercase tracking-wide text-slate-500">
+                    Current balance
+                  </p>
+                  <p
+                    className={cn(
+                      "mt-1 text-2xl font-semibold leading-none",
+                      balanceToneClass(balance),
+                    )}
+                  >
+                    {formatMoney(balance)}
+                  </p>
+                </div>
+
+                <div className="mt-4 space-y-1.5">
+                  <p className="text-xs uppercase tracking-wide text-slate-500">
+                    Monthly budget
+                  </p>
+                  <p className="text-sm text-slate-700">
+                    {hasBudget
+                      ? `${formatMoney(used)} spent of ${formatMoney(budget)}`
+                      : "No budget set"}
+                  </p>
+                  {hasBudget && (
+                    <>
+                      <Progress value={budgetPercent} className="h-1.5" />
+                      <p className="text-xs text-slate-500">
+                        {Math.round(budgetPercent)}% used
+                      </p>
+                    </>
+                  )}
+                </div>
+
+                <button
+                  type="button"
+                  className="mt-3 text-left text-sm text-blue-600 hover:text-blue-800"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    navigate(`/dashboard/transactions/${account.id}`);
+                  }}
+                >
+                  Transactions →
+                </button>
+              </div>
+            );
+          })}
+          </div>
+        )}
+      </section>
+      {accountForm}
+
+      <Dialog
+        open={Boolean(editingAccount)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setEditingAccount(null);
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Update account</DialogTitle>
+            <DialogDescription>
+              Change the name or monthly budget. Opening balance is not edited
+              here.
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...updateForm}>
+            <form
+              onSubmit={updateForm.handleSubmit(onUpdate)}
+              className="space-y-3"
+            >
+              <FormField
+                control={updateForm.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Account name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter your account name" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={updateForm.control}
+                name="budget"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Budget</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Enter your budget"
+                        {...field}
+                        type="number"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button type="submit" disabled={updatingAccount}>
+                {updatingAccount && (
+                  <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                )}
+                {updatingAccount ? "Updating..." : "Update account"}
+              </Button>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

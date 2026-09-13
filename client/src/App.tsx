@@ -5,6 +5,7 @@ import Dashboard from "./pages/Dashboard";
 import DashBoardLayout from "./layout/DashboardLayout";
 import Transaction from "./pages/Transaction";
 import AddTransaction from "./pages/AddTransaction";
+import AskBudgetly from "./pages/AskBudgetly";
 import SignInPage from "./pages/SignInPage";
 import SignUpPage from "./pages/SignUpPage";
 
@@ -20,6 +21,7 @@ function App() {
             <Route index element={<Dashboard />} />
             <Route path="transactions/:accountId" element={<Transaction />} />
             <Route path="add-transaction" element={<AddTransaction />} />
+            <Route path="ask" element={<AskBudgetly />} />
           </Route>
         </Route>
       </Routes>

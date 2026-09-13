@@ -3,6 +3,7 @@ import {
   FormControl,
   FormField,
   FormItem,
+  FormLabel,
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -17,7 +18,10 @@ import { Button } from "../ui/button";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { Loader2, Search } from "lucide-react";
+import { Loader2, Search, SlidersHorizontal } from "lucide-react";
+import { useState } from "react";
+import { cn } from "@/lib/utils";
+import { CATEGORIES } from "@/lib/categories";
 
 const TransactionCategory = [
   "ALL",
@@ -49,37 +53,37 @@ const TransactionFilteration = ({
   onSubmit: (data: TransactionFilterData) => void;
   searching: boolean;
 }) => {
+  const [showFilters, setShowFilters] = useState(false);
   const form = useForm<TransactionFilterData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      description: "", // Matches schema
-      type: "ALL", // Ensure it matches `z.enum`
-      category: "ALL", // Must be a valid category
+      description: "",
+      type: "ALL",
+      category: "ALL",
       isRecurring: "ALL",
     },
   });
+
   return (
-    <>
-      <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit((data) => onSubmit(data))}
-          className="gap-2 flex justify-between flex-wrap"
-        >
+    <Form {...form}>
+      <form
+        onSubmit={form.handleSubmit((data) => onSubmit(data))}
+        className="space-y-3"
+      >
+        <div className="flex flex-col gap-3 md:flex-row md:items-end">
           <FormField
             control={form.control}
             name="description"
             render={({ field }) => (
-              <FormItem className="flex-1 min-w-96 relative">
+              <FormItem className="min-w-0 flex-1">
+                <FormLabel>Search transactions</FormLabel>
                 <FormControl>
                   <div className="relative">
-                    {/* Search Icon */}
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 w-5 h-5" />
-
-                    {/* Input Field */}
+                    <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
                     <Input
-                      placeholder="Search here..."
+                      placeholder="Search transactions"
                       {...field}
-                      className="pl-10" // Add left padding for icon
+                      className="pl-9"
                     />
                   </div>
                 </FormControl>
@@ -87,28 +91,45 @@ const TransactionFilteration = ({
               </FormItem>
             )}
           />
+          <Button
+            type="button"
+            variant="outline"
+            className="md:hidden"
+            onClick={() => setShowFilters((open) => !open)}
+          >
+            <SlidersHorizontal className="size-4" aria-hidden />
+            Filters
+          </Button>
+          <Button type="submit" disabled={searching} className="hidden md:inline-flex">
+            {searching && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
+            Search
+          </Button>
+        </div>
+
+        <div
+          className={cn(
+            "grid grid-cols-1 gap-3 sm:grid-cols-3",
+            !showFilters && "max-md:hidden",
+          )}
+        >
           <FormField
             control={form.control}
             name="type"
             render={({ field }) => (
               <FormItem>
-                {/* <FormLabel>Email</FormLabel> */}
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
+                <FormLabel>Transaction Type</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
-                    <SelectTrigger className="w-44">
-                      <SelectValue placeholder="Select Type" />
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="All Types" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="ALL">BOTH</SelectItem>
-                    <SelectItem value="INCOME">INCOME</SelectItem>
-                    <SelectItem value="EXPENSE">EXPENSE</SelectItem>
+                    <SelectItem value="ALL">All Types</SelectItem>
+                    <SelectItem value="INCOME">Income</SelectItem>
+                    <SelectItem value="EXPENSE">Expense</SelectItem>
                   </SelectContent>
                 </Select>
-
                 <FormMessage />
               </FormItem>
             )}
@@ -118,64 +139,56 @@ const TransactionFilteration = ({
             name="category"
             render={({ field }) => (
               <FormItem>
-                {/* <FormLabel>Email</FormLabel> */}
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
+                <FormLabel>Category</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
-                    <SelectTrigger className="w-44">
-                      <SelectValue placeholder="Select Category" />
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="All Categories" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {TransactionCategory.map((item: string) => (
-                      <SelectItem key={item} value={item}>
-                        {item}
+                    <SelectItem value="ALL">All Categories</SelectItem>
+                    {CATEGORIES.map((item) => (
+                      <SelectItem key={item.value} value={item.value}>
+                        {item.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-
                 <FormMessage />
               </FormItem>
             )}
           />
-
           <FormField
             control={form.control}
             name="isRecurring"
             render={({ field }) => (
               <FormItem>
-                {/* <FormLabel>Email</FormLabel> */}
-                <Select
-                  onValueChange={field.onChange}
-                  defaultValue={field.value}
-                >
+                <FormLabel>Schedule</FormLabel>
+                <Select onValueChange={field.onChange} value={field.value}>
                   <FormControl>
-                    <SelectTrigger className="w-44">
-                      <SelectValue placeholder="Select Recurrence" />
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="All Transactions" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="ALL">BOTH</SelectItem>
-                    <SelectItem value="true">RECURRING</SelectItem>
-                    <SelectItem value="false">NON-RECURRING</SelectItem>
+                    <SelectItem value="ALL">All Transactions</SelectItem>
+                    <SelectItem value="true">Recurring</SelectItem>
+                    <SelectItem value="false">One-time</SelectItem>
                   </SelectContent>
                 </Select>
-
                 <FormMessage />
               </FormItem>
             )}
           />
+        </div>
 
-          <Button type="submit" disabled={searching}>
-            {searching && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
-            Search
-          </Button>
-        </form>
-      </Form>
-    </>
+        <Button type="submit" disabled={searching} className="md:hidden">
+          {searching && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
+          Search
+        </Button>
+      </form>
+    </Form>
   );
 };
 

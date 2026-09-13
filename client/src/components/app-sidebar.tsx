@@ -1,5 +1,5 @@
-import { Home, Inbox } from "lucide-react";
-
+import { Home, PlusCircle, Sparkles } from "lucide-react";
+import { Link, useLocation } from "react-router-dom";
 import {
   Sidebar,
   SidebarContent,
@@ -10,9 +10,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { Link } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
-// Menu items.
 const items = [
   {
     title: "Dashboard",
@@ -20,37 +19,51 @@ const items = [
     icon: Home,
   },
   {
+    title: "Ask Budgetly",
+    url: "/dashboard/ask",
+    icon: Sparkles,
+  },
+  {
     title: "Add Transaction",
     url: "/dashboard/add-transaction",
-    icon: Inbox,
+    icon: PlusCircle,
   },
 ];
 
 export function AppSidebar() {
+  const location = useLocation();
+
   return (
     <Sidebar>
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="font-bold text-primary text-3xl mt-3">
-            💸Budgetly
+          <SidebarGroupLabel className="mt-3 px-2 text-xl font-semibold text-primary">
+            Budgetly
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu className="mt-6">
-              {items.map((item) => (
-                <SidebarMenuItem
-                  key={item.title}
-                  className="bg-primary text-white border rounded-xl p-2 "
-                >
-                  <SidebarMenuButton asChild>
-                    <Link to={item.url} className=" w-full">
-                      <item.icon />
-                      <span className="text-base font-medium">
-                        {item.title}
-                      </span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+            <SidebarMenu className="mt-6 space-y-1">
+              {items.map((item) => {
+                const isActive = location.pathname === item.url;
+                const isAsk = item.url === "/dashboard/ask";
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild isActive={isActive}>
+                      <Link
+                        to={item.url}
+                        className={cn(
+                          "w-full rounded-lg px-2",
+                          isActive && !isAsk && "bg-primary/10 text-primary",
+                          isAsk && "text-ai hover:bg-indigo-50 hover:text-ai",
+                          isAsk && isActive && "bg-indigo-50 text-ai",
+                        )}
+                      >
+                        <item.icon />
+                        <span className="text-sm font-medium">{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
