@@ -57,13 +57,7 @@ export type FilteredTransactionsResult<T> = {
   };
 };
 
-export type AiReceiptResult = {
-  type?: TransactionType;
-  amount?: string;
-  category?: TransactionCategory;
-  date?: string;
-  description?: string;
-};
+export type { AiReceiptResult } from "../../shared/integrations/ai/ai.types.js";
 
 export type GroupedTransactionByDateRow = {
   date: Date;

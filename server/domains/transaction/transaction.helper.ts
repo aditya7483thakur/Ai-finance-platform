@@ -1,5 +1,5 @@
 import { addDays, addMonths, addWeeks, addYears } from "date-fns";
-import type { AiReceiptResult, RecurringInterval } from "./transaction.types.js";
+import type { RecurringInterval } from "./transaction.types.js";
 
 export const getNextRecurringDate = (
   transactionDate: Date,
@@ -22,10 +22,4 @@ export const getNextRecurringDate = (
     default:
       return null;
   }
-};
-
-export const parseGeminiJson = (rawText: string): AiReceiptResult => {
-  const cleanText = rawText.replace(/```(json)?/g, "").trim();
-  const parsed = JSON.parse(cleanText) as AiReceiptResult;
-  return parsed;
 };

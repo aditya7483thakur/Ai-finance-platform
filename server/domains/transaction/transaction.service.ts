@@ -19,7 +19,7 @@ import { transactionPrismaRepository } from "./transaction.repository.prisma.js"
 import type { AccountRepository } from "../account/account.port.js";
 import { runInTransaction } from "../../config/prisma.js";
 import { Money } from "../../shared/utils/money.js";
-import { getNextRecurringDate, parseGeminiJson } from "./transaction.helper.js";
+import { getNextRecurringDate } from "./transaction.helper.js";
 
 export class TransactionService {
   constructor(
@@ -281,16 +281,14 @@ export class TransactionService {
     const base64Image = fileBuffer.toString("base64");
 
     try {
-      const extractedText = await this.ai.extractReceipt({
+      return this.ai.extractReceipt({
         mimeType,
         base64Image,
       });
-      const parsed = parseGeminiJson(extractedText);
-      return parsed;
     } catch (error) {
       if (error instanceof Error && error.message === AI_API_MISSING_ERROR) {
         throw new BadRequestError(
-          TRANSACTION_ERROR_MESSAGES.GEMINI_API_KEY_MISSING,
+          TRANSACTION_ERROR_MESSAGES.AI_API_KEY_MISSING,
         );
       }
 
