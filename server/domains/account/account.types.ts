@@ -39,6 +39,6 @@ export type SendBudgetAlertInput = {
   account: AccountWithUser;
   userId: string;
   accountId: string;
-  newUsedAmount: number;
+  newUsedAmount: string;
   type: AccountTransactionType;
 };

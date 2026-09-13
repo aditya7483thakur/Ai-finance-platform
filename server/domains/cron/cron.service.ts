@@ -13,6 +13,7 @@ import type {
   SendMonthlySummariesResult,
 } from "./cron.types.js";
 import { runInTransaction } from "../../config/prisma.js";
+import { Money } from "../../shared/utils/money.js";
 import type { TransactionRepository } from "../transaction/transaction.port.js";
 import { transactionPrismaRepository } from "../transaction/transaction.repository.prisma.js";
 import type { AccountRepository } from "../account/account.port.js";
@@ -35,7 +36,7 @@ export class CronService {
     );
 
     for (const transaction of dueTransactions) {
-      let newUsedAmount = 0;
+      let newUsedAmount = Money.zero();
 
       await runInTransaction(async (tx) => {
         await this.transactions.createRecurringTransactionRecord(
@@ -49,21 +50,21 @@ export class CronService {
           throw new NotFoundError(CRON_ERROR_MESSAGES.ACCOUNT_NOT_FOUND);
         }
 
-        const amount = Number(transaction.amount);
-        let newBalance = Number(account.balance);
-        newUsedAmount = Number(account.usedAmount);
+        const amount = Money.fromString(transaction.amount);
+        let newBalance = Money.fromString(account.balance);
+        newUsedAmount = Money.fromString(account.usedAmount);
 
         if (transaction.type === "INCOME") {
-          newBalance += amount;
+          newBalance = newBalance.add(amount);
         } else {
-          newBalance -= amount;
-          newUsedAmount += amount;
+          newBalance = newBalance.subtract(amount);
+          newUsedAmount = newUsedAmount.add(amount);
         }
 
         await this.accounts.updateAccountAmounts(
           transaction.accountId,
-          String(newBalance),
-          String(newUsedAmount),
+          newBalance.toString(),
+          newUsedAmount.toString(),
           tx,
         );
 
@@ -97,7 +98,7 @@ export class CronService {
         account: accountWithUser,
         userId: transaction.userId,
         accountId: transaction.accountId,
-        newUsedAmount,
+        newUsedAmount: newUsedAmount.toString(),
         type: transaction.type,
       });
     }
@@ -134,7 +135,7 @@ export class CronService {
 
         const formatted = categoryExpenses.map((item) => ({
           name: item.category,
-          value: Number(item.amount),
+          value: Money.fromString(item.amount).toNumber(),
         }));
 
         if (!formatted || formatted.length === 0) {

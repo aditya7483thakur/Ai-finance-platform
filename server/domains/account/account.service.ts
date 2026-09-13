@@ -1,4 +1,5 @@
 import { BadRequestError, NotFoundError } from "../../shared/types/errors.js";
+import { Money } from "../../shared/utils/money.js";
 import { sendEmail } from "../../shared/integrations/email/sendEmail.js";
 import {
   ACCOUNT_BUDGET_ALERT,
@@ -95,8 +96,9 @@ export class AccountService {
       return;
     }
 
-    const threshold = Number(input.account.budget) * 0.9;
-    if (input.newUsedAmount < threshold) {
+    const used = Money.fromString(input.newUsedAmount);
+    const threshold = Money.fromString(input.account.budget).multiply("0.9");
+    if (used.isLessThan(threshold)) {
       return;
     }
 

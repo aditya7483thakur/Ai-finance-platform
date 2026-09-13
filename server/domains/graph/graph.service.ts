@@ -1,3 +1,4 @@
+import { Money } from "../../shared/utils/money.js";
 import {
   buildCompleteDailySeries,
   buildDailySummaryMap,
@@ -31,7 +32,7 @@ export class GraphService {
     const mappedRows: GraphGroupedTransactionRow[] = rows.map((row) => ({
       date: row.date,
       type: row.type,
-      amount: Number(row.amount),
+      amount: row.amount,
     }));
 
     const summaryMap = buildDailySummaryMap(mappedRows);
@@ -39,12 +40,11 @@ export class GraphService {
     const summary = buildCompleteDailySeries(startDate, endDate, summaryMap);
 
     const totals = summary.reduce(
-      (acc, day) => {
-        acc.totalIncome += day.income;
-        acc.totalExpense += day.expense;
-        return acc;
-      },
-      { totalIncome: 0, totalExpense: 0 },
+      (acc, day) => ({
+        totalIncome: acc.totalIncome.add(Money.fromNumber(day.income)),
+        totalExpense: acc.totalExpense.add(Money.fromNumber(day.expense)),
+      }),
+      { totalIncome: Money.zero(), totalExpense: Money.zero() },
     );
 
     return {
@@ -53,9 +53,9 @@ export class GraphService {
         startDate: startDate.toISOString(),
         endDate: endDate.toISOString(),
         count: summary.length,
-        totalIncome: totals.totalIncome,
-        totalExpense: totals.totalExpense,
-        net: totals.totalIncome - totals.totalExpense,
+        totalIncome: totals.totalIncome.toNumber(),
+        totalExpense: totals.totalExpense.toNumber(),
+        net: totals.totalIncome.subtract(totals.totalExpense).toNumber(),
       },
     };
   }
@@ -77,7 +77,7 @@ export class GraphService {
     return {
       expenses: rows.map((row) => ({
         name: row.category,
-        value: Number(row.amount),
+        value: Money.fromString(row.amount).toNumber(),
       })),
       meta: {
         month: now.toLocaleString("default", { month: "long" }),

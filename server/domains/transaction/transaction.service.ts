@@ -19,11 +19,8 @@ import type { TransactionRepository } from "./transaction.port.js";
 import { transactionPrismaRepository } from "./transaction.repository.prisma.js";
 import type { AccountRepository } from "../account/account.port.js";
 import { runInTransaction } from "../../config/prisma.js";
-import {
-  ensureNotNegativeAmount,
-  getNextRecurringDate,
-  parseGeminiJson,
-} from "./transaction.helper.js";
+import { Money } from "../../shared/utils/money.js";
+import { getNextRecurringDate, parseGeminiJson } from "./transaction.helper.js";
 
 export class TransactionService {
   constructor(
@@ -44,7 +41,7 @@ export class TransactionService {
       input.recurringInterval,
     );
 
-    let newUsedAmount = Number(account.usedAmount);
+    let newUsedAmount = Money.fromString(account.usedAmount);
 
     const createdTransaction = await runInTransaction(async (tx) => {
       const record = await this.transactions.createTransactionRecord(
@@ -53,20 +50,21 @@ export class TransactionService {
         tx,
       );
 
-      let newBalance = Number(account.balance);
-      newUsedAmount = Number(account.usedAmount);
+      let newBalance = Money.fromString(account.balance);
+      newUsedAmount = Money.fromString(account.usedAmount);
+      const amount = Money.fromNumber(input.amount);
 
       if (input.type === "INCOME") {
-        newBalance += input.amount;
+        newBalance = newBalance.add(amount);
       } else {
-        newBalance -= input.amount;
-        newUsedAmount += input.amount;
+        newBalance = newBalance.subtract(amount);
+        newUsedAmount = newUsedAmount.add(amount);
       }
 
       await this.accounts.updateAccountAmounts(
         input.accountId,
-        String(newBalance),
-        String(newUsedAmount),
+        newBalance.toString(),
+        newUsedAmount.toString(),
         tx,
       );
       return record;
@@ -76,7 +74,7 @@ export class TransactionService {
       account,
       userId: input.userId,
       accountId: input.accountId,
-      newUsedAmount,
+      newUsedAmount: newUsedAmount.toString(),
       type: input.type,
     });
 
@@ -101,25 +99,26 @@ export class TransactionService {
       throw new NotFoundError(TRANSACTION_ERROR_MESSAGES.ACCOUNT_NOT_FOUND);
     }
 
-    let newBalance = Number(account.balance);
-    let newUsedAmount = Number(account.usedAmount);
-    const existingAmount = Number(existingTransaction.amount);
+    let newBalance = Money.fromString(account.balance);
+    let newUsedAmount = Money.fromString(account.usedAmount);
+    const existingAmount = Money.fromString(existingTransaction.amount);
+    const nextAmount = Money.fromNumber(input.amount);
 
     if (existingTransaction.type === "INCOME") {
-      newBalance -= existingAmount;
+      newBalance = newBalance.subtract(existingAmount);
     } else {
-      newBalance += existingAmount;
-      newUsedAmount -= existingAmount;
+      newBalance = newBalance.add(existingAmount);
+      newUsedAmount = newUsedAmount.subtract(existingAmount);
     }
 
     if (input.type === "INCOME") {
-      newBalance += input.amount;
+      newBalance = newBalance.add(nextAmount);
     } else {
-      newBalance -= input.amount;
-      newUsedAmount += input.amount;
+      newBalance = newBalance.subtract(nextAmount);
+      newUsedAmount = newUsedAmount.add(nextAmount);
     }
 
-    newUsedAmount = ensureNotNegativeAmount(newUsedAmount);
+    newUsedAmount = newUsedAmount.clampNonNegative();
 
     const nextRecurringDate = getNextRecurringDate(
       input.date,
@@ -137,8 +136,8 @@ export class TransactionService {
 
       await this.accounts.updateAccountAmounts(
         existingTransaction.accountId,
-        String(newBalance),
-        String(newUsedAmount),
+        newBalance.toString(),
+        newUsedAmount.toString(),
         tx,
       );
       return record;
@@ -148,7 +147,7 @@ export class TransactionService {
       account,
       userId: existingTransaction.userId,
       accountId: existingTransaction.accountId,
-      newUsedAmount,
+      newUsedAmount: newUsedAmount.toString(),
       type: input.type,
     });
 
@@ -170,25 +169,25 @@ export class TransactionService {
       throw new NotFoundError(TRANSACTION_ERROR_MESSAGES.ACCOUNT_NOT_FOUND);
     }
 
-    let newBalance = Number(account.balance);
-    let newUsedAmount = Number(account.usedAmount);
-    const existingAmount = Number(existingTransaction.amount);
+    let newBalance = Money.fromString(account.balance);
+    let newUsedAmount = Money.fromString(account.usedAmount);
+    const existingAmount = Money.fromString(existingTransaction.amount);
 
     if (existingTransaction.type === "INCOME") {
-      newBalance -= existingAmount;
+      newBalance = newBalance.subtract(existingAmount);
     } else {
-      newBalance += existingAmount;
-      newUsedAmount -= existingAmount;
+      newBalance = newBalance.add(existingAmount);
+      newUsedAmount = newUsedAmount.subtract(existingAmount);
     }
 
-    newUsedAmount = ensureNotNegativeAmount(newUsedAmount);
+    newUsedAmount = newUsedAmount.clampNonNegative();
 
     await runInTransaction(async (tx) => {
       await this.transactions.deleteTransactionById(transactionId, tx);
       await this.accounts.updateAccountAmounts(
         existingTransaction.accountId,
-        String(newBalance),
-        String(newUsedAmount),
+        newBalance.toString(),
+        newUsedAmount.toString(),
         tx,
       );
     });
@@ -206,21 +205,21 @@ export class TransactionService {
 
     const accountDeltas = new Map<
       string,
-      { balanceDelta: number; usedAmountDelta: number }
+      { balanceDelta: Money; usedAmountDelta: Money }
     >();
 
     for (const txn of transactions) {
       const current = accountDeltas.get(txn.accountId) ?? {
-        balanceDelta: 0,
-        usedAmountDelta: 0,
+        balanceDelta: Money.zero(),
+        usedAmountDelta: Money.zero(),
       };
-      const amount = Number(txn.amount);
+      const amount = Money.fromString(txn.amount);
 
       if (txn.type === "INCOME") {
-        current.balanceDelta -= amount;
+        current.balanceDelta = current.balanceDelta.subtract(amount);
       } else {
-        current.balanceDelta += amount;
-        current.usedAmountDelta -= amount;
+        current.balanceDelta = current.balanceDelta.add(amount);
+        current.usedAmountDelta = current.usedAmountDelta.subtract(amount);
       }
 
       accountDeltas.set(txn.accountId, current);
@@ -233,15 +232,15 @@ export class TransactionService {
           throw new NotFoundError(TRANSACTION_ERROR_MESSAGES.ACCOUNT_NOT_FOUND);
         }
 
-        const newBalance = Number(account.balance) + delta.balanceDelta;
-        const newUsedAmount = ensureNotNegativeAmount(
-          Number(account.usedAmount) + delta.usedAmountDelta,
-        );
+        const newBalance = Money.fromString(account.balance).add(delta.balanceDelta);
+        const newUsedAmount = Money.fromString(account.usedAmount)
+          .add(delta.usedAmountDelta)
+          .clampNonNegative();
 
         await this.accounts.updateAccountAmounts(
           accountId,
-          String(newBalance),
-          String(newUsedAmount),
+          newBalance.toString(),
+          newUsedAmount.toString(),
           tx,
         );
       }

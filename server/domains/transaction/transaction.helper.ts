@@ -24,10 +24,6 @@ export const getNextRecurringDate = (
   }
 };
 
-export const ensureNotNegativeAmount = (value: number): number => {
-  return Math.max(value, 0);
-};
-
 export const parseGeminiJson = (rawText: string): AiReceiptResult => {
   const cleanText = rawText.replace(/```(json)?/g, "").trim();
   const parsed = JSON.parse(cleanText) as AiReceiptResult;

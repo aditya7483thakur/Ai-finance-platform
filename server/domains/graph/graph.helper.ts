@@ -1,3 +1,4 @@
+import { Money } from "../../shared/utils/money.js";
 import type {
   DailySummaryAmounts,
   DailyTransactionSummaryItem,
@@ -37,20 +38,28 @@ const buildDateKey = (date: Date): string => date.toISOString().split("T")[0];
 export const buildDailySummaryMap = (
   rows: GraphGroupedTransactionRow[],
 ): Record<string, DailySummaryAmounts> => {
-  const summaryMap: Record<string, DailySummaryAmounts> = {};
+  const totals: Record<string, { income: Money; expense: Money }> = {};
 
   for (const row of rows) {
     const dateKey = buildDateKey(row.date);
-    if (!summaryMap[dateKey]) {
-      summaryMap[dateKey] = { income: 0, expense: 0 };
+    if (!totals[dateKey]) {
+      totals[dateKey] = { income: Money.zero(), expense: Money.zero() };
     }
 
-    const amount = row.amount;
+    const amount = Money.fromString(row.amount);
     if (row.type === "INCOME") {
-      summaryMap[dateKey].income += amount;
+      totals[dateKey].income = totals[dateKey].income.add(amount);
     } else {
-      summaryMap[dateKey].expense += amount;
+      totals[dateKey].expense = totals[dateKey].expense.add(amount);
     }
+  }
+
+  const summaryMap: Record<string, DailySummaryAmounts> = {};
+  for (const [dateKey, day] of Object.entries(totals)) {
+    summaryMap[dateKey] = {
+      income: day.income.toNumber(),
+      expense: day.expense.toNumber(),
+    };
   }
 
   return summaryMap;

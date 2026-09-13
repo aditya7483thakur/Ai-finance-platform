@@ -55,5 +55,5 @@ export type CategoryExpensesResult = {
 export type GraphGroupedTransactionRow = {
   date: Date;
   type: GraphTransactionType;
-  amount: number;
+  amount: string;
 };
