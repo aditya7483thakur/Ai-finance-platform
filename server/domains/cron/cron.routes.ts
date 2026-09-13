@@ -6,7 +6,7 @@ import {
 
 const router = express.Router();
 
-router.get("/run-recurring-transactions", runRecurringTransactions);
-router.get("/run-monthly-summaries", sendMonthlySummaries);
+router.post("/run-recurring-transactions", runRecurringTransactions);
+router.post("/run-monthly-summaries", sendMonthlySummaries);
 
 export default router;

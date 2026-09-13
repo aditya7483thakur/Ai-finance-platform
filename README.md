@@ -76,7 +76,7 @@ Refer to the provided .env.example files in each folder to know which environmen
 ```
 Make sure to fill in the necessary values (e.g., API keys, database URLs, JWT secret, cron secret, Gmail credentials, etc.).
 
-Cron jobs (cron-job.org) must send header `x-cron-secret` with the same value as `CRON_SECRET`. Do not put this secret in the React app.
+Cron jobs (cron-job.org) must use POST and send header `x-cron-secret` with the same value as `CRON_SECRET`. Do not put this secret in the React app.
 
 ### 5. Run the App
 Once environment variables are set up and dependencies are installed, start both the client and server.
