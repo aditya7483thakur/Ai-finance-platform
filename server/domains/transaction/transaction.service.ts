@@ -1,8 +1,7 @@
 import fs from "fs/promises";
-import {
-  extractReceiptDataWithGemini,
-  GEMINI_API_MISSING_ERROR,
-} from "../../shared/integrations/ai/gemini.js";
+import type { AiClient } from "../../shared/integrations/ai/ai.port.js";
+import { aiGeminiAdapter } from "../../shared/integrations/ai/ai.adapter.gemini.js";
+import { AI_API_MISSING_ERROR } from "../../shared/integrations/ai/ai.types.js";
 import { BadRequestError, NotFoundError } from "../../shared/types/errors.js";
 import { accountService } from "../account/account.service.js";
 import { accountPrismaRepository } from "../account/account.repository.prisma.js";
@@ -26,6 +25,7 @@ export class TransactionService {
   constructor(
     private readonly transactions: TransactionRepository,
     private readonly accounts: AccountRepository,
+    private readonly ai: AiClient,
   ) {}
 
   async create(input: CreateTransactionInput): Promise<Transaction> {
@@ -281,14 +281,14 @@ export class TransactionService {
     const base64Image = fileBuffer.toString("base64");
 
     try {
-      const extractedText = await extractReceiptDataWithGemini(
+      const extractedText = await this.ai.extractReceipt({
         mimeType,
         base64Image,
-      );
+      });
       const parsed = parseGeminiJson(extractedText);
       return parsed;
     } catch (error) {
-      if (error instanceof Error && error.message === GEMINI_API_MISSING_ERROR) {
+      if (error instanceof Error && error.message === AI_API_MISSING_ERROR) {
         throw new BadRequestError(
           TRANSACTION_ERROR_MESSAGES.GEMINI_API_KEY_MISSING,
         );
@@ -305,4 +305,5 @@ export class TransactionService {
 export const transactionService = new TransactionService(
   transactionPrismaRepository,
   accountPrismaRepository,
+  aiGeminiAdapter,
 );

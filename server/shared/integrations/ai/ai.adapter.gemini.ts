@@ -1,49 +1,40 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import type { AiClient } from "./ai.port.js";
+import { AI_API_MISSING_ERROR } from "./ai.types.js";
 
 const GEMINI_MODEL_NAME = "gemini-1.5-flash";
-
-export const GEMINI_API_MISSING_ERROR = "GEMINI_API_MISSING";
-
-export type FinancialTipExpenseItem = {
-  name: string;
-  value: number;
-};
 
 const getGeminiModel = () => {
   const apiKey = process.env.GEMINI_API;
 
   if (!apiKey || apiKey.trim() === "") {
-    throw new Error(GEMINI_API_MISSING_ERROR);
+    throw new Error(AI_API_MISSING_ERROR);
   }
 
   const genAI = new GoogleGenerativeAI(apiKey);
   return genAI.getGenerativeModel({ model: GEMINI_MODEL_NAME });
 };
 
-export const generateFinancialTipWithGemini = async (
-  expenses: FinancialTipExpenseItem[],
-): Promise<string> => {
-  const model = getGeminiModel();
+export const aiGeminiAdapter: AiClient = {
+  writeTips: async (expenses) => {
+    const model = getGeminiModel();
 
-  const prompt = `
+    const prompt = `
 You are a friendly financial advisor. Based on the category-wise monthly spending below, write 2-3 personalized financial tips. Be concise, friendly, and avoid guilt-tripping.
 
 Here is the user's monthly spending:
 ${expenses.map((item) => `${item.name}: INR ${item.value.toFixed(2)}`).join("\n")}
 `;
 
-  const result = await model.generateContent(prompt);
-  const response = await result.response;
-  return response.text();
-};
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    return response.text();
+  },
 
-export const extractReceiptDataWithGemini = async (
-  mimeType: string,
-  base64Image: string,
-): Promise<string> => {
-  const model = getGeminiModel();
+  extractReceipt: async ({ mimeType, base64Image }) => {
+    const model = getGeminiModel();
 
-  const prompt = `
+    const prompt = `
 You're a smart assistant that extracts fields from receipts.
 From the uploaded image, return this object:
 {
@@ -56,22 +47,23 @@ From the uploaded image, return this object:
 If it's not a receipt, return an empty object {}
 `;
 
-  const result = await model.generateContent({
-    contents: [
-      {
-        role: "user",
-        parts: [
-          { text: prompt },
-          {
-            inlineData: {
-              mimeType,
-              data: base64Image,
+    const result = await model.generateContent({
+      contents: [
+        {
+          role: "user",
+          parts: [
+            { text: prompt },
+            {
+              inlineData: {
+                mimeType,
+                data: base64Image,
+              },
             },
-          },
-        ],
-      },
-    ],
-  });
+          ],
+        },
+      ],
+    });
 
-  return result.response.text().trim();
+    return result.response.text().trim();
+  },
 };

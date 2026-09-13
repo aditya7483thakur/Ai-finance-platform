@@ -1,7 +1,9 @@
 import { endOfMonth, startOfMonth } from "date-fns";
 import { accountService } from "../account/account.service.js";
-import { sendEmail } from "../../shared/integrations/email/sendEmail.js";
-import { generateFinancialTipWithGemini } from "../../shared/integrations/ai/gemini.js";
+import type { AiClient } from "../../shared/integrations/ai/ai.port.js";
+import { aiGeminiAdapter } from "../../shared/integrations/ai/ai.adapter.gemini.js";
+import type { EmailSender } from "../../shared/integrations/email/email.port.js";
+import { emailNodemailerAdapter } from "../../shared/integrations/email/email.adapter.nodemailer.js";
 import { BadRequestError, NotFoundError } from "../../shared/types/errors.js";
 import { CRON_ERROR_MESSAGES } from "./cron.constants.js";
 import {
@@ -26,6 +28,8 @@ export class CronService {
     private readonly transactions: TransactionRepository,
     private readonly accounts: AccountRepository,
     private readonly users: UserRepository,
+    private readonly ai: AiClient,
+    private readonly mailer: EmailSender,
   ) {}
 
   async runRecurringTransactions(
@@ -143,10 +147,10 @@ export class CronService {
           continue;
         }
 
-        const tip = await generateFinancialTipWithGemini(formatted);
+        const tip = await this.ai.writeTips(formatted);
         const html = buildMonthlySummaryHtml(formatted, month, year, tip);
 
-        await sendEmail({
+        await this.mailer.send({
           to: user.email,
           subject: `Your ${month} Summary + Tip from Budgetly`,
           html,
@@ -171,4 +175,6 @@ export const cronService = new CronService(
   transactionPrismaRepository,
   accountPrismaRepository,
   userPrismaRepository,
+  aiGeminiAdapter,
+  emailNodemailerAdapter,
 );

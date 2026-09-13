@@ -1,6 +1,7 @@
 import { BadRequestError, NotFoundError } from "../../shared/types/errors.js";
 import { Money } from "../../shared/utils/money.js";
-import { sendEmail } from "../../shared/integrations/email/sendEmail.js";
+import type { EmailSender } from "../../shared/integrations/email/email.port.js";
+import { emailNodemailerAdapter } from "../../shared/integrations/email/email.adapter.nodemailer.js";
 import {
   ACCOUNT_BUDGET_ALERT,
   ACCOUNT_ERROR_MESSAGES,
@@ -25,6 +26,7 @@ export class AccountService {
   constructor(
     private readonly accounts: AccountRepository,
     private readonly users: UserRepository,
+    private readonly mailer: EmailSender,
   ) {}
 
   async create(input: CreateAccountInput): Promise<Account> {
@@ -111,7 +113,7 @@ export class AccountService {
       return;
     }
 
-    await sendEmail({
+    await this.mailer.send({
       to: input.account.user.email,
       subject: `${ACCOUNT_BUDGET_ALERT.SUBJECT_PREFIX} ${input.account.name}`,
       html: `Hi ${
@@ -128,4 +130,5 @@ export class AccountService {
 export const accountService = new AccountService(
   accountPrismaRepository,
   userPrismaRepository,
+  emailNodemailerAdapter,
 );
