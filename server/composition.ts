@@ -1,5 +1,6 @@
 import { emailNodemailerAdapter } from "./shared/integrations/email/email.adapter.nodemailer.js";
 import { aiGeminiAdapter } from "./shared/integrations/ai/ai.adapter.gemini.js";
+import { bcryptPasswordHasher } from "./shared/integrations/password/password.adapter.bcrypt.js";
 import { accountPrismaRepository } from "./domains/account/account.repository.prisma.js";
 import { transactionPrismaRepository } from "./domains/transaction/transaction.repository.prisma.js";
 import { userPrismaRepository } from "./domains/user/user.repository.prisma.js";
@@ -16,9 +17,15 @@ export const accountService = new AccountService(
   emailNodemailerAdapter,
 );
 
-export const authService = new AuthService(userPrismaRepository);
+export const authService = new AuthService(
+  userPrismaRepository,
+  bcryptPasswordHasher,
+);
 
-export const userService = new UserService(userPrismaRepository);
+export const userService = new UserService(
+  userPrismaRepository,
+  bcryptPasswordHasher,
+);
 
 export const graphService = new GraphService(transactionPrismaRepository);
 

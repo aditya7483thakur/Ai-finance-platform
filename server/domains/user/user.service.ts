@@ -1,6 +1,6 @@
-import bcrypt from "bcrypt";
 import { type AuthUserPayload, type User } from "./user.types.js";
 import { ConflictError, NotFoundError } from "../../shared/types/errors.js";
+import type { PasswordHasher } from "../../shared/integrations/password/password.port.js";
 import { USER_ERROR_MESSAGES } from "./user.constants.js";
 import type { UserRepository } from "./user.port.js";
 
@@ -9,7 +9,10 @@ const getNameFromAuthPayload = (firstName?: string, lastName?: string) => {
 };
 
 export class UserService {
-  constructor(private readonly users: UserRepository) {}
+  constructor(
+    private readonly users: UserRepository,
+    private readonly passwords: PasswordHasher,
+  ) {}
 
   async createAuthUser(payload: AuthUserPayload): Promise<User> {
     const email = payload.email;
@@ -26,7 +29,7 @@ export class UserService {
       );
     }
 
-    const placeholderPassword = await bcrypt.hash(`auth:${payload.id}`, 10);
+    const placeholderPassword = await this.passwords.hash(`auth:${payload.id}`);
 
     return this.users.createUser({
       id: payload.id,

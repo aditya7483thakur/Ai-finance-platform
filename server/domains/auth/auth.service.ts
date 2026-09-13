@@ -1,9 +1,9 @@
-import bcrypt from "bcrypt";
 import {
   BadRequestError,
   ConflictError,
   NotFoundError,
 } from "../../shared/types/errors.js";
+import type { PasswordHasher } from "../../shared/integrations/password/password.port.js";
 import { AUTH_ERROR_MESSAGES } from "./auth.constants.js";
 import type {
   AccessTokenPayload,
@@ -18,10 +18,11 @@ import {
 } from "./auth.helper.js";
 import type { UserRepository } from "../user/user.port.js";
 
-const SALT_ROUNDS = 10;
-
 export class AuthService {
-  constructor(private readonly users: UserRepository) {}
+  constructor(
+    private readonly users: UserRepository,
+    private readonly passwords: PasswordHasher,
+  ) {}
 
   async signup(input: SignupInput): Promise<AuthSessionData> {
     const existingUser = await this.users.findUserByEmail(input.email);
@@ -30,7 +31,7 @@ export class AuthService {
       throw new ConflictError(AUTH_ERROR_MESSAGES.USER_ALREADY_EXISTS);
     }
 
-    const hashedPassword = await bcrypt.hash(input.password, SALT_ROUNDS);
+    const hashedPassword = await this.passwords.hash(input.password);
     const newUser = await this.users.createUser({
       name: input.name,
       email: input.email,
@@ -50,7 +51,10 @@ export class AuthService {
       throw new BadRequestError(AUTH_ERROR_MESSAGES.INVALID_EMAIL_OR_PASSWORD);
     }
 
-    const isPasswordValid = await bcrypt.compare(input.password, user.password);
+    const isPasswordValid = await this.passwords.compare(
+      input.password,
+      user.password,
+    );
 
     if (!isPasswordValid) {
       throw new BadRequestError(AUTH_ERROR_MESSAGES.INVALID_EMAIL_OR_PASSWORD);
