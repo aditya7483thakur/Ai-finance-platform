@@ -3,10 +3,8 @@ import { BadRequestError, NotFoundError } from "../../shared/types/errors.js";
 import { Money } from "../../shared/utils/money.js";
 import type { EmailSender } from "../../shared/integrations/email/email.port.js";
 import { emailNodemailerAdapter } from "../../shared/integrations/email/email.adapter.nodemailer.js";
-import {
-  ACCOUNT_BUDGET_ALERT,
-  ACCOUNT_ERROR_MESSAGES,
-} from "./account.constants.js";
+import { buildBudgetAlertEmail } from "../../shared/integrations/email/email.templates.js";
+import { ACCOUNT_ERROR_MESSAGES } from "./account.constants.js";
 import {
   canDeleteAccount,
   hasUpdateAccountData,
@@ -114,14 +112,15 @@ export class AccountService {
       return;
     }
 
+    const { subject, html } = buildBudgetAlertEmail({
+      userName: input.account.user.name,
+      accountName: input.account.name,
+    });
+
     await this.mailer.send({
       to: input.account.user.email,
-      subject: `${ACCOUNT_BUDGET_ALERT.SUBJECT_PREFIX} ${input.account.name}`,
-      html: `Hi ${
-        input.account.user.name || "there"
-      },<br/><br/>You've used over 90% of your budget for <strong>${
-        input.account.name
-      }</strong>.<br/>Try to hold back a bit to avoid going over!`,
+      subject,
+      html,
     });
 
     await this.accounts.createBudgetAlertSentRecord(input.userId, input.accountId);

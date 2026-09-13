@@ -29,7 +29,7 @@ export enum EmailType {
   MONTHLY_REPORT = "MONTHLY_REPORT",
 }
 
-export enum EmailStatus {
+export enum EmailStatus { 
   PENDING = "PENDING",
   SENT = "SENT",
   FAILED = "FAILED",
@@ -38,5 +38,4 @@ export enum EmailStatus {
 export const ACCOUNT_BUDGET_ALERT = {
   TYPE: EmailType.BUDGET_ALERT,
   STATUS_SENT: EmailStatus.SENT,
-  SUBJECT_PREFIX: "Budget Alert for",
 } as const;

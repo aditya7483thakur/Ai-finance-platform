@@ -2,11 +2,6 @@ export type CronJobName =
   | "run-recurring-transactions"
   | "run-monthly-summaries";
 
-export type MonthlyExpenseItem = {
-  name: string;
-  value: number;
-};
-
 export type RunRecurringTransactionsResult = {
   processedCount: number;
 };

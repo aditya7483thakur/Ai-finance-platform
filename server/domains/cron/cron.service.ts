@@ -4,12 +4,10 @@ import type { AiClient } from "../../shared/integrations/ai/ai.port.js";
 import { aiGeminiAdapter } from "../../shared/integrations/ai/ai.adapter.gemini.js";
 import type { EmailSender } from "../../shared/integrations/email/email.port.js";
 import { emailNodemailerAdapter } from "../../shared/integrations/email/email.adapter.nodemailer.js";
+import { buildMonthlySummaryEmail } from "../../shared/integrations/email/email.templates.js";
 import { BadRequestError, NotFoundError } from "../../shared/types/errors.js";
 import { CRON_ERROR_MESSAGES } from "./cron.constants.js";
-import {
-  buildMonthlySummaryHtml,
-  getNextRecurringDate,
-} from "./cron.helper.js";
+import { getNextRecurringDate } from "./cron.helper.js";
 import type {
   RunRecurringTransactionsResult,
   SendMonthlySummariesResult,
@@ -148,11 +146,16 @@ export class CronService {
         }
 
         const tip = await this.ai.writeTips(formatted);
-        const html = buildMonthlySummaryHtml(formatted, month, year, tip);
+        const { subject, html } = buildMonthlySummaryEmail({
+          expenses: formatted,
+          month,
+          year,
+          tip,
+        });
 
         await this.mailer.send({
           to: user.email,
-          subject: `Your ${month} Summary + Tip from Budgetly`,
+          subject,
           html,
         });
 
