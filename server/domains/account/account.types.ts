@@ -1,4 +1,4 @@
-export type AccountTransactionType = "INCOME" | "EXPENSE";
+import type { LedgerEntryType } from "../../shared/types/ledger.js";
 
 export type Account = {
   id: string;
@@ -40,5 +40,5 @@ export type SendBudgetAlertInput = {
   userId: string;
   accountId: string;
   newUsedAmount: string;
-  type: AccountTransactionType;
+  type: `${LedgerEntryType}`;
 };

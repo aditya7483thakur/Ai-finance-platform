@@ -18,6 +18,10 @@ import type { TransactionRepository } from "./transaction.port.js";
 import { transactionPrismaRepository } from "./transaction.repository.prisma.js";
 import type { AccountRepository } from "../account/account.port.js";
 import { runInTransaction } from "../../config/prisma.js";
+import {
+  applyLedgerEntry,
+  reverseLedgerEntry,
+} from "../../shared/utils/ledger.js";
 import { Money } from "../../shared/utils/money.js";
 import { getNextRecurringDate } from "./transaction.helper.js";
 
@@ -50,21 +54,20 @@ export class TransactionService {
         tx,
       );
 
-      let newBalance = Money.fromString(account.balance);
-      newUsedAmount = Money.fromString(account.usedAmount);
-      const amount = Money.fromNumber(input.amount);
-
-      if (input.type === "INCOME") {
-        newBalance = newBalance.add(amount);
-      } else {
-        newBalance = newBalance.subtract(amount);
-        newUsedAmount = newUsedAmount.add(amount);
-      }
+      const next = applyLedgerEntry(
+        {
+          balance: Money.fromString(account.balance),
+          usedAmount: Money.fromString(account.usedAmount),
+        },
+        input.type,
+        Money.fromNumber(input.amount),
+      );
+      newUsedAmount = next.usedAmount;
 
       await this.accounts.updateAccountAmounts(
         input.accountId,
-        newBalance.toString(),
-        newUsedAmount.toString(),
+        next.balance.toString(),
+        next.usedAmount.toString(),
         tx,
       );
       return record;
@@ -99,26 +102,21 @@ export class TransactionService {
       throw new NotFoundError(TRANSACTION_ERROR_MESSAGES.ACCOUNT_NOT_FOUND);
     }
 
-    let newBalance = Money.fromString(account.balance);
-    let newUsedAmount = Money.fromString(account.usedAmount);
-    const existingAmount = Money.fromString(existingTransaction.amount);
-    const nextAmount = Money.fromNumber(input.amount);
-
-    if (existingTransaction.type === "INCOME") {
-      newBalance = newBalance.subtract(existingAmount);
-    } else {
-      newBalance = newBalance.add(existingAmount);
-      newUsedAmount = newUsedAmount.subtract(existingAmount);
-    }
-
-    if (input.type === "INCOME") {
-      newBalance = newBalance.add(nextAmount);
-    } else {
-      newBalance = newBalance.subtract(nextAmount);
-      newUsedAmount = newUsedAmount.add(nextAmount);
-    }
-
-    newUsedAmount = newUsedAmount.clampNonNegative();
+    const undone = reverseLedgerEntry(
+      {
+        balance: Money.fromString(account.balance),
+        usedAmount: Money.fromString(account.usedAmount),
+      },
+      existingTransaction.type,
+      Money.fromString(existingTransaction.amount),
+    );
+    const next = applyLedgerEntry(
+      undone,
+      input.type,
+      Money.fromNumber(input.amount),
+    );
+    const newBalance = next.balance;
+    const newUsedAmount = next.usedAmount.clampNonNegative();
 
     const nextRecurringDate = getNextRecurringDate(
       input.date,
@@ -169,18 +167,16 @@ export class TransactionService {
       throw new NotFoundError(TRANSACTION_ERROR_MESSAGES.ACCOUNT_NOT_FOUND);
     }
 
-    let newBalance = Money.fromString(account.balance);
-    let newUsedAmount = Money.fromString(account.usedAmount);
-    const existingAmount = Money.fromString(existingTransaction.amount);
-
-    if (existingTransaction.type === "INCOME") {
-      newBalance = newBalance.subtract(existingAmount);
-    } else {
-      newBalance = newBalance.add(existingAmount);
-      newUsedAmount = newUsedAmount.subtract(existingAmount);
-    }
-
-    newUsedAmount = newUsedAmount.clampNonNegative();
+    const next = reverseLedgerEntry(
+      {
+        balance: Money.fromString(account.balance),
+        usedAmount: Money.fromString(account.usedAmount),
+      },
+      existingTransaction.type,
+      Money.fromString(existingTransaction.amount),
+    );
+    const newBalance = next.balance;
+    const newUsedAmount = next.usedAmount.clampNonNegative();
 
     await runInTransaction(async (tx) => {
       await this.transactions.deleteTransactionById(transactionId, tx);
@@ -205,24 +201,19 @@ export class TransactionService {
 
     const accountDeltas = new Map<
       string,
-      { balanceDelta: Money; usedAmountDelta: Money }
+      { balance: Money; usedAmount: Money }
     >();
 
     for (const txn of transactions) {
       const current = accountDeltas.get(txn.accountId) ?? {
-        balanceDelta: Money.zero(),
-        usedAmountDelta: Money.zero(),
+        balance: Money.zero(),
+        usedAmount: Money.zero(),
       };
-      const amount = Money.fromString(txn.amount);
 
-      if (txn.type === "INCOME") {
-        current.balanceDelta = current.balanceDelta.subtract(amount);
-      } else {
-        current.balanceDelta = current.balanceDelta.add(amount);
-        current.usedAmountDelta = current.usedAmountDelta.subtract(amount);
-      }
-
-      accountDeltas.set(txn.accountId, current);
+      accountDeltas.set(
+        txn.accountId,
+        reverseLedgerEntry(current, txn.type, Money.fromString(txn.amount)),
+      );
     }
 
     await runInTransaction(async (tx) => {
@@ -232,9 +223,9 @@ export class TransactionService {
           throw new NotFoundError(TRANSACTION_ERROR_MESSAGES.ACCOUNT_NOT_FOUND);
         }
 
-        const newBalance = Money.fromString(account.balance).add(delta.balanceDelta);
+        const newBalance = Money.fromString(account.balance).add(delta.balance);
         const newUsedAmount = Money.fromString(account.usedAmount)
-          .add(delta.usedAmountDelta)
+          .add(delta.usedAmount)
           .clampNonNegative();
 
         await this.accounts.updateAccountAmounts(

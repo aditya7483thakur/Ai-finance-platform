@@ -1,5 +1,6 @@
 import { Prisma, type Transaction as PrismaTransaction } from "@prisma/client";
 import prisma, { type DbClient } from "../../config/prisma.js";
+import { LedgerEntryType } from "../../shared/types/ledger.js";
 import type { PersistenceContext } from "../../shared/types/persistence.js";
 import type { TransactionRepository } from "./transaction.port.js";
 import type {
@@ -191,7 +192,7 @@ export const transactionPrismaRepository: TransactionRepository = {
       by: ["category"],
       where: {
         userId,
-        type: "EXPENSE",
+        type: LedgerEntryType.EXPENSE,
         date: {
           gte: firstDayOfMonth,
           lte: lastDayOfMonth,

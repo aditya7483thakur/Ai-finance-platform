@@ -1,3 +1,4 @@
+import { LedgerEntryType } from "../../shared/types/ledger.js";
 import { Money } from "../../shared/utils/money.js";
 import type {
   DailySummaryAmounts,
@@ -47,7 +48,7 @@ export const buildDailySummaryMap = (
     }
 
     const amount = Money.fromString(row.amount);
-    if (row.type === "INCOME") {
+    if (row.type === LedgerEntryType.INCOME) {
       totals[dateKey].income = totals[dateKey].income.add(amount);
     } else {
       totals[dateKey].expense = totals[dateKey].expense.add(amount);

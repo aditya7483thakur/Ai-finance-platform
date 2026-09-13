@@ -1,3 +1,4 @@
+import { LedgerEntryType } from "../../shared/types/ledger.js";
 import { BadRequestError, NotFoundError } from "../../shared/types/errors.js";
 import { Money } from "../../shared/utils/money.js";
 import type { EmailSender } from "../../shared/integrations/email/email.port.js";
@@ -91,7 +92,7 @@ export class AccountService {
 
   async sendBudgetAlertIfNeeded(input: SendBudgetAlertInput): Promise<void> {
     if (
-      input.type !== "EXPENSE" ||
+      input.type !== LedgerEntryType.EXPENSE ||
       !input.account.budget ||
       !input.account.user.email
     ) {

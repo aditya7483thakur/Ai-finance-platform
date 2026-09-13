@@ -1,12 +1,16 @@
 import { z } from "zod";
+import { LedgerEntryType } from "../../shared/types/ledger.js";
 import { queryString, routeParam } from "../../shared/utils/parseWithZod.js";
 import { TRANSACTION_ERROR_MESSAGES } from "./transaction.constants.js";
 
-export const transactionTypeSchema = z.enum(["INCOME", "EXPENSE"], {
-  errorMap: () => ({
-    message: TRANSACTION_ERROR_MESSAGES.INVALID_TRANSACTION_TYPE,
-  }),
-});
+export const transactionTypeSchema = z.enum(
+  [LedgerEntryType.INCOME, LedgerEntryType.EXPENSE],
+  {
+    errorMap: () => ({
+      message: TRANSACTION_ERROR_MESSAGES.INVALID_TRANSACTION_TYPE,
+    }),
+  },
+);
 
 export const recurringIntervalSchema = z.enum(
   ["DAILY", "WEEKLY", "MONTHLY", "YEARLY"],
@@ -185,7 +189,7 @@ export const transactionIdParamSchema = routeParam(
   TRANSACTION_ERROR_MESSAGES.TRANSACTION_ID_REQUIRED,
 );
 
-export type TransactionType = z.infer<typeof transactionTypeSchema>;
+export type TransactionType = `${LedgerEntryType}`;
 export type RecurringInterval = z.infer<typeof recurringIntervalSchema>;
 export type TransactionCategory = z.infer<typeof transactionCategorySchema>;
 export type CreateTransactionInput = z.infer<typeof createTransactionInputSchema>;

@@ -1,3 +1,5 @@
+import type { LedgerEntryType } from "../../types/ledger.js";
+
 export const AI_API_MISSING_ERROR = "AI_API_MISSING";
 
 export type FinancialTipExpenseItem = {
@@ -11,7 +13,7 @@ export type ExtractReceiptInput = {
 };
 
 export type AiReceiptResult = {
-  type?: "INCOME" | "EXPENSE";
+  type?: `${LedgerEntryType}`;
   amount?: string;
   category?:
     | "SALARY"

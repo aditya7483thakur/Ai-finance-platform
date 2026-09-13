@@ -1,10 +1,15 @@
-export type {
+import type { LedgerEntryType } from "../../shared/types/ledger.js";
+import type {
   CategoryExpensesQueryInput,
   GraphFilter,
   TransactionSummaryQueryInput,
 } from "./graph.validators.js";
 
-export type GraphTransactionType = "INCOME" | "EXPENSE";
+export type {
+  CategoryExpensesQueryInput,
+  GraphFilter,
+  TransactionSummaryQueryInput,
+};
 
 export type DateRange = {
   startDate: Date;
@@ -54,6 +59,6 @@ export type CategoryExpensesResult = {
 
 export type GraphGroupedTransactionRow = {
   date: Date;
-  type: GraphTransactionType;
+  type: `${LedgerEntryType}`;
   amount: string;
 };

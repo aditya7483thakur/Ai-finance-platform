@@ -15,6 +15,7 @@ import type {
   SendMonthlySummariesResult,
 } from "./cron.types.js";
 import { runInTransaction } from "../../config/prisma.js";
+import { applyLedgerEntry } from "../../shared/utils/ledger.js";
 import { Money } from "../../shared/utils/money.js";
 import type { TransactionRepository } from "../transaction/transaction.port.js";
 import { transactionPrismaRepository } from "../transaction/transaction.repository.prisma.js";
@@ -54,21 +55,20 @@ export class CronService {
           throw new NotFoundError(CRON_ERROR_MESSAGES.ACCOUNT_NOT_FOUND);
         }
 
-        const amount = Money.fromString(transaction.amount);
-        let newBalance = Money.fromString(account.balance);
-        newUsedAmount = Money.fromString(account.usedAmount);
-
-        if (transaction.type === "INCOME") {
-          newBalance = newBalance.add(amount);
-        } else {
-          newBalance = newBalance.subtract(amount);
-          newUsedAmount = newUsedAmount.add(amount);
-        }
+        const next = applyLedgerEntry(
+          {
+            balance: Money.fromString(account.balance),
+            usedAmount: Money.fromString(account.usedAmount),
+          },
+          transaction.type,
+          Money.fromString(transaction.amount),
+        );
+        newUsedAmount = next.usedAmount;
 
         await this.accounts.updateAccountAmounts(
           transaction.accountId,
-          newBalance.toString(),
-          newUsedAmount.toString(),
+          next.balance.toString(),
+          next.usedAmount.toString(),
           tx,
         );
 
