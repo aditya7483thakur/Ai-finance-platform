@@ -76,7 +76,7 @@ export default function Page() {
                 type="button"
                 variant="outline"
                 size="sm"
-                className="border-indigo-200 bg-indigo-50 text-ai hover:bg-indigo-100 hover:text-ai"
+                className="border-accent/25 bg-accent/10 text-accent hover:bg-accent/15 hover:text-accent"
                 onClick={() => openAsk()}
               >
                 <Sparkles className="size-4" aria-hidden />

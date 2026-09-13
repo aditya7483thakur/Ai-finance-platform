@@ -46,7 +46,7 @@ export const ToolActivity = ({ steps }: { steps: string[] }) => (
   <ul className="space-y-1.5 text-xs text-slate-500">
     {steps.map((step) => (
       <li key={step} className="flex items-center gap-2">
-        <Check className="size-3 text-ai" aria-hidden />
+        <Check className="size-3 text-accent" aria-hidden />
         {step}
       </li>
     ))}
@@ -76,7 +76,7 @@ export const AnalysisCard = ({ analysis }: { analysis: AnalysisBlock }) => (
     {analysis.href && (
       <Link
         to={analysis.href}
-        className="mt-4 inline-flex text-sm font-medium text-blue-600 hover:text-blue-800"
+        className="mt-4 inline-flex text-sm font-medium text-primary hover:text-primary/80"
       >
         {analysis.hrefLabel ?? "View Details"}
       </Link>
@@ -85,12 +85,12 @@ export const AnalysisCard = ({ analysis }: { analysis: AnalysisBlock }) => (
 );
 
 export const InsightCard = ({ insight }: { insight: InsightBlock }) => (
-  <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-4">
-    <p className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-ai">
+  <div className="rounded-xl border border-accent/20 bg-accent/10 p-4">
+    <p className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-accent">
       <Sparkles className="size-3.5" aria-hidden />
       Insight
     </p>
-    <p className="mt-2 text-sm text-indigo-950">{insight.body}</p>
+    <p className="mt-2 text-sm text-accent">{insight.body}</p>
     {insight.stats && (
       <dl className="mt-3 space-y-2">
         {insight.stats.map((row) => (
@@ -103,7 +103,7 @@ export const InsightCard = ({ insight }: { insight: InsightBlock }) => (
     {insight.href && (
       <Link
         to={insight.href}
-        className="mt-4 inline-flex text-sm font-medium text-ai hover:underline"
+        className="mt-4 inline-flex text-sm font-medium text-accent hover:underline"
       >
         {insight.hrefLabel ?? "Explore Spending"}
       </Link>
@@ -158,7 +158,7 @@ const ProposalFields = ({
         <Field label="Amount">
           <span
             className={
-              draft.type === "INCOME" ? "text-green-600" : "text-red-600"
+              draft.type === "INCOME" ? "text-success" : "text-error"
             }
           >
             {formatSignedMoney(draft.amount, draft.type)}
@@ -290,8 +290,8 @@ export const SimulationCard = ({
   }
 
   return (
-    <div className="rounded-xl border border-indigo-100 bg-white p-4">
-      <p className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-ai">
+    <div className="rounded-xl border border-accent/20 bg-white p-4">
+      <p className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-accent">
         <FlaskConical className="size-3.5" aria-hidden />
         Simulation
       </p>
@@ -400,16 +400,16 @@ export const CompletedCard = ({
 }: {
   accountId: string;
 }) => (
-  <div className="rounded-xl border border-emerald-200 bg-emerald-50/70 p-4">
-    <p className="text-xs font-medium uppercase tracking-wide text-emerald-800">
+  <div className="rounded-xl border border-success/30 bg-success/10 p-4">
+    <p className="text-xs font-medium uppercase tracking-wide text-success">
       Completed
     </p>
-    <p className="mt-2 text-sm font-medium text-emerald-950">
+    <p className="mt-2 text-sm font-medium text-success">
       Transaction created
     </p>
     <Link
       to={`/dashboard/transactions/${accountId}`}
-      className="mt-3 inline-flex text-sm font-medium text-emerald-800 hover:underline"
+      className="mt-3 inline-flex text-sm font-medium text-success hover:underline"
     >
       View Transaction →
     </Link>

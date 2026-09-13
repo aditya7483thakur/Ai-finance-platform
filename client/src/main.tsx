@@ -1,7 +1,10 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
+import { applyColorVariables } from "./lib/colors";
 import App from "./App.tsx";
+
+applyColorVariables();
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { UserProvider } from "./contexts/userContext.tsx";
 import { AgentProvider } from "./contexts/agentContext.tsx";

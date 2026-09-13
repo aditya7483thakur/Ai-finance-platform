@@ -266,7 +266,7 @@ const AskBudgetly = () => {
         <div ref={threadRef} className="min-h-0 flex-1 space-y-5 overflow-y-auto pb-4">
           {isEmpty && (
             <div className="flex flex-col items-center px-4 py-16 text-center">
-              <Sparkles className="size-6 text-ai" aria-hidden />
+              <Sparkles className="size-6 text-accent" aria-hidden />
               <h3 className="mt-4 text-2xl font-semibold text-slate-900">
                 Ask Budgetly
               </h3>
@@ -283,7 +283,7 @@ const AskBudgetly = () => {
                     key={action.label}
                     type="button"
                     onClick={() => void sendPrompt(action.prompt)}
-                    className="rounded-full border border-indigo-200 bg-white px-3 py-1.5 text-sm text-indigo-900 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ai"
+                    className="rounded-full border border-accent/25 bg-white px-3 py-1.5 text-sm text-accent hover:bg-accent/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                   >
                     {action.label}
                   </button>
@@ -393,7 +393,7 @@ const AskBudgetly = () => {
             <div className="space-y-2">
               <ToolActivity steps={activeTools} />
               {activeTools.length === 0 && (
-                <p className="text-sm text-ai">Looking at your workspace…</p>
+                <p className="text-sm text-accent">Looking at your workspace…</p>
               )}
             </div>
           )}
@@ -409,7 +409,7 @@ const AskBudgetly = () => {
           <div className="flex items-end gap-2">
             <button
               type="button"
-              className="mb-1 rounded-md p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ai"
+              className="mb-1 rounded-md p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               aria-label="Scan a receipt"
               disabled={isScanning || isWorking}
               onClick={() => fileInputRef.current?.click()}
@@ -445,7 +445,7 @@ const AskBudgetly = () => {
             <Button
               type="submit"
               size="icon"
-              className="bg-ai text-ai-foreground hover:bg-ai/90"
+              className="bg-accent text-accent-foreground hover:bg-accent/90"
               disabled={isWorking || !input.trim()}
               aria-label="Send"
             >

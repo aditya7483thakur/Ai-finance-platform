@@ -152,7 +152,7 @@ const Transaction = () => {
             onClick={() =>
               openAsk(`Analyze this account: ${accountName}`)
             }
-            className="rounded-full border border-indigo-200 bg-white px-3 py-1 text-xs text-indigo-900 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ai"
+            className="rounded-full border border-accent/25 bg-white px-3 py-1 text-xs text-accent hover:bg-accent/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             Analyze this account
           </button>
@@ -161,7 +161,7 @@ const Transaction = () => {
             onClick={() =>
               openAsk(`Simulate a transaction in ${accountName}`)
             }
-            className="rounded-full border border-indigo-200 bg-white px-3 py-1 text-xs text-indigo-900 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ai"
+            className="rounded-full border border-accent/25 bg-white px-3 py-1 text-xs text-accent hover:bg-accent/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             Simulate a transaction
           </button>
@@ -170,15 +170,15 @@ const Transaction = () => {
             onClick={() =>
               openAsk(`Explain my spending in ${accountName}`)
             }
-            className="rounded-full border border-indigo-200 bg-white px-3 py-1 text-xs text-indigo-900 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ai"
+            className="rounded-full border border-accent/25 bg-white px-3 py-1 text-xs text-accent hover:bg-accent/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             Explain my spending
           </button>
         </div>
 
         {!isPending && balance < 0 && (
-          <section className="flex flex-col gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="flex items-center gap-2 text-sm font-medium text-red-800">
+          <section className="flex flex-col gap-2 rounded-lg border border-error/30 bg-error/10 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="flex items-center gap-2 text-sm font-medium text-error">
               <TriangleAlert className="size-4" aria-hidden />
               Account is below zero
             </p>
@@ -213,7 +213,7 @@ const Transaction = () => {
               <p className="text-xs uppercase tracking-wide text-slate-500">
                 Income
               </p>
-              <p className="mt-1 text-xl font-semibold text-green-600">
+              <p className="mt-1 text-xl font-semibold text-success">
                 {totals.income == null
                   ? "—"
                   : formatSignedMoney(totals.income, "INCOME")}
@@ -223,7 +223,7 @@ const Transaction = () => {
               <p className="text-xs uppercase tracking-wide text-slate-500">
                 Expenses
               </p>
-              <p className="mt-1 text-xl font-semibold text-red-600">
+              <p className="mt-1 text-xl font-semibold text-error">
                 {formatSignedMoney(totals.expenses, "EXPENSE")}
               </p>
             </div>
@@ -235,7 +235,7 @@ const Transaction = () => {
                 className={cn(
                   "mt-1 text-xl font-semibold",
                   hasBudget && budget - used < 0
-                    ? "text-red-600"
+                    ? "text-error"
                     : "text-slate-900",
                 )}
               >
@@ -246,16 +246,16 @@ const Transaction = () => {
         )}
 
         {insight && (
-          <section className="rounded-xl border border-indigo-100 bg-indigo-50/50 px-4 py-3">
-            <p className="flex items-center gap-2 text-sm font-semibold text-indigo-950">
-              <Sparkles className="size-4 text-ai" aria-hidden />
+          <section className="rounded-xl border border-accent/20 bg-accent/10 px-4 py-3">
+            <p className="flex items-center gap-2 text-sm font-semibold text-accent">
+              <Sparkles className="size-4 text-accent" aria-hidden />
               Budgetly Insight
             </p>
-            <p className="mt-2 text-sm text-indigo-900">
+            <p className="mt-2 text-sm text-accent">
               Most of your spending this month has been in{" "}
               {getCategoryLabel(insight.category)}.
             </p>
-            <p className="mt-1 text-xs text-indigo-800/80">
+            <p className="mt-1 text-xs text-accent/80">
               {formatMoney(insight.amount)} of {formatMoney(insight.total)} total
               expenses.
             </p>
@@ -266,7 +266,7 @@ const Transaction = () => {
                   `Why is ${getCategoryLabel(insight.category)} my largest expense in ${accountName} this month?`,
                 )
               }
-              className="mt-3 text-sm font-medium text-ai hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ai"
+              className="mt-3 text-sm font-medium text-accent hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               Ask Budgetly about this →
             </button>

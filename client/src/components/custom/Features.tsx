@@ -42,42 +42,42 @@ const Features = () => {
     {
       id: 1,
       title: "Smart Budgeting",
-      icon: <BarChart className="w-10 h-10 text-blue-500" />,
+      icon: <BarChart className="w-10 h-10 text-primary" />,
       description:
         "Set spending limits, track expenses, and get alerts when you're close to exceeding your budget.",
     },
     {
       id: 2,
       title: "Seamless Transactions",
-      icon: <Wallet className="w-10 h-10 text-blue-500" />,
+      icon: <Wallet className="w-10 h-10 text-primary" />,
       description:
         "Easily add, categorize, and manage transactions with instant organization.",
     },
     {
       id: 3,
       title: "Multiple Accounts Management",
-      icon: <Banknote className="w-10 h-10 text-blue-500" />,
+      icon: <Banknote className="w-10 h-10 text-primary" />,
       description:
         "Link multiple accounts, track balances, and view all your finances in one place.",
     },
     {
       id: 4,
       title: "Insightful Reports",
-      icon: <LineChart className="w-10 h-10 text-blue-500" />,
+      icon: <LineChart className="w-10 h-10 text-primary" />,
       description:
         "Generate spending reports by category, account, or status to make informed decisions.",
     },
     {
       id: 5,
       title: "Secure & Fast Authentication",
-      icon: <Lock className="w-10 h-10 text-blue-500" />,
+      icon: <Lock className="w-10 h-10 text-primary" />,
       description:
         "Enjoy a seamless login experience with secure authentication.",
     },
     {
       id: 6,
       title: "Automated Expense Tracking",
-      icon: <RefreshCcw className="w-10 h-10 text-blue-500" />,
+      icon: <RefreshCcw className="w-10 h-10 text-primary" />,
       description:
         "Set up recurring transactions and automate bill payments effortlessly.",
     },
@@ -99,7 +99,7 @@ const Features = () => {
             variants={textVariants}
           >
             Unlock the Power of AI for{" "}
-            <span className="text-blue-600">Smarter Finance</span>
+            <span className="text-primary">Smarter Finance</span>
           </motion.h2>
 
           {/* Animated Paragraph */}
@@ -127,7 +127,7 @@ const Features = () => {
             className="flex flex-col items-center text-center bg-white rounded-2xl shadow-lg border border-gray-100 p-4 w-full sm:w-[48%] md:w-[30%] hover:shadow-2xl"
             variants={cardVariants}
           >
-            <div className="flex items-center justify-center w-16 h-16 rounded-full bg-blue-50 mb-6">
+            <div className="flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-6">
               {feature.icon}
             </div>
             <h3 className="text-xl font-semibold text-gray-900 mb-3">

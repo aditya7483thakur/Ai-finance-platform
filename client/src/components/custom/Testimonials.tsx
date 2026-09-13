@@ -73,7 +73,7 @@ const HomeSectionTwo = () => {
           >
             <h2 className="text-3xl md:text-4xl font-extrabold text-center mb-4">
               What Our
-              <span className="text-blue-500"> Users</span> Say
+              <span className="text-primary"> Users</span> Say
             </h2>
             <p className="text-center text-gray-600 mb-16 max-w-2xl mx-auto">
               Hear from our satisfied users about how our platform has made
@@ -132,7 +132,7 @@ const HomeSectionTwo = () => {
           transition={{ duration: 0.8 }}
           viewport={{ once: true, amount: 0.8 }}
         >
-          Take Control of Your <span className="text-blue-500">Finances</span>{" "}
+          Take Control of Your <span className="text-primary">Finances</span>{" "}
           Today 💡
         </motion.h2>
 

@@ -9,7 +9,7 @@ const Home = () => {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-gradient-to-r from-white to-sky-100 font-sans pt-16">
+      <div className="min-h-screen bg-gradient-to-r from-white to-primary/10 font-sans pt-16">
         <HeroSection />
         <Features />
         <PricingPlans />

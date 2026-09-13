@@ -262,15 +262,15 @@ const AddTransaction = () => {
           </header>
 
           {!isEdit && (
-            <section className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-4">
+            <section className="rounded-xl border border-accent/20 bg-accent/10 p-4">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-start gap-2">
-                  <Sparkles className="mt-0.5 size-4 text-ai" aria-hidden />
+                  <Sparkles className="mt-0.5 size-4 text-accent" aria-hidden />
                   <div>
-                    <h3 className="text-sm font-semibold text-indigo-950">
+                    <h3 className="text-sm font-semibold text-accent">
                       Scan Receipt with AI
                     </h3>
-                    <p className="mt-1 text-xs text-indigo-800/80">
+                    <p className="mt-1 text-xs text-accent/80">
                       Upload or scan a receipt and Budgetly will extract the
                       transaction details for you.
                     </p>
@@ -278,7 +278,7 @@ const AddTransaction = () => {
                 </div>
                 <Button
                   type="button"
-                  className="shrink-0 bg-ai text-ai-foreground hover:bg-ai/90"
+                  className="shrink-0 bg-accent text-accent-foreground hover:bg-accent/90"
                   disabled={isScanning}
                   onClick={() => fileInputRef.current?.click()}
                 >
@@ -302,8 +302,8 @@ const AddTransaction = () => {
           )}
 
           {extracted && (
-            <div className="rounded-xl border border-indigo-100 bg-white px-4 py-3">
-              <p className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-ai">
+            <div className="rounded-xl border border-accent/20 bg-white px-4 py-3">
+              <p className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-accent">
                 <Sparkles className="size-3.5" aria-hidden />
                 Extracted from receipt
               </p>
@@ -476,10 +476,10 @@ const AddTransaction = () => {
                               "rounded-lg border px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
                               option.value === "EXPENSE" &&
                                 selected &&
-                                "border-red-300 bg-red-50 text-red-700",
+                                "border-error/40 bg-error/10 text-error",
                               option.value === "INCOME" &&
                                 selected &&
-                                "border-green-300 bg-green-50 text-green-700",
+                                "border-success/40 bg-success/10 text-success",
                               !selected &&
                                 "border-slate-200 bg-white text-slate-600 hover:bg-slate-50",
                             )}
@@ -681,7 +681,7 @@ const AddTransaction = () => {
                 onClick={() =>
                   openAsk("Add a $200 food expense yesterday")
                 }
-                className="inline-flex items-center gap-1 font-medium text-ai hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ai"
+                className="inline-flex items-center gap-1 font-medium text-accent hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               >
                 <Sparkles className="size-3.5" aria-hidden />
                 Ask Budgetly to create this transaction

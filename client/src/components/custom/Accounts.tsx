@@ -323,14 +323,14 @@ const Accounts = ({
                 className={cn(
                   "flex flex-col rounded-xl border bg-white p-4 cursor-pointer transition-colors",
                   isSelected
-                    ? "border-blue-500 ring-2 ring-blue-100"
-                    : "border-slate-200 hover:border-blue-300",
+                    ? "border-primary ring-2 ring-primary/20"
+                    : "border-slate-200 hover:border-primary/40",
                 )}
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex min-w-0 items-center gap-2.5">
-                    <div className="shrink-0 rounded-lg bg-blue-50 p-2">
-                      <Wallet className="h-4 w-4 text-blue-600" />
+                    <div className="shrink-0 rounded-lg bg-primary/10 p-2">
+                      <Wallet className="h-4 w-4 text-primary" />
                     </div>
                     <h3 className="truncate font-semibold text-slate-900">
                       {account.name}
@@ -341,8 +341,8 @@ const Accounts = ({
                       className={cn(
                         "rounded-full px-2 py-0.5 text-[11px] font-medium",
                         balance < 0
-                          ? "bg-red-50 text-red-700"
-                          : "bg-emerald-50 text-emerald-700",
+                          ? "bg-error/10 text-error"
+                          : "bg-success/10 text-success",
                       )}
                     >
                       {balance < 0 ? "Overdrawn" : "Healthy"}
@@ -396,7 +396,7 @@ const Accounts = ({
 
                 <button
                   type="button"
-                  className="mt-3 text-left text-sm text-blue-600 hover:text-blue-800"
+                  className="mt-3 text-left text-sm text-primary hover:text-primary/80"
                   onClick={(event) => {
                     event.stopPropagation();
                     navigate(`/dashboard/transactions/${account.id}`);

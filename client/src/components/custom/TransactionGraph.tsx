@@ -29,6 +29,7 @@ import {
   toAmount,
 } from "@/lib/money";
 import { cn } from "@/lib/utils";
+import { colors } from "@/lib/colors";
 
 const RANGES = [
   { key: "last_7_days", label: "Last 7 days" },
@@ -164,13 +165,13 @@ const TransactionGraph = ({
       <div className="mb-6 grid grid-cols-3 gap-4 text-sm">
         <div>
           <p className="text-slate-500">Income</p>
-          <p className="mt-1 text-xl font-semibold text-green-600">
+          <p className="mt-1 text-xl font-semibold text-success">
             {formatSignedMoney(income, "INCOME")}
           </p>
         </div>
         <div>
           <p className="text-slate-500">Expenses</p>
-          <p className="mt-1 text-xl font-semibold text-red-600">
+          <p className="mt-1 text-xl font-semibold text-error">
             {formatSignedMoney(expenses, "EXPENSE")}
           </p>
         </div>
@@ -179,7 +180,7 @@ const TransactionGraph = ({
           <p
             className={cn(
               "mt-1 text-xl font-semibold",
-              net < 0 ? "text-red-600" : net > 0 ? "text-green-600" : "text-slate-900",
+              net < 0 ? "text-error" : net > 0 ? "text-success" : "text-slate-900",
             )}
           >
             {net < 0
@@ -211,7 +212,7 @@ const TransactionGraph = ({
                 <Line
                   type="monotone"
                   dataKey="balance"
-                  stroke="#2679f3"
+                  stroke={colors.primary}
                   strokeWidth={2}
                   dot={false}
                   name="Balance"
@@ -231,8 +232,8 @@ const TransactionGraph = ({
                     name === "income" ? "Income" : "Expenses",
                   ]}
                 />
-                <Bar dataKey="income" fill="#22c55e" name="income" />
-                <Bar dataKey="expense" fill="#ef4444" name="expense" />
+                <Bar dataKey="income" fill={colors.success} name="income" />
+                <Bar dataKey="expense" fill={colors.error} name="expense" />
               </BarChart>
             )}
           </ResponsiveContainer>

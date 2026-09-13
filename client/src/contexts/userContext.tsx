@@ -89,9 +89,9 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     return (
       <div className="flex flex-col justify-center items-center h-screen">
         <div className="flex flex-row gap-2">
-          <div className="w-5 h-5 rounded-full bg-blue-700 animate-bounce"></div>
-          <div className="w-5 h-5 rounded-full bg-blue-700 animate-bounce [animation-delay:-.3s]"></div>
-          <div className="w-5 h-5 rounded-full bg-blue-700 animate-bounce [animation-delay:-.5s]"></div>
+          <div className="w-5 h-5 rounded-full bg-primary animate-bounce"></div>
+          <div className="w-5 h-5 rounded-full bg-primary animate-bounce [animation-delay:-.3s]"></div>
+          <div className="w-5 h-5 rounded-full bg-primary animate-bounce [animation-delay:-.5s]"></div>
         </div>
       </div>
     );

@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+/* Hex values must match client/src/lib/colors.ts */
+
 @custom-variant dark (&:is(.dark *));
 
 :root {
@@ -13,12 +15,12 @@
   --primary: #2679f3;
   --secondary: #0a2463;
   --primary-foreground: oklch(0.985 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.97 0 0);
   --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
+  --accent: #4f46e5;
+  --accent-foreground: #eef2ff;
+  --destructive: #ef4444;
   --border: oklch(0.8 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
@@ -38,8 +40,6 @@
   --success: #16a34a;
   --error: #ef4444;
   --warning: #d97706;
-  --ai: #4f46e5;
-  --ai-foreground: #eef2ff;
 }
 
 .dark {
@@ -55,8 +55,8 @@
   --secondary-foreground: oklch(0.985 0 0);
   --muted: oklch(0.269 0 0);
   --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  --accent: #818cf8;
+  --accent-foreground: #eef2ff;
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
@@ -92,8 +92,6 @@
   --color-error: var(--error);
   --color-success: var(--success);
   --color-warning: var(--warning);
-  --color-ai: var(--ai);
-  --color-ai-foreground: var(--ai-foreground);
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);

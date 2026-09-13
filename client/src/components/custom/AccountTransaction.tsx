@@ -244,8 +244,8 @@ const AccountTransaction = ({
                       className={cn(
                         "text-right text-sm font-semibold whitespace-nowrap",
                         transaction.type === "INCOME"
-                          ? "text-green-600"
-                          : "text-red-600",
+                          ? "text-success"
+                          : "text-error",
                       )}
                     >
                       {formatSignedMoney(transaction.amount, transaction.type)}
@@ -286,7 +286,7 @@ const AccountTransaction = ({
                             Duplicate
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            className="text-red-600 focus:text-red-600"
+                            className="text-error focus:text-error"
                             onClick={() => setDeleteTarget(transaction)}
                           >
                             <Trash2 className="size-4" />

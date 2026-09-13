@@ -53,8 +53,8 @@ export function AppSidebar() {
                         className={cn(
                           "w-full rounded-lg px-2",
                           isActive && !isAsk && "bg-primary/10 text-primary",
-                          isAsk && "text-ai hover:bg-indigo-50 hover:text-ai",
-                          isAsk && isActive && "bg-indigo-50 text-ai",
+                          isAsk && "text-accent hover:bg-accent/10 hover:text-accent",
+                          isAsk && isActive && "bg-accent/10 text-accent",
                         )}
                       >
                         <item.icon />

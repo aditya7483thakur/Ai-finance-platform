@@ -15,13 +15,13 @@ export default function PricingPlans() {
         >
           {/* Main Title */}
           <h2 className="text-3xl md:text-4xl font-extrabold mb-4">
-            Simple, Transparent <span className="text-blue-500"> Pricing </span>
+            Simple, Transparent <span className="text-primary"> Pricing </span>
           </h2>
 
           {/* Subtitle with attention-grabbing offer */}
           <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto mb-6">
             Get started today and enjoy{" "}
-            <span className="font-semibold text-green-400">FREE access</span> to
+            <span className="font-semibold text-success">FREE access</span> to
             all features for this year! No hidden fees, no surprises.
           </p>
         </motion.div>
@@ -55,7 +55,7 @@ export default function PricingPlans() {
                 "Email notifications",
               ].map((feature) => (
                 <li key={feature} className="flex items-start">
-                  <Check className="text-green-500 mt-1 mr-2 h-4 w-4 flex-shrink-0" />
+                  <Check className="text-success mt-1 mr-2 h-4 w-4 flex-shrink-0" />
                   <span className="text-sm text-gray-600 dark:text-gray-300">
                     {feature}
                   </span>
@@ -70,7 +70,7 @@ export default function PricingPlans() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="bg-primary text-white p-8 rounded-xl shadow-lg relative border border-blue-500 transform md:-translate-y-4 md:scale-105"
+            className="bg-primary text-white p-8 rounded-xl shadow-lg relative border border-primary transform md:-translate-y-4 md:scale-105"
           >
             <div className="absolute top-0 right-0 transform translate-x-2 -translate-y-2">
               <div className="bg-yellow-400 text-primary text-xs font-bold px-3 py-1 rounded-full">
@@ -79,16 +79,16 @@ export default function PricingPlans() {
             </div>
 
             <h3 className="text-xl font-bold mb-2">Pro</h3>
-            <p className="text-blue-100 mb-6">
+            <p className="text-primary-foreground/80 mb-6">
               Unlock advanced budgeting tools and insights
             </p>
 
             <div className="mb-6">
               <span className="text-4xl font-bold">$9.99</span>
-              <span className="text-blue-100">/month</span>
+              <span className="text-primary-foreground/80">/month</span>
             </div>
 
-            <Button className="w-full mb-6 bg-white hover:bg-gray-100 text-blue-600">
+            <Button className="w-full mb-6 bg-white hover:bg-muted text-primary">
               Get Started
             </Button>
 
@@ -139,7 +139,7 @@ export default function PricingPlans() {
                 "24/7 priority support",
               ].map((feature) => (
                 <li key={feature} className="flex items-start">
-                  <Check className="text-green-500 mt-1 mr-2 h-4 w-4 flex-shrink-0" />
+                  <Check className="text-success mt-1 mr-2 h-4 w-4 flex-shrink-0" />
                   <span className="text-sm text-gray-600 dark:text-gray-300">
                     {feature}
                   </span>

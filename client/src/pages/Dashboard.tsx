@@ -146,14 +146,14 @@ const Dashboard = () => {
           </div>
         </header>
 
-        <section className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-4 sm:p-5">
+        <section className="rounded-xl border border-accent/20 bg-accent/10 p-4 sm:p-5">
           <div className="mb-3 flex items-start gap-2">
-            <Sparkles className="mt-0.5 size-4 text-ai" aria-hidden />
+            <Sparkles className="mt-0.5 size-4 text-accent" aria-hidden />
             <div>
-              <h3 className="text-sm font-semibold text-indigo-950">
+              <h3 className="text-sm font-semibold text-accent">
                 Ask Budgetly
               </h3>
-              <p className="text-xs text-indigo-800/80">
+              <p className="text-xs text-accent/80">
                 Ask questions, analyze your spending, or simulate a financial
                 decision.
               </p>
@@ -175,11 +175,11 @@ const Dashboard = () => {
               value={agentDraft}
               onChange={(event) => setAgentDraft(event.target.value)}
               placeholder="Ask anything about your finances..."
-              className="border-indigo-200 bg-white"
+              className="border-accent/25 bg-white"
             />
             <Button
               type="submit"
-              className="bg-ai text-ai-foreground hover:bg-ai/90"
+              className="bg-accent text-accent-foreground hover:bg-accent/90"
             >
               Ask
             </Button>
@@ -190,7 +190,7 @@ const Dashboard = () => {
                 key={chip.label}
                 type="button"
                 onClick={() => submitAgent(chip.prompt)}
-                className="rounded-full border border-indigo-200 bg-white px-3 py-1 text-xs text-indigo-900 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ai"
+                className="rounded-full border border-accent/25 bg-white px-3 py-1 text-xs text-accent hover:bg-accent/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               >
                 {chip.label}
               </button>
@@ -228,7 +228,7 @@ const Dashboard = () => {
               <p
                 className={cn(
                   "mt-1 text-2xl font-semibold",
-                  totals.remaining < 0 ? "text-red-600" : "text-slate-900",
+                  totals.remaining < 0 ? "text-error" : "text-slate-900",
                 )}
               >
                 {formatMoney(totals.remaining)}
@@ -257,15 +257,15 @@ const Dashboard = () => {
                     className={cn(
                       "flex flex-col gap-3 rounded-lg px-4 py-3 sm:flex-row sm:items-center sm:justify-between",
                       alert.overdrawn
-                        ? "border border-red-200 bg-red-50"
-                        : "border border-amber-200 bg-amber-50",
+                        ? "border border-error/30 bg-error/10"
+                        : "border border-warning/30 bg-warning/10",
                     )}
                   >
                     <div>
                       <p
                         className={cn(
                           "flex items-center gap-2 text-sm font-medium",
-                          alert.overdrawn ? "text-red-800" : "text-amber-950",
+                          alert.overdrawn ? "text-error" : "text-warning",
                         )}
                       >
                         <TriangleAlert className="size-4" aria-hidden />

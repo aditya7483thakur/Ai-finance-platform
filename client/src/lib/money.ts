@@ -26,12 +26,12 @@ export const balanceToneClass = (
 ): string => {
   const amount = toAmount(value);
   if (amount < 0) {
-    return "text-red-600";
+    return "text-error";
   }
   if (amount > 0) {
-    return "text-green-600";
+    return "text-success";
   }
-  return "text-gray-900";
+  return "text-foreground";
 };
 
 export const formatShortDate = (value: string | Date): string => {

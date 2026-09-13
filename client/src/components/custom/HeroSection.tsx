@@ -14,7 +14,7 @@ const HeroSection = () => {
           transition={{ delay: 0.5, duration: 0.8 }}
           viewport={{ once: true }}
         >
-          <span className="inline-block bg-gray-100 rounded-full px-3 py-1 text-sm">
+          <span className="inline-block bg-muted rounded-full px-3 py-1 text-sm">
             The Smarter Way to Manage Money!
           </span>
         </motion.div>
@@ -38,15 +38,15 @@ const HeroSection = () => {
           transition={{ delay: 0.7, duration: 0.8 }}
           viewport={{ once: true }}
         >
-          Turn Your <span className="text-blue-500"> Finances</span>
+          Turn Your <span className="text-primary"> Finances</span>
           <br />
-          from <span className="text-blue-500"> Chaos </span> to{" "}
-          <span className="text-blue-500"> Control</span>!
+          from <span className="text-primary"> Chaos </span> to{" "}
+          <span className="text-primary"> Control</span>!
         </motion.h1>
 
         {/* Description */}
         <motion.p
-          className="text-gray-600 mb-6 max-w-2xl mx-auto "
+          className="text-muted-foreground mb-6 max-w-2xl mx-auto "
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           transition={{ delay: 0.9, duration: 0.8 }}

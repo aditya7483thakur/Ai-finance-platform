@@ -1,20 +1,8 @@
 import { formatMoney } from "@/lib/money";
+import { chartColors } from "@/lib/colors";
 import { useUserContext } from "@/contexts/userContext";
 import { useFetchExpenseBreakdown } from "@/services/graphs/query";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
-
-const COLORS = [
-  "#0088FE",
-  "#FF8042",
-  "#00C49F",
-  "#4F46E5",
-  "#FFBB28",
-  "#9932CC",
-  "#32CD32",
-  "#FF4500",
-  "#1E90FF",
-  "#8B4513",
-];
 
 const ExpenseBreakdown = () => {
   const { userId } = useUserContext();
@@ -71,7 +59,7 @@ const ExpenseBreakdown = () => {
                   {pieData.data.map((entry: { name: string }, index: number) => (
                     <Cell
                       key={`cell-${index}-${entry.name}`}
-                      fill={COLORS[index % COLORS.length]}
+                      fill={chartColors[index % chartColors.length]}
                     />
                   ))}
                 </Pie>
@@ -93,7 +81,7 @@ const ExpenseBreakdown = () => {
                     <div className="flex items-center">
                       <div
                         className="mr-2 h-3 w-3 rounded-full"
-                        style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                        style={{ backgroundColor: chartColors[index % chartColors.length] }}
                       />
                       <span className="text-sm text-slate-600">{item.name}</span>
                     </div>

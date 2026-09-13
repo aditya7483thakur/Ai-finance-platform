@@ -7,6 +7,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { formatShortDate, formatSignedMoney } from "@/lib/money";
+import { getCategoryBadge } from "@/lib/categories";
 import { cn } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { AccountType, Transaction } from "@/types";
@@ -20,31 +21,6 @@ interface props {
   selectedAccountId?: string;
   onAccountSelect?: (accountId: string) => void;
 }
-
-const categoryClass = (category: string): string => {
-  switch (category) {
-    case "SALARY":
-      return "bg-green-100 text-green-800";
-    case "INVESTMENTS":
-      return "bg-teal-100 text-teal-800";
-    case "FOOD":
-      return "bg-orange-100 text-orange-800";
-    case "TRANSPORT":
-      return "bg-blue-100 text-blue-800";
-    case "HOUSING":
-      return "bg-indigo-100 text-indigo-800";
-    case "ENTERTAINMENT":
-      return "bg-purple-100 text-purple-800";
-    case "TRAVEL":
-      return "bg-cyan-100 text-cyan-800";
-    case "HEALTH":
-      return "bg-red-100 text-red-800";
-    case "SHOPPING":
-      return "bg-pink-100 text-pink-800";
-    default:
-      return "bg-slate-100 text-slate-700";
-  }
-};
 
 const RecentTransactions = ({
   accounts,
@@ -111,7 +87,7 @@ const RecentTransactions = ({
           {filters.accountId && (
             <Link
               to={`/dashboard/transactions/${filters.accountId}`}
-              className="text-sm font-medium text-blue-600 hover:text-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              className="text-sm font-medium text-primary hover:text-primary/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             >
               View All Transactions
             </Link>
@@ -152,7 +128,7 @@ const RecentTransactions = ({
                   <span
                     className={cn(
                       "mt-1.5 inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide",
-                      categoryClass(transaction.category),
+                      getCategoryBadge(transaction.category),
                     )}
                   >
                     {transaction.category}
@@ -162,8 +138,8 @@ const RecentTransactions = ({
                   className={cn(
                     "shrink-0 text-sm font-semibold",
                     transaction.type === "INCOME"
-                      ? "text-green-600"
-                      : "text-red-600",
+                      ? "text-success"
+                      : "text-error",
                   )}
                 >
                   {formatSignedMoney(transaction.amount, transaction.type)}
