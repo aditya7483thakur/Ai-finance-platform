@@ -2,8 +2,6 @@ export type CronJobName =
   | "run-recurring-transactions"
   | "run-monthly-summaries";
 
-export type RecurringInterval = "DAILY" | "WEEKLY" | "MONTHLY" | "YEARLY";
-
 export type MonthlyExpenseItem = {
   name: string;
   value: number;

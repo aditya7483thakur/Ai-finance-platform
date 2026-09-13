@@ -1,25 +1,26 @@
 import { addDays, addMonths, addWeeks, addYears, isBefore } from "date-fns";
-import type { MonthlyExpenseItem, RecurringInterval } from "./cron.types.js";
+import { RecurringInterval } from "../../shared/types/recurring.js";
+import type { MonthlyExpenseItem } from "./cron.types.js";
 
 export const getNextRecurringDate = (
   currentDate: Date,
   today: Date,
-  recurringInterval: RecurringInterval | null,
+  recurringInterval: `${RecurringInterval}` | null,
 ): Date => {
   let nextDate = currentDate;
 
   while (isBefore(nextDate, today) || nextDate.getTime() === today.getTime()) {
     switch (recurringInterval) {
-      case "DAILY":
+      case RecurringInterval.DAILY:
         nextDate = addDays(nextDate, 1);
         break;
-      case "WEEKLY":
+      case RecurringInterval.WEEKLY:
         nextDate = addWeeks(nextDate, 1);
         break;
-      case "MONTHLY":
+      case RecurringInterval.MONTHLY:
         nextDate = addMonths(nextDate, 1);
         break;
-      case "YEARLY":
+      case RecurringInterval.YEARLY:
         nextDate = addYears(nextDate, 1);
         break;
       default:

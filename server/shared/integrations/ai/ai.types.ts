@@ -1,3 +1,4 @@
+import type { TransactionCategory } from "../../types/category.js";
 import type { LedgerEntryType } from "../../types/ledger.js";
 
 export const AI_API_MISSING_ERROR = "AI_API_MISSING";
@@ -15,17 +16,7 @@ export type ExtractReceiptInput = {
 export type AiReceiptResult = {
   type?: `${LedgerEntryType}`;
   amount?: string;
-  category?:
-    | "SALARY"
-    | "INVESTMENTS"
-    | "FOOD"
-    | "TRANSPORT"
-    | "HOUSING"
-    | "ENTERTAINMENT"
-    | "TRAVEL"
-    | "HEALTH"
-    | "SHOPPING"
-    | "MISCELLANEOUS";
+  category?: `${TransactionCategory}`;
   date?: string;
   description?: string;
 };

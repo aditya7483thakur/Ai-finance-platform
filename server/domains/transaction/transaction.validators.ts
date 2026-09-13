@@ -1,45 +1,27 @@
 import { z } from "zod";
+import { TransactionCategory as TransactionCategoryEnum } from "../../shared/types/category.js";
 import { LedgerEntryType } from "../../shared/types/ledger.js";
+import { RecurringInterval as RecurringIntervalEnum } from "../../shared/types/recurring.js";
 import { queryString, routeParam } from "../../shared/utils/parseWithZod.js";
 import { TRANSACTION_ERROR_MESSAGES } from "./transaction.constants.js";
 
-export const transactionTypeSchema = z.enum(
-  [LedgerEntryType.INCOME, LedgerEntryType.EXPENSE],
-  {
-    errorMap: () => ({
-      message: TRANSACTION_ERROR_MESSAGES.INVALID_TRANSACTION_TYPE,
-    }),
-  },
-);
+export const transactionTypeSchema = z.nativeEnum(LedgerEntryType, {
+  errorMap: () => ({
+    message: TRANSACTION_ERROR_MESSAGES.INVALID_TRANSACTION_TYPE,
+  }),
+});
 
-export const recurringIntervalSchema = z.enum(
-  ["DAILY", "WEEKLY", "MONTHLY", "YEARLY"],
-  {
-    errorMap: () => ({
-      message: TRANSACTION_ERROR_MESSAGES.INVALID_RECURRING_INTERVAL,
-    }),
-  },
-);
+export const recurringIntervalSchema = z.nativeEnum(RecurringIntervalEnum, {
+  errorMap: () => ({
+    message: TRANSACTION_ERROR_MESSAGES.INVALID_RECURRING_INTERVAL,
+  }),
+});
 
-export const transactionCategorySchema = z.enum(
-  [
-    "SALARY",
-    "INVESTMENTS",
-    "FOOD",
-    "TRANSPORT",
-    "HOUSING",
-    "ENTERTAINMENT",
-    "TRAVEL",
-    "HEALTH",
-    "SHOPPING",
-    "MISCELLANEOUS",
-  ],
-  {
-    errorMap: () => ({
-      message: TRANSACTION_ERROR_MESSAGES.INVALID_TRANSACTION_CATEGORY,
-    }),
-  },
-);
+export const transactionCategorySchema = z.nativeEnum(TransactionCategoryEnum, {
+  errorMap: () => ({
+    message: TRANSACTION_ERROR_MESSAGES.INVALID_TRANSACTION_CATEGORY,
+  }),
+});
 
 const objectPayload = {
   required_error: TRANSACTION_ERROR_MESSAGES.MISSING_REQUIRED_FIELDS,
@@ -190,8 +172,8 @@ export const transactionIdParamSchema = routeParam(
 );
 
 export type TransactionType = `${LedgerEntryType}`;
-export type RecurringInterval = z.infer<typeof recurringIntervalSchema>;
-export type TransactionCategory = z.infer<typeof transactionCategorySchema>;
+export type RecurringInterval = `${RecurringIntervalEnum}`;
+export type TransactionCategory = `${TransactionCategoryEnum}`;
 export type CreateTransactionInput = z.infer<typeof createTransactionInputSchema>;
 export type UpdateTransactionInput = z.infer<typeof updateTransactionInputSchema>;
 export type ParsedTransactionFilters = z.infer<typeof filterQuerySchema>;

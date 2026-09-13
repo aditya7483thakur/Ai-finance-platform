@@ -1,6 +1,10 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { TransactionCategory } from "../../types/category.js";
+import { LedgerEntryType } from "../../types/ledger.js";
 import type { AiClient } from "./ai.port.js";
 import { AI_API_MISSING_ERROR, type AiReceiptResult } from "./ai.types.js";
+
+const RECEIPT_CATEGORIES = Object.values(TransactionCategory).join(", ");
 
 const parseReceiptJson = (rawText: string): AiReceiptResult => {
   const cleanText = rawText.replace(/```(json)?/g, "").trim();
@@ -43,9 +47,9 @@ ${expenses.map((item) => `${item.name}: INR ${item.value.toFixed(2)}`).join("\n"
 You're a smart assistant that extracts fields from receipts.
 From the uploaded image, return this object:
 {
-  "type": "INCOME" or "EXPENSE",
+  "type": "${LedgerEntryType.INCOME}" or "${LedgerEntryType.EXPENSE}",
   "amount": "number as string",
-  "category": "One of: SALARY, INVESTMENTS, FOOD, TRANSPORT, HOUSING, ENTERTAINMENT, TRAVEL, HEALTH, SHOPPING, MISCELLANEOUS",
+  "category": "One of: ${RECEIPT_CATEGORIES}",
   "date": "yyyy-mm-dd",
   "description": "short merchant or transaction description"
 }

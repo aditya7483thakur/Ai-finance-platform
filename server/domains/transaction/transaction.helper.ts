@@ -1,23 +1,23 @@
 import { addDays, addMonths, addWeeks, addYears } from "date-fns";
-import type { RecurringInterval } from "./transaction.types.js";
+import { RecurringInterval } from "../../shared/types/recurring.js";
 
 export const getNextRecurringDate = (
   transactionDate: Date,
   isRecurring: boolean,
-  recurringInterval: RecurringInterval | null,
+  recurringInterval: `${RecurringInterval}` | null,
 ): Date | null => {
   if (!isRecurring || !recurringInterval) {
     return null;
   }
 
   switch (recurringInterval) {
-    case "DAILY":
+    case RecurringInterval.DAILY:
       return addDays(transactionDate, 1);
-    case "WEEKLY":
+    case RecurringInterval.WEEKLY:
       return addWeeks(transactionDate, 1);
-    case "MONTHLY":
+    case RecurringInterval.MONTHLY:
       return addMonths(transactionDate, 1);
-    case "YEARLY":
+    case RecurringInterval.YEARLY:
       return addYears(transactionDate, 1);
     default:
       return null;
