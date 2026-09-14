@@ -12,7 +12,7 @@ export const useCreateAccount = () => {
       console.log(data);
       toast.success(data.message);
       queryClient.invalidateQueries({
-        queryKey: ["getAllAccounts", data.data.userId],
+        queryKey: ["getAllAccounts"],
       });
     },
     onError: (err: any) => {
@@ -30,7 +30,7 @@ export const useUpdateAccount = () => {
       console.log(data, "new invalidated");
       toast.success(data.message);
       queryClient.invalidateQueries({
-        queryKey: ["getAllAccounts", data.updatedAccount.userId],
+        queryKey: ["getAllAccounts"],
       });
     },
     onError: (data: any) => {

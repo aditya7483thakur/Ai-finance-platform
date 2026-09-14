@@ -34,13 +34,8 @@ export class AccountService {
     return this.accounts.createAccountRecord(input);
   }
 
-  async getSingle(accountId: string): Promise<Account> {
-    const account = await this.accounts.findAccountById(accountId);
-
-    if (!account) {
-      throw new NotFoundError(ACCOUNT_ERROR_MESSAGES.ACCOUNT_NOT_FOUND);
-    }
-
+  async getSingle(accountId: string, userId: string): Promise<Account> {
+    const account = await this.requireOwnedAccount(accountId, userId);
     return account;
   }
 
@@ -54,12 +49,8 @@ export class AccountService {
     return this.accounts.findAccountsByUserId(userId);
   }
 
-  async update(input: UpdateAccountInput): Promise<Account> {
-    const existingAccount = await this.accounts.findAccountById(input.id);
-
-    if (!existingAccount) {
-      throw new NotFoundError(ACCOUNT_ERROR_MESSAGES.ACCOUNT_NOT_FOUND);
-    }
+  async update(input: UpdateAccountInput, userId: string): Promise<Account> {
+    await this.requireOwnedAccount(input.id, userId);
 
     const data = mapUpdateAccountData(input);
 
@@ -70,10 +61,10 @@ export class AccountService {
     return this.accounts.updateAccountById(input.id, data);
   }
 
-  async delete(accountId: string): Promise<void> {
+  async delete(accountId: string, userId: string): Promise<void> {
     const account = await this.accounts.findAccountByIdWithTransactions(accountId);
 
-    if (!account) {
+    if (!account || account.userId !== userId) {
       throw new NotFoundError(ACCOUNT_ERROR_MESSAGES.ACCOUNT_NOT_FOUND);
     }
 
@@ -117,5 +108,18 @@ export class AccountService {
     });
 
     await this.accounts.createBudgetAlertSentRecord(input.userId, input.accountId);
+  }
+
+  private async requireOwnedAccount(
+    accountId: string,
+    userId: string,
+  ): Promise<Account> {
+    const account = await this.accounts.findAccountById(accountId);
+
+    if (!account || account.userId !== userId) {
+      throw new NotFoundError(ACCOUNT_ERROR_MESSAGES.ACCOUNT_NOT_FOUND);
+    }
+
+    return account;
   }
 }

@@ -37,10 +37,6 @@ const nullableFiniteNumber = (message: string) =>
 
 export const createAccountInputSchema = z.object(
   {
-    userId: z
-      .string()
-      .trim()
-      .min(1, ACCOUNT_ERROR_MESSAGES.USER_ID_REQUIRED),
     name: z
       .string()
       .trim()
@@ -50,7 +46,6 @@ export const createAccountInputSchema = z.object(
   },
   objectPayload,
 ).transform((data) => ({
-  userId: data.userId,
   name: data.name,
   balance: data.balance ?? 0,
   budget: data.budget ?? null,
@@ -82,7 +77,7 @@ export const updateAccountInputSchema = z
 export const accountIdParamSchema = routeParam(
   ACCOUNT_ERROR_MESSAGES.ACCOUNT_ID_REQUIRED,
 );
-export const userIdParamSchema = routeParam(ACCOUNT_ERROR_MESSAGES.USER_ID_REQUIRED);
 
-export type CreateAccountInput = z.infer<typeof createAccountInputSchema>;
+export type CreateAccountBody = z.infer<typeof createAccountInputSchema>;
+export type CreateAccountInput = CreateAccountBody & { userId: string };
 export type UpdateAccountInput = z.infer<typeof updateAccountInputSchema>;

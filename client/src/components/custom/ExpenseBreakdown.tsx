@@ -9,7 +9,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 const ExpenseBreakdown = () => {
   const { userId } = useUserContext();
   const openAsk = useAskBudgetly();
-  const { data: pieData, isPending } = useFetchExpenseBreakdown({ userId });
+  const { data: pieData, isPending } = useFetchExpenseBreakdown(!!userId);
 
   const rows =
     pieData?.data?.map((item: { name: string; value: number }) => ({

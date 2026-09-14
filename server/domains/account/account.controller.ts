@@ -1,4 +1,4 @@
-import type { Request, Response } from "express";
+import type { Response } from "express";
 import { handleControllerError } from "../../shared/utils/controllerError.js";
 import {
   ACCOUNT_ERROR_MESSAGES,
@@ -9,13 +9,18 @@ import {
   accountIdParamSchema,
   createAccountInputSchema,
   updateAccountInputSchema,
-  userIdParamSchema,
 } from "./account.validators.js";
+import type { AuthenticatedRequest } from "../auth/auth.types.js";
+import { requireUserId } from "../auth/requireUserId.js";
 
-export const createAccount = async (req: Request, res: Response) => {
+export const createAccount = async (
+  req: AuthenticatedRequest,
+  res: Response,
+) => {
   try {
-    const input = createAccountInputSchema.parse(req.body);
-    const account = await accountService.create(input);
+    const userId = requireUserId(req);
+    const body = createAccountInputSchema.parse(req.body);
+    const account = await accountService.create({ ...body, userId });
 
     return res.status(201).json({
       message: ACCOUNT_SUCCESS_MESSAGES.ACCOUNT_CREATED,
@@ -30,10 +35,14 @@ export const createAccount = async (req: Request, res: Response) => {
   }
 };
 
-export const getSingleAccount = async (req: Request, res: Response) => {
+export const getSingleAccount = async (
+  req: AuthenticatedRequest,
+  res: Response,
+) => {
   try {
+    const userId = requireUserId(req);
     const accountId = accountIdParamSchema.parse(req.params.accountId);
-    const account = await accountService.getSingle(accountId);
+    const account = await accountService.getSingle(accountId, userId);
 
     return res.status(200).json({
       message: ACCOUNT_SUCCESS_MESSAGES.ACCOUNT_FETCHED,
@@ -48,9 +57,12 @@ export const getSingleAccount = async (req: Request, res: Response) => {
   }
 };
 
-export const getAllAccounts = async (req: Request, res: Response) => {
+export const getAllAccounts = async (
+  req: AuthenticatedRequest,
+  res: Response,
+) => {
   try {
-    const userId = userIdParamSchema.parse(req.params.userId);
+    const userId = requireUserId(req);
     const accounts = await accountService.getAll(userId);
 
     return res.status(200).json({
@@ -66,10 +78,14 @@ export const getAllAccounts = async (req: Request, res: Response) => {
   }
 };
 
-export const updateAccount = async (req: Request, res: Response) => {
+export const updateAccount = async (
+  req: AuthenticatedRequest,
+  res: Response,
+) => {
   try {
+    const userId = requireUserId(req);
     const input = updateAccountInputSchema.parse(req.body);
-    const account = await accountService.update(input);
+    const account = await accountService.update(input, userId);
 
     return res.status(200).json({
       message: ACCOUNT_SUCCESS_MESSAGES.ACCOUNT_UPDATED,
@@ -84,10 +100,14 @@ export const updateAccount = async (req: Request, res: Response) => {
   }
 };
 
-export const deleteAccount = async (req: Request, res: Response) => {
+export const deleteAccount = async (
+  req: AuthenticatedRequest,
+  res: Response,
+) => {
   try {
+    const userId = requireUserId(req);
     const accountId = accountIdParamSchema.parse(req.params.id);
-    await accountService.delete(accountId);
+    await accountService.delete(accountId, userId);
 
     return res.status(200).json({
       message: ACCOUNT_SUCCESS_MESSAGES.ACCOUNT_DELETED,

@@ -13,13 +13,8 @@ export const transactionSummaryQuerySchema = z.object({
   ),
 });
 
-export const categoryExpensesQuerySchema = z.object({
-  userId: requiredQueryString(GRAPH_ERROR_MESSAGES.USER_ID_REQUIRED),
-});
-
 export type TransactionSummaryQueryInput = z.infer<
   typeof transactionSummaryQuerySchema
->;
-export type CategoryExpensesQueryInput = z.infer<
-  typeof categoryExpensesQuerySchema
->;
+> & {
+  userId: string;
+};

@@ -13,15 +13,21 @@ import {
   transactionIdParamSchema,
   updateTransactionInputSchema,
 } from "./transaction.validators.js";
+import type { AuthenticatedRequest } from "../auth/auth.types.js";
+import { requireUserId } from "../auth/requireUserId.js";
 
 type ReceiptRequest = Request & {
   file?: Express.Multer.File;
 };
 
-export const createTransaction = async (req: Request, res: Response) => {
+export const createTransaction = async (
+  req: AuthenticatedRequest,
+  res: Response,
+) => {
   try {
-    const input = createTransactionInputSchema.parse(req.body);
-    const transaction = await transactionService.create(input);
+    const userId = requireUserId(req);
+    const body = createTransactionInputSchema.parse(req.body);
+    const transaction = await transactionService.create({ ...body, userId });
     return res.status(201).json({
       message: TRANSACTION_SUCCESS_MESSAGES.TRANSACTION_CREATED,
       data: transaction,
@@ -35,11 +41,19 @@ export const createTransaction = async (req: Request, res: Response) => {
   }
 };
 
-export const editTransaction = async (req: Request, res: Response) => {
+export const editTransaction = async (
+  req: AuthenticatedRequest,
+  res: Response,
+) => {
   try {
+    const userId = requireUserId(req);
     const transactionId = transactionIdParamSchema.parse(req.params.transactionId);
     const input = updateTransactionInputSchema.parse(req.body);
-    const transaction = await transactionService.update(transactionId, input);
+    const transaction = await transactionService.update(
+      transactionId,
+      input,
+      userId,
+    );
 
     return res.status(200).json({
       message: TRANSACTION_SUCCESS_MESSAGES.TRANSACTION_UPDATED,
@@ -54,10 +68,14 @@ export const editTransaction = async (req: Request, res: Response) => {
   }
 };
 
-export const deleteTransaction = async (req: Request, res: Response) => {
+export const deleteTransaction = async (
+  req: AuthenticatedRequest,
+  res: Response,
+) => {
   try {
+    const userId = requireUserId(req);
     const transactionId = transactionIdParamSchema.parse(req.params.transactionId);
-    await transactionService.delete(transactionId);
+    await transactionService.delete(transactionId, userId);
 
     return res.status(200).json({
       message: TRANSACTION_SUCCESS_MESSAGES.TRANSACTION_DELETED,
@@ -73,12 +91,16 @@ export const deleteTransaction = async (req: Request, res: Response) => {
 };
 
 export const deleteMultipleTransactions = async (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response,
 ) => {
   try {
+    const userId = requireUserId(req);
     const { transactionIds } = deleteManyTransactionsSchema.parse(req.body);
-    const deletedCount = await transactionService.deleteMany(transactionIds);
+    const deletedCount = await transactionService.deleteMany(
+      transactionIds,
+      userId,
+    );
 
     return res.status(200).json({
       message: TRANSACTION_SUCCESS_MESSAGES.TRANSACTIONS_DELETED,
@@ -93,10 +115,14 @@ export const deleteMultipleTransactions = async (
   }
 };
 
-export const getFilteredTransactions = async (req: Request, res: Response) => {
+export const getFilteredTransactions = async (
+  req: AuthenticatedRequest,
+  res: Response,
+) => {
   try {
+    const userId = requireUserId(req);
     const filters = filterQuerySchema.parse(req.query);
-    const result = await transactionService.getFiltered(filters);
+    const result = await transactionService.getFiltered(filters, userId);
 
     return res.status(200).json({
       message: TRANSACTION_SUCCESS_MESSAGES.TRANSACTIONS_FILTERED,

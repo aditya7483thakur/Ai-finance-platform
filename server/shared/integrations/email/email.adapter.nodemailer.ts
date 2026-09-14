@@ -18,7 +18,7 @@ export const emailNodemailerAdapter: EmailSender = {
         subject,
         html,
       });
-      console.log(`Email sent to ${to}`);
+      console.info(`Email sent to ${to}`);
     } catch (err) {
       console.error("Failed to send email:", err);
       throw err;

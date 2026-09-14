@@ -11,7 +11,7 @@ import rateLimiter from "../../shared/middleware/rateLimiter.js";
 const router = express.Router();
 
 router.post("/create-account", rateLimiter(5), createAccount);
-router.get("/get-all-accounts/:userId", getAllAccounts);
+router.get("/", getAllAccounts);
 router.patch("/update-account", rateLimiter(2), updateAccount);
 router.delete("/delete-account/:id", rateLimiter(5), deleteAccount);
 router.get("/get-account/:accountId", getSingleAccount);

@@ -39,6 +39,7 @@ export type TransactionListFilter = {
   isRecurring?: boolean;
   description?: string;
   accountId?: string;
+  userId?: string;
   date?: {
     gte?: Date;
     lte?: Date;

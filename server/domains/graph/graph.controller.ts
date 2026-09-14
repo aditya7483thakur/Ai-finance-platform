@@ -1,19 +1,26 @@
-import type { Request, Response } from "express";
+import type { Response } from "express";
 import { handleControllerError } from "../../shared/utils/controllerError.js";
 import {
   GRAPH_ERROR_MESSAGES,
   GRAPH_SUCCESS_MESSAGES,
 } from "./graph.constants.js";
-import { graphService } from "../../composition.js";
-import {
-  categoryExpensesQuerySchema,
-  transactionSummaryQuerySchema,
-} from "./graph.validators.js";
+import { accountService, graphService } from "../../composition.js";
+import { transactionSummaryQuerySchema } from "./graph.validators.js";
+import type { AuthenticatedRequest } from "../auth/auth.types.js";
+import { requireUserId } from "../auth/requireUserId.js";
 
-export const getTransactionSummary = async (req: Request, res: Response) => {
+export const getTransactionSummary = async (
+  req: AuthenticatedRequest,
+  res: Response,
+) => {
   try {
-    const input = transactionSummaryQuerySchema.parse(req.query);
-    const result = await graphService.getTransactionSummary(input);
+    const userId = requireUserId(req);
+    const query = transactionSummaryQuerySchema.parse(req.query);
+    await accountService.getSingle(query.accountId, userId);
+    const result = await graphService.getTransactionSummary({
+      ...query,
+      userId,
+    });
 
     return res.status(200).json({
       message: GRAPH_SUCCESS_MESSAGES.TRANSACTION_SUMMARY_FETCHED,
@@ -30,11 +37,11 @@ export const getTransactionSummary = async (req: Request, res: Response) => {
 };
 
 export const getCurrentMonthCategoryExpenses = async (
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response,
 ) => {
   try {
-    const { userId } = categoryExpensesQuerySchema.parse(req.query);
+    const userId = requireUserId(req);
     const result = await graphService.getCurrentMonthCategoryExpenses(userId);
 
     return res.status(200).json({

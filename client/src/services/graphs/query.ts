@@ -12,9 +12,10 @@ export const useFetchTransactionGraph = (
   });
 };
 
-export const useFetchExpenseBreakdown = (filters: Record<string, any>) => {
+export const useFetchExpenseBreakdown = (enabled = true) => {
   return useQuery({
-    queryKey: ["fetchExpenseBreakdown", filters],
-    queryFn: () => fetchExpenseBreakdown(filters),
+    queryKey: ["fetchExpenseBreakdown"],
+    queryFn: () => fetchExpenseBreakdown(),
+    enabled,
   });
 };

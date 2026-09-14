@@ -5,8 +5,8 @@ export function useGetAllAccounts(userId: string | null) {
   return useQuery({
     queryKey: ["getAllAccounts", userId],
     queryFn: () => {
-      console.log("✅ Fetching accounts for userId:", userId); // Debug log
-      return getAllAccounts(userId as string);
+      console.log("✅ Fetching accounts");
+      return getAllAccounts();
     },
     enabled: !!userId, // Ensure the query runs only if userId is not null
   });

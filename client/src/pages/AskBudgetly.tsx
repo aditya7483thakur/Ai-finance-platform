@@ -58,7 +58,7 @@ const AskBudgetly = () => {
   const startedRef = useRef(false);
   const { data: accountsData, isPending: accountsLoading } =
     useGetAllAccounts(userId);
-  const { data: expenseData } = useFetchExpenseBreakdown({ userId });
+  const { data: expenseData } = useFetchExpenseBreakdown(!!userId);
   const accounts = (accountsData?.data ?? []) as AccountType[];
 
   const transactionQueries = useQueries({
@@ -173,7 +173,6 @@ const AskBudgetly = () => {
     setConfirmingId(message.id);
     createTransaction(
       {
-        userId,
         accountId: draft.accountId,
         type: draft.type,
         amount: draft.amount,

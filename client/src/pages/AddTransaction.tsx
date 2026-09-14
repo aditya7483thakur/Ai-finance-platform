@@ -157,7 +157,7 @@ const AddTransaction = () => {
   const onSubmit = (data: any) => {
     if (isEdit) {
       editTransaction(
-        { ...data, userId, transactionId: transaction.id },
+        { ...data, transactionId: transaction.id },
         {
           onSuccess: () => {
             navigate("/dashboard");
@@ -166,7 +166,7 @@ const AddTransaction = () => {
       );
     } else {
       createTransaction(
-        { ...data, userId },
+        { ...data },
         {
           onSuccess: () => {
             navigate("/dashboard");

@@ -33,7 +33,7 @@ export class TransactionService {
   async create(input: CreateTransactionInput): Promise<Transaction> {
     const account = await this.accounts.findAccountWithUserById(input.accountId);
 
-    if (!account) {
+    if (!account || account.userId !== input.userId) {
       throw new NotFoundError(TRANSACTION_ERROR_MESSAGES.ACCOUNT_NOT_FOUND);
     }
 
@@ -85,13 +85,12 @@ export class TransactionService {
   async update(
     transactionId: string,
     input: UpdateTransactionInput,
+    userId: string,
   ): Promise<Transaction> {
-    const existingTransaction = await this.transactions.findTransactionById(
+    const existingTransaction = await this.requireOwnedTransaction(
       transactionId,
+      userId,
     );
-    if (!existingTransaction) {
-      throw new NotFoundError(TRANSACTION_ERROR_MESSAGES.TRANSACTION_NOT_FOUND);
-    }
     const account = await this.accounts.findAccountWithUserById(
       existingTransaction.accountId,
     );
@@ -150,13 +149,11 @@ export class TransactionService {
     return updatedTransaction;
   }
 
-  async delete(transactionId: string): Promise<void> {
-    const existingTransaction = await this.transactions.findTransactionById(
+  async delete(transactionId: string, userId: string): Promise<void> {
+    const existingTransaction = await this.requireOwnedTransaction(
       transactionId,
+      userId,
     );
-    if (!existingTransaction) {
-      throw new NotFoundError(TRANSACTION_ERROR_MESSAGES.TRANSACTION_NOT_FOUND);
-    }
 
     const account = await this.accounts.findAccountById(
       existingTransaction.accountId,
@@ -187,11 +184,14 @@ export class TransactionService {
     });
   }
 
-  async deleteMany(transactionIds: string[]): Promise<number> {
+  async deleteMany(transactionIds: string[], userId: string): Promise<number> {
     const transactions = await this.transactions.findTransactionsByIds(
       transactionIds,
     );
-    if (transactions.length !== transactionIds.length) {
+    if (
+      transactions.length !== transactionIds.length ||
+      transactions.some((txn) => txn.userId !== userId)
+    ) {
       throw new NotFoundError(
         TRANSACTION_ERROR_MESSAGES.SOME_TRANSACTIONS_NOT_FOUND,
       );
@@ -242,12 +242,24 @@ export class TransactionService {
 
   async getFiltered(
     filters: ParsedTransactionFilters,
+    userId: string,
   ): Promise<FilteredTransactionsResult<Transaction>> {
     const { filter, page, limit } = filters;
-    const totalCount = await this.transactions.countTransactionsByFilter(filter);
+
+    if (filter.accountId) {
+      const account = await this.accounts.findAccountById(filter.accountId);
+      if (!account || account.userId !== userId) {
+        throw new NotFoundError(TRANSACTION_ERROR_MESSAGES.ACCOUNT_NOT_FOUND);
+      }
+    }
+
+    const scopedFilter = { ...filter, userId };
+    const totalCount = await this.transactions.countTransactionsByFilter(
+      scopedFilter,
+    );
     const offset = (page - 1) * limit;
     const transactions = await this.transactions.findTransactionsByFilter(
-      filter,
+      scopedFilter,
       offset,
       limit,
     );
@@ -286,5 +298,19 @@ export class TransactionService {
     } finally {
       await fs.unlink(filePath).catch(() => undefined);
     }
+  }
+
+  private async requireOwnedTransaction(
+    transactionId: string,
+    userId: string,
+  ): Promise<Transaction> {
+    const existingTransaction = await this.transactions.findTransactionById(
+      transactionId,
+    );
+    if (!existingTransaction || existingTransaction.userId !== userId) {
+      throw new NotFoundError(TRANSACTION_ERROR_MESSAGES.TRANSACTION_NOT_FOUND);
+    }
+
+    return existingTransaction;
   }
 }

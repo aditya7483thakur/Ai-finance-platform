@@ -1,8 +1,8 @@
 import backend from "@/axios-instance";
 import { CreateAccountData, updateAccountData } from "@/types";
 
-export const getAllAccounts = async (userId: string) => {
-  const res = await backend.get(`/accounts/get-all-accounts/${userId}`);
+export const getAllAccounts = async () => {
+  const res = await backend.get("/accounts");
   console.log(res.data);
   return res.data;
 };

@@ -47,6 +47,7 @@ const toPrismaWhere = (
         }
       : {}),
     ...(filter.accountId ? { accountId: filter.accountId } : {}),
+    ...(filter.userId ? { userId: filter.userId } : {}),
     ...(filter.date
       ? {
           date: {

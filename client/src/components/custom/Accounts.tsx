@@ -33,7 +33,6 @@ import {
   DrawerContent,
   DrawerFooter,
 } from "@/components/ui/drawer";
-import { useUserContext } from "@/contexts/userContext";
 import { useCreateAccount, useUpdateAccount } from "@/services/accounts/mutation";
 import { useEffect, useState } from "react";
 
@@ -72,7 +71,6 @@ const Accounts = ({
   onCreateOpenChange,
 }: props) => {
   const navigate = useNavigate();
-  const { userId } = useUserContext();
   const [internalOpen, setInternalOpen] = useState<boolean>(false);
   const isOpen = createOpen ?? internalOpen;
   const setIsOpen = onCreateOpenChange ?? setInternalOpen;
@@ -94,7 +92,7 @@ const Accounts = ({
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     createAccount(
-      { ...values, userId: userId as string },
+      { ...values },
       {
         onSuccess: () => {
           form.reset();

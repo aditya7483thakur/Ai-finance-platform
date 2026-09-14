@@ -1,16 +1,10 @@
 import type { LedgerEntryType } from "../../shared/types/ledger.js";
 import { GraphFilter } from "./graph.constants.js";
-import type {
-  CategoryExpensesQueryInput,
-  TransactionSummaryQueryInput,
-} from "./graph.validators.js";
+import type { TransactionSummaryQueryInput } from "./graph.validators.js";
 
 export { GraphFilter };
 
-export type {
-  CategoryExpensesQueryInput,
-  TransactionSummaryQueryInput
-};
+export type { TransactionSummaryQueryInput };
 
 export type DateRange = {
   startDate: Date;

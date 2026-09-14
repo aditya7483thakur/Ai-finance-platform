@@ -21,6 +21,7 @@ export class GraphService {
     const { startDate, endDate } = getDateRangeByFilter(input.filter);
 
     const rows = await this.transactions.getGroupedTransactions({
+      userId: input.userId,
       accountId: input.accountId,
       date: {
         gte: startDate,

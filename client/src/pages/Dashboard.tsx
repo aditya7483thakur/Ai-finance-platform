@@ -18,7 +18,6 @@ import {
 import { cn } from "@/lib/utils";
 import {
   BarChart3,
-  ChevronRight,
   FlaskConical,
   Gauge,
   PieChart,
@@ -122,13 +121,7 @@ const KpiCard = ({
         <Icon className="size-5" aria-hidden />
       </span>
       <div className="min-w-0 flex-1">
-        <div className="flex items-start justify-between gap-2">
-          <p className="text-xs text-muted-foreground">{label}</p>
-          <ChevronRight
-            className="mt-0.5 size-3.5 shrink-0 text-muted-foreground/70"
-            aria-hidden
-          />
-        </div>
+        <p className="text-xs text-muted-foreground">{label}</p>
         <div className="mt-1 flex items-end justify-between gap-3">
           <p
             className={cn(

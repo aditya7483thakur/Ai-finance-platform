@@ -95,10 +95,6 @@ export const createTransactionInputSchema = withRecurringRules(
         .string()
         .trim()
         .min(1, TRANSACTION_ERROR_MESSAGES.MISSING_REQUIRED_FIELDS),
-      userId: z
-        .string()
-        .trim()
-        .min(1, TRANSACTION_ERROR_MESSAGES.MISSING_REQUIRED_FIELDS),
     },
     objectPayload,
   ),
@@ -177,6 +173,7 @@ export const transactionIdParamSchema = routeParam(
 export type TransactionType = `${LedgerEntryType}`;
 export type RecurringInterval = `${RecurringIntervalEnum}`;
 export type TransactionCategory = `${TransactionCategoryEnum}`;
-export type CreateTransactionInput = z.infer<typeof createTransactionInputSchema>;
+export type CreateTransactionBody = z.infer<typeof createTransactionInputSchema>;
+export type CreateTransactionInput = CreateTransactionBody & { userId: string };
 export type UpdateTransactionInput = z.infer<typeof updateTransactionInputSchema>;
 export type ParsedTransactionFilters = z.infer<typeof filterQuerySchema>;
