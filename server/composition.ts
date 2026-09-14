@@ -5,7 +5,7 @@ import { accountPrismaRepository } from "./domains/account/account.repository.pr
 import { transactionPrismaRepository } from "./domains/transaction/transaction.repository.prisma.js";
 import { userPrismaRepository } from "./domains/user/user.repository.prisma.js";
 import { AccountService } from "./domains/account/account.service.js";
-import { AuthService } from "./domains/auth/auth.service.js";
+import { UserService } from "./domains/user/user.service.js";
 import { CronService } from "./domains/cron/cron.service.js";
 import { GraphService } from "./domains/graph/graph.service.js";
 import { TransactionService } from "./domains/transaction/transaction.service.js";
@@ -16,7 +16,7 @@ export const accountService = new AccountService(
   emailNodemailerAdapter,
 );
 
-export const authService = new AuthService(
+export const userService = new UserService(
   userPrismaRepository,
   bcryptPasswordHasher,
 );

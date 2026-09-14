@@ -1,7 +1,7 @@
 import type { NextFunction, Response } from "express";
-import { AUTH_ERROR_MESSAGES } from "./auth.constants.js";
-import { authService } from "../../composition.js";
-import type { AuthenticatedRequest } from "./auth.types.js";
+import { userService } from "../../composition.js";
+import { USER_ERROR_MESSAGES } from "./user.constants.js";
+import type { AuthenticatedRequest } from "./user.types.js";
 
 export const requireAuth = (
   req: AuthenticatedRequest,
@@ -13,12 +13,12 @@ export const requireAuth = (
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({
-        error: AUTH_ERROR_MESSAGES.UNAUTHORIZED_NO_TOKEN,
+        error: USER_ERROR_MESSAGES.UNAUTHORIZED_NO_TOKEN,
       });
     }
 
     const token = authHeader.split(" ")[1];
-    const decoded = authService.verifyAccessToken(token);
+    const decoded = userService.verifyAccessToken(token);
 
     req.userId = decoded.userId;
     req.userEmail = decoded.email;
@@ -28,16 +28,16 @@ export const requireAuth = (
     if (error instanceof Error && error.name === "TokenExpiredError") {
       return res
         .status(401)
-        .json({ error: AUTH_ERROR_MESSAGES.UNAUTHORIZED_TOKEN_EXPIRED });
+        .json({ error: USER_ERROR_MESSAGES.UNAUTHORIZED_TOKEN_EXPIRED });
     }
 
     if (error instanceof Error && error.name === "JsonWebTokenError") {
       return res
         .status(401)
-        .json({ error: AUTH_ERROR_MESSAGES.UNAUTHORIZED_INVALID_TOKEN });
+        .json({ error: USER_ERROR_MESSAGES.UNAUTHORIZED_INVALID_TOKEN });
     }
 
-    console.error(AUTH_ERROR_MESSAGES.AUTH_MIDDLEWARE_FAILED, error);
+    console.error(USER_ERROR_MESSAGES.AUTH_MIDDLEWARE_FAILED, error);
     return res.status(500).json({ error: "Internal server error" });
   }
 };

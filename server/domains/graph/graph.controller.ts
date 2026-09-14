@@ -6,8 +6,8 @@ import {
 } from "./graph.constants.js";
 import { accountService, graphService } from "../../composition.js";
 import { transactionSummaryQuerySchema } from "./graph.validators.js";
-import type { AuthenticatedRequest } from "../auth/auth.types.js";
-import { requireUserId } from "../auth/requireUserId.js";
+import type { AuthenticatedRequest } from "../user/user.types.js";
+import { requireUserId } from "../user/requireUserId.js";
 
 export const getTransactionSummary = async (
   req: AuthenticatedRequest,

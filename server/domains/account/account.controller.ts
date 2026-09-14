@@ -10,8 +10,8 @@ import {
   createAccountInputSchema,
   updateAccountInputSchema,
 } from "./account.validators.js";
-import type { AuthenticatedRequest } from "../auth/auth.types.js";
-import { requireUserId } from "../auth/requireUserId.js";
+import type { AuthenticatedRequest } from "../user/user.types.js";
+import { requireUserId } from "../user/requireUserId.js";
 
 export const createAccount = async (
   req: AuthenticatedRequest,

@@ -1,13 +1,13 @@
 import express from "express";
 import cors from "cors";
 import "./config/env.js";
-import authRouter from "./domains/auth/auth.routes.js";
+import userRouter from "./domains/user/user.routes.js";
 import transactionRouter from "./domains/transaction/transaction.routes.js";
 import graphRouter from "./domains/graph/graph.routes.js";
 import accountRouter from "./domains/account/account.routes.js";
 import cronRoutes from "./domains/cron/cron.routes.js";
 import { requireCronSecret } from "./domains/cron/requireCronSecret.middleware.js";
-import { requireAuth } from "./domains/auth/requireAuth.middleware.js";
+import { requireAuth } from "./domains/user/requireAuth.js";
 
 // Initialize Express
 const app = express();
@@ -28,7 +28,7 @@ app.get("/", (req, res) => {
 });
 
 // Auth routes (public)
-app.use("/auth", authRouter);
+app.use("/auth", userRouter);
 
 // Protected routes
 app.use("/accounts", requireAuth, accountRouter);

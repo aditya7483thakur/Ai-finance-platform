@@ -1,10 +1,10 @@
-export const AUTH_SUCCESS_MESSAGES = {
+export const USER_SUCCESS_MESSAGES = {
   USER_CREATED: "User created successfully",
   SIGNIN_SUCCESSFUL: "Sign in successful",
   USER_FETCHED: "User fetched successfully",
 } as const;
 
-export const AUTH_ERROR_MESSAGES = {
+export const USER_ERROR_MESSAGES = {
   INVALID_REQUEST_PAYLOAD: "Invalid request payload",
   NAME_EMAIL_PASSWORD_REQUIRED: "Name, email, and password are required",
   EMAIL_PASSWORD_REQUIRED: "Email and password are required",

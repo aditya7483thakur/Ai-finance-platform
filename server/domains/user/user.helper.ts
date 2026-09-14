@@ -1,20 +1,19 @@
 import jwt from "jsonwebtoken";
-import type { User } from "../user/user.types.js";
 import { BadRequestError } from "../../shared/types/errors.js";
-import { AUTH_ERROR_MESSAGES } from "./auth.constants.js";
-import type { AccessTokenPayload, PublicAuthUser } from "./auth.types.js";
+import { USER_ERROR_MESSAGES } from "./user.constants.js";
+import type { AccessTokenPayload, PublicUser, User } from "./user.types.js";
 
 export const getJwtSecret = (): string => {
   const jwtSecret = process.env.JWT_SECRET;
 
   if (!jwtSecret) {
-    throw new Error(AUTH_ERROR_MESSAGES.JWT_SECRET_NOT_CONFIGURED);
+    throw new Error(USER_ERROR_MESSAGES.JWT_SECRET_NOT_CONFIGURED);
   }
 
   return jwtSecret;
 };
 
-export const toPublicUser = (passwordUser: User): PublicAuthUser => {
+export const toPublicUser = (passwordUser: User): PublicUser => {
   const { password, ...publicUser } = passwordUser;
   return publicUser;
 };
@@ -32,7 +31,7 @@ export const verifyAccessTokenPayload = (token: string): AccessTokenPayload => {
     typeof decoded.userId !== "string" ||
     typeof decoded.email !== "string"
   ) {
-    throw new BadRequestError(AUTH_ERROR_MESSAGES.UNAUTHORIZED_INVALID_TOKEN);
+    throw new BadRequestError(USER_ERROR_MESSAGES.UNAUTHORIZED_INVALID_TOKEN);
   }
 
   return {
