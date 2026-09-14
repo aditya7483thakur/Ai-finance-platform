@@ -370,7 +370,7 @@ const Accounts = ({
                     className="mt-3 text-left text-sm text-primary hover:text-primary/80"
                     onClick={(event) => {
                       event.stopPropagation();
-                      navigate(`/dashboard/transactions/${account.id}`);
+                      navigate(`/dashboard/transactions?accountId=${account.id}`);
                     }}
                   >
                     Transactions →

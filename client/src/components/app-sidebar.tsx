@@ -20,8 +20,6 @@ import {
 } from "@/components/ui/sidebar";
 import { cn } from "@/lib/utils";
 import { useUserContext } from "@/contexts/userContext";
-import { useGetAllAccounts } from "@/services/accounts/query";
-import { AccountType } from "@/types";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -41,10 +39,7 @@ const getInitials = (name: string) =>
 export function AppSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, userId, logout } = useUserContext();
-  const { data: accounts } = useGetAllAccounts(userId);
-  const accountList: AccountType[] = (accounts?.data ?? []) as AccountType[];
-  const firstAccountId = accountList[0]?.id;
+  const { user, logout } = useUserContext();
 
   const items = [
     {
@@ -75,11 +70,9 @@ export function AppSidebar() {
     },
     {
       title: "Transactions",
-      url: firstAccountId
-        ? `/dashboard/transactions/${firstAccountId}`
-        : "/dashboard#accounts",
+      url: "/dashboard/transactions",
       icon: LayoutList,
-      isActive: location.pathname.startsWith("/dashboard/transactions/"),
+      isActive: location.pathname.startsWith("/dashboard/transactions"),
     },
   ];
 

@@ -47,7 +47,10 @@ const RecentTransactions = ({
     );
   }, [selectedAccountId]);
 
-  const { data: transactionData, isPending } = useFilteredTransactions(filters);
+  const { data: transactionData, isPending } = useFilteredTransactions(
+    filters,
+    { enabled: Boolean(filters.accountId) },
+  );
   const noAccounts = safeAccounts.length === 0;
 
   return (
@@ -86,7 +89,7 @@ const RecentTransactions = ({
           )}
           {filters.accountId && (
             <Link
-              to={`/dashboard/transactions/${filters.accountId}`}
+              to={`/dashboard/transactions?accountId=${filters.accountId}`}
               className="inline-flex h-8 items-center rounded-full border border-white/10 px-3 text-xs text-muted-foreground hover:bg-white/5 hover:text-foreground"
             >
               View All →

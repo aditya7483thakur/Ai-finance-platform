@@ -62,7 +62,7 @@ export default function Page() {
   };
 
   function getPageTitle(pathname: string): string {
-    if (pathname.startsWith("/dashboard/transactions/")) {
+    if (pathname.startsWith("/dashboard/transactions")) {
       return "Transactions";
     }
     return pageTitles[pathname] || "Dashboard";
@@ -147,7 +147,9 @@ export default function Page() {
                       <DropdownMenuItem
                         key={`${alert.account.id}-${alert.message}`}
                         onClick={() =>
-                          navigate(`/dashboard/transactions/${alert.account.id}`)
+                          navigate(
+                            `/dashboard/transactions?accountId=${alert.account.id}`,
+                          )
                         }
                       >
                         <span className="min-w-0">

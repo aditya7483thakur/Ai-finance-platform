@@ -6,3 +6,8 @@ export const dashSelect =
 
 export const dashLink =
   "cursor-pointer text-xs font-medium text-muted-foreground hover:text-foreground";
+
+export const transactionsHref = (accountId?: string | null) =>
+  accountId
+    ? `/dashboard/transactions?accountId=${encodeURIComponent(accountId)}`
+    : "/dashboard/transactions";

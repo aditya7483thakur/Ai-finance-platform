@@ -7,11 +7,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { z } from "zod";
-import { Copy, Loader2, MoreVertical, Pencil, Plus, Trash2 } from "lucide-react";
+import { Copy, Loader2, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { useFilteredTransactions } from "@/services/transactions/query";
-import { Link, useNavigate, useParams } from "react-router-dom";
-import { Transaction } from "@/types";
+import { useNavigate } from "react-router-dom";
+import { AccountType, Transaction } from "@/types";
 import {
   Pagination,
   PaginationContent,
@@ -43,55 +42,65 @@ import {
   useDeleteBulkTransactions,
   useDeleteTransaction,
 } from "@/services/transactions/mutation";
-import TransactionFilteration, { formSchema } from "./TransactionFilteration";
 import { Checkbox } from "../ui/checkbox";
 import { formatShortDate, formatSignedMoney } from "@/lib/money";
-import { getCategory, getCategoryBadge, getCategoryLabel } from "@/lib/categories";
+import {
+  getCategory,
+  getCategoryBadge,
+  getCategoryLabel,
+} from "@/lib/categories";
 import { cn } from "@/lib/utils";
 
-const scheduleLabel = (transaction: Transaction) => {
-  if (!transaction.isRecurring) {
-    return "One-time";
-  }
-
-  switch (transaction.recurringInterval) {
-    case "DAILY":
-      return "Daily";
-    case "WEEKLY":
-      return "Weekly";
-    case "MONTHLY":
-      return "Monthly";
-    case "YEARLY":
-      return "Yearly";
-    default:
-      return "Recurring";
-  }
+export type TransactionListFilters = {
+  accountId?: string;
+  description?: string;
+  type?: "ALL" | "INCOME" | "EXPENSE";
+  category?: string;
+  isRecurring?: "ALL" | "true" | "false";
 };
 
 const AccountTransaction = ({
-  setTotalTransactions,
+  accounts,
+  listFilters,
+  enabled,
 }: {
-  setTotalTransactions: (count: number) => void;
+  accounts: AccountType[];
+  listFilters: TransactionListFilters;
+  enabled: boolean;
 }) => {
-  const { accountId } = useParams();
   const navigate = useNavigate();
-  const [filters, setFilters] = useState({ accountId, page: 1 });
+  const [page, setPage] = useState(1);
   const [selectedTransactions, setSelectedTransactions] = useState<Set<string>>(
     new Set(),
   );
   const [deleteTarget, setDeleteTarget] = useState<Transaction | null>(null);
 
+  const queryFilters = { ...listFilters, page, limit: 10 };
   const { mutate: deleteTransaction, isPending: deleting } =
     useDeleteTransaction();
-  const { data: transactionData, isPending } = useFilteredTransactions(filters);
+  const { data: transactionData, isPending } = useFilteredTransactions(
+    queryFilters,
+    { enabled },
+  );
   const { mutate: bulkDelete, isPending: bulkDeleting } =
     useDeleteBulkTransactions();
 
   useEffect(() => {
-    if (transactionData?.pagination) {
-      setTotalTransactions(transactionData.pagination.totalTransactions);
-    }
-  }, [transactionData, setTotalTransactions]);
+    setPage(1);
+    setSelectedTransactions(new Set());
+  }, [
+    listFilters.accountId,
+    listFilters.category,
+    listFilters.description,
+    listFilters.isRecurring,
+    listFilters.type,
+  ]);
+
+  const rows: Transaction[] = transactionData?.data ?? [];
+  const accountName = (id: string) =>
+    accounts.find((account) => account.id === id)?.name ?? "Account";
+  const allSelected =
+    rows.length > 0 && rows.every((row) => selectedTransactions.has(row.id));
 
   const handleDelete = () => {
     if (!deleteTarget) {
@@ -112,13 +121,6 @@ const AccountTransaction = ({
     });
   };
 
-  const handlePageChange = (newPage: number) => {
-    setFilters((prev) => ({
-      ...prev,
-      page: newPage,
-    }));
-  };
-
   const handleCheckboxChange = (id: string, checked: boolean) => {
     setSelectedTransactions((prev) => {
       const next = new Set(prev);
@@ -127,37 +129,27 @@ const AccountTransaction = ({
     });
   };
 
-  function handleFilterSubmit(values: z.infer<typeof formSchema>) {
-    setFilters((prev) => ({
-      ...prev,
-      ...values,
-      page: 1,
-    }));
-  }
+  const toggleSelectAll = (checked: boolean) => {
+    setSelectedTransactions((prev) => {
+      const next = new Set(prev);
+      rows.forEach((row) => {
+        if (checked) {
+          next.add(row.id);
+        } else {
+          next.delete(row.id);
+        }
+      });
+      return next;
+    });
+  };
 
   return (
     <section>
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <h2 className="text-lg font-semibold text-foreground">
-          Transaction History
-        </h2>
-        <Button size="sm" variant="outline" asChild>
-          <Link to="/dashboard/add-transaction">
-            <Plus className="size-4" aria-hidden />
-            Add Transaction
-          </Link>
-        </Button>
-      </div>
-
-      <TransactionFilteration
-        searching={isPending}
-        onSubmit={handleFilterSubmit}
-      />
-
       {selectedTransactions.size > 0 && (
-        <div className="mt-3 flex justify-end">
+        <div className="mb-3 flex justify-end">
           <Button
             variant="destructive"
+            size="sm"
             onClick={handleBulkDelete}
             disabled={bulkDeleting}
           >
@@ -168,16 +160,25 @@ const AccountTransaction = ({
         </div>
       )}
 
-      <div className="mt-4 overflow-x-auto">
+      <div className="overflow-x-auto rounded-2xl border border-border bg-card">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-10"></TableHead>
+              <TableHead className="w-10">
+                <Checkbox
+                  checked={allSelected}
+                  onCheckedChange={(checked) =>
+                    toggleSelectAll(checked === true)
+                  }
+                  aria-label="Select all transactions on this page"
+                />
+              </TableHead>
               <TableHead>Date</TableHead>
               <TableHead>Description</TableHead>
+              <TableHead>Account</TableHead>
               <TableHead>Category</TableHead>
+              <TableHead>Type</TableHead>
               <TableHead className="text-right">Amount</TableHead>
-              <TableHead>Recurring</TableHead>
               <TableHead className="text-center">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -185,14 +186,14 @@ const AccountTransaction = ({
             {isPending ? (
               <TableRow>
                 <TableCell
-                  colSpan={7}
+                  colSpan={8}
                   className="py-8 text-center text-muted-foreground"
                 >
                   Loading...
                 </TableCell>
               </TableRow>
-            ) : transactionData?.data?.length > 0 ? (
-              transactionData.data.map((transaction: Transaction) => {
+            ) : rows.length > 0 ? (
+              rows.map((transaction) => {
                 const category = getCategory(transaction.category);
                 const Icon = category?.icon;
                 return (
@@ -204,7 +205,7 @@ const AccountTransaction = ({
                         onCheckedChange={(checked) =>
                           handleCheckboxChange(
                             transaction.id,
-                            checked as boolean,
+                            checked === true,
                           )
                         }
                       />
@@ -229,6 +230,9 @@ const AccountTransaction = ({
                         </Tooltip>
                       </TooltipProvider>
                     </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {accountName(transaction.accountId)}
+                    </TableCell>
                     <TableCell>
                       <span
                         className={cn(
@@ -240,6 +244,18 @@ const AccountTransaction = ({
                         {getCategoryLabel(transaction.category)}
                       </span>
                     </TableCell>
+                    <TableCell>
+                      <span
+                        className={cn(
+                          "rounded-full px-2 py-0.5 text-xs font-medium",
+                          transaction.type === "INCOME"
+                            ? "bg-success/15 text-success"
+                            : "bg-error/15 text-error",
+                        )}
+                      >
+                        {transaction.type === "INCOME" ? "Income" : "Expense"}
+                      </span>
+                    </TableCell>
                     <TableCell
                       className={cn(
                         "text-right text-sm font-semibold whitespace-nowrap",
@@ -249,9 +265,6 @@ const AccountTransaction = ({
                       )}
                     >
                       {formatSignedMoney(transaction.amount, transaction.type)}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {scheduleLabel(transaction)}
                     </TableCell>
                     <TableCell className="text-center">
                       <DropdownMenu>
@@ -301,7 +314,7 @@ const AccountTransaction = ({
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={7}
+                  colSpan={8}
                   className="py-10 text-center text-muted-foreground"
                 >
                   No transactions found.
@@ -312,40 +325,40 @@ const AccountTransaction = ({
         </Table>
       </div>
 
-      <div className="mt-4 flex justify-center">
-        <Pagination>
+      <div className="mt-4 flex items-center justify-between gap-3">
+        <p className="text-xs text-muted-foreground">
+          {scheduleHint(rows)}
+          {transactionData?.pagination
+            ? `Showing page ${transactionData.pagination.currentPage} of ${transactionData.pagination.totalPages || 1}`
+            : null}
+        </p>
+        <Pagination className="mx-0 w-auto justify-end">
           <PaginationContent>
             <PaginationItem>
               <PaginationPrevious
-                to={`?page=${filters.page - 1}`}
-                className={
-                  filters.page === 1 ? "pointer-events-none opacity-50" : ""
-                }
-                onClick={(e) => {
-                  if (filters.page === 1) e.preventDefault();
-                  else handlePageChange(filters.page - 1);
+                to="#"
+                className={page === 1 ? "pointer-events-none opacity-50" : ""}
+                onClick={(event) => {
+                  event.preventDefault();
+                  if (page === 1) return;
+                  setPage(page - 1);
                 }}
               />
             </PaginationItem>
-            <span className="px-2 text-sm text-muted-foreground">
-              {`${filters.page}/${transactionData?.pagination?.totalPages || 1}`}
-            </span>
             <PaginationItem>
               <PaginationNext
-                to={`?page=${filters.page + 1}`}
+                to="#"
                 className={
-                  filters.page === transactionData?.pagination?.totalPages
+                  page === transactionData?.pagination?.totalPages
                     ? "pointer-events-none opacity-50"
                     : ""
                 }
-                onClick={(e) => {
-                  if (
-                    filters.page === transactionData?.pagination?.totalPages
-                  ) {
-                    e.preventDefault();
-                  } else {
-                    handlePageChange(filters.page + 1);
+                onClick={(event) => {
+                  event.preventDefault();
+                  if (page === transactionData?.pagination?.totalPages) {
+                    return;
                   }
+                  setPage(page + 1);
                 }}
               />
             </PaginationItem>
@@ -390,6 +403,16 @@ const AccountTransaction = ({
       </Dialog>
     </section>
   );
+};
+
+const scheduleHint = (rows: Transaction[]) => {
+  if (!rows.length) {
+    return "";
+  }
+  const recurring = rows.filter((row) => row.isRecurring).length;
+  return recurring
+    ? `${recurring} recurring on this page. `
+    : "";
 };
 
 export default AccountTransaction;

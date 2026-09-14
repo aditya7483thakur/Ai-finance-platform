@@ -2,8 +2,16 @@ import backend from "@/axios-instance";
 export const fetchFilteredTransactions = async (
   filters: Record<string, any>
 ) => {
+  const params: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(filters)) {
+    if (value === undefined || value === null || value === "" || value === "ALL") {
+      continue;
+    }
+    params[key] = value;
+  }
+
   const { data } = await backend.get("/transactions/filter", {
-    params: filters,
+    params,
   });
 
   return data;

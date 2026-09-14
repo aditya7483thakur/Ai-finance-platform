@@ -408,7 +408,7 @@ export const CompletedCard = ({
       Transaction created
     </p>
     <Link
-      to={`/dashboard/transactions/${accountId}`}
+      to={`/dashboard/transactions?accountId=${accountId}`}
       className="mt-3 inline-flex text-sm font-medium text-success hover:underline"
     >
       View Transaction →
