@@ -15,6 +15,7 @@ export const useDeleteTransaction = () => {
     onSuccess: (data) => {
       toast.success(data.message);
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["transactionSummary"] });
     },
 
     onError: (data: any) => {
@@ -30,6 +31,7 @@ export const useDeleteBulkTransactions = () => {
     onSuccess: (data) => {
       toast.success(data.message);
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["transactionSummary"] });
     },
 
     onError: (data: any) => {
@@ -45,6 +47,7 @@ export const useCreateTransaction = () => {
     onSuccess: (data) => {
       toast.success(data.message);
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["transactionSummary"] });
     },
 
     onError: (data: any) => {
@@ -60,6 +63,7 @@ export const useEditTransaction = () => {
     onSuccess: (data) => {
       toast.success(data.message);
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
+      queryClient.invalidateQueries({ queryKey: ["transactionSummary"] });
     },
     onError: (data: any) => {
       toast.error(data?.response?.data?.error);

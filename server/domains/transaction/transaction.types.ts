@@ -1,6 +1,7 @@
 import type {
   CreateTransactionInput,
   ParsedTransactionFilters,
+  ParsedTransactionSummaryFilter,
   RecurringInterval,
   TransactionCategory,
   TransactionType,
@@ -10,6 +11,7 @@ import type {
 export type {
   CreateTransactionInput,
   ParsedTransactionFilters,
+  ParsedTransactionSummaryFilter,
   RecurringInterval,
   TransactionCategory,
   TransactionType,
@@ -69,4 +71,20 @@ export type GroupedTransactionByDateRow = {
 export type GroupedCategoryExpenseRow = {
   category: string;
   amount: string;
+};
+
+export type TransactionAmountByTypeRow = {
+  type: TransactionType;
+  amount: string;
+};
+
+export type TransactionSummaryResult = {
+  income: number;
+  expense: number;
+  net: number;
+  topExpenseCategory: {
+    name: string;
+    value: number;
+    share: number;
+  } | null;
 };

@@ -214,4 +214,39 @@ export const transactionPrismaRepository: TransactionRepository = {
       amount: (row._sum.amount ?? new Prisma.Decimal(0)).toString(),
     }));
   },
+  sumAmountsByType: async (filter, ctx) => {
+    const rows = await dbOf(ctx).transaction.groupBy({
+      by: ["type"],
+      where: toPrismaWhere(filter),
+      _sum: { amount: true },
+    });
+
+    return rows.map((row) => ({
+      type: row.type,
+      amount: (row._sum.amount ?? new Prisma.Decimal(0)).toString(),
+    }));
+  },
+  getTopExpenseCategory: async (filter, ctx) => {
+    const rows = await dbOf(ctx).transaction.groupBy({
+      by: ["category"],
+      where: toPrismaWhere({ ...filter, type: LedgerEntryType.EXPENSE }),
+      _sum: { amount: true },
+      orderBy: {
+        _sum: {
+          amount: "desc",
+        },
+      },
+      take: 1,
+    });
+
+    const row = rows[0];
+    if (!row) {
+      return null;
+    }
+
+    return {
+      category: row.category,
+      amount: (row._sum.amount ?? new Prisma.Decimal(0)).toString(),
+    };
+  },
 };

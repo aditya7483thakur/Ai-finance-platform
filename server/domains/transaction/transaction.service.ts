@@ -9,7 +9,9 @@ import type {
   CreateTransactionInput,
   FilteredTransactionsResult,
   ParsedTransactionFilters,
+  ParsedTransactionSummaryFilter,
   Transaction,
+  TransactionSummaryResult,
   UpdateTransactionInput,
 } from "./transaction.types.js";
 import type { TransactionRepository } from "./transaction.port.js";
@@ -274,6 +276,55 @@ export class TransactionService {
         hasNextPage: page * limit < totalCount,
         hasPrevPage: page > 1,
       },
+    };
+  }
+
+  async getSummary(
+    filter: ParsedTransactionSummaryFilter,
+    userId: string,
+  ): Promise<TransactionSummaryResult> {
+    if (filter.accountId) {
+      const account = await this.accounts.findAccountById(filter.accountId);
+      if (!account || account.userId !== userId) {
+        throw new NotFoundError(TRANSACTION_ERROR_MESSAGES.ACCOUNT_NOT_FOUND);
+      }
+    }
+
+    const scopedFilter = { ...filter, userId };
+    const [totals, topExpense] = await Promise.all([
+      this.transactions.sumAmountsByType(scopedFilter),
+      scopedFilter.type === "INCOME"
+        ? Promise.resolve(null)
+        : this.transactions.getTopExpenseCategory(scopedFilter),
+    ]);
+
+    const income = Money.fromString(
+      totals.find((row) => row.type === "INCOME")?.amount ?? "0",
+    );
+    const expense = Money.fromString(
+      totals.find((row) => row.type === "EXPENSE")?.amount ?? "0",
+    );
+    const topValue = topExpense
+      ? Money.fromString(topExpense.amount)
+      : Money.zero();
+    const expenseAmount = expense.toNumber();
+    const share =
+      expenseAmount > 0
+        ? Math.round((topValue.toNumber() / expenseAmount) * 100)
+        : 0;
+
+    return {
+      income: income.toNumber(),
+      expense: expense.toNumber(),
+      net: income.subtract(expense).toNumber(),
+      topExpenseCategory:
+        topExpense && topValue.toNumber() > 0
+          ? {
+              name: topExpense.category,
+              value: topValue.toNumber(),
+              share,
+            }
+          : null,
     };
   }
 

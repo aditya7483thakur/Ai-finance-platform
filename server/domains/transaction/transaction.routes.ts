@@ -6,6 +6,7 @@ import {
   deleteTransaction,
   editTransaction,
   getFilteredTransactions,
+  getTransactionSummary,
 } from "./transaction.controller.js";
 import { uploadReceipt } from "../../shared/middleware/uploadMiddleware.js";
 import rateLimiter from "../../shared/middleware/rateLimiter.js";
@@ -29,6 +30,7 @@ router.delete(
   deleteMultipleTransactions,
 );
 router.get("/filter", getFilteredTransactions);
+router.get("/summary", getTransactionSummary);
 router.post("/ai-receipt", rateLimiter(10), uploadReceipt, AiFormReceipt);
 
 export default router;

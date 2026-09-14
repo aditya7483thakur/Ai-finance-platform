@@ -4,6 +4,7 @@ import type {
   GroupedCategoryExpenseRow,
   GroupedTransactionByDateRow,
   Transaction,
+  TransactionAmountByTypeRow,
   TransactionListFilter,
   UpdateTransactionInput,
 } from "./transaction.types.js";
@@ -70,4 +71,12 @@ export type TransactionRepository = {
     lastDayOfMonth: Date,
     ctx?: PersistenceContext,
   ) => Promise<GroupedCategoryExpenseRow[]>;
+  sumAmountsByType: (
+    filter: TransactionListFilter,
+    ctx?: PersistenceContext,
+  ) => Promise<TransactionAmountByTypeRow[]>;
+  getTopExpenseCategory: (
+    filter: TransactionListFilter,
+    ctx?: PersistenceContext,
+  ) => Promise<GroupedCategoryExpenseRow | null>;
 };

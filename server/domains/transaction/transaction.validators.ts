@@ -121,13 +121,106 @@ export const deleteManyTransactionsSchema = z.object(
 
 const optionalFilterValue = queryString.optional();
 
+const dayOnlyPattern = /^(\d{4})-(\d{2})-(\d{2})$/;
+
+const invalidDateError = (path: "startDate" | "endDate"): z.ZodError =>
+  new z.ZodError([
+    {
+      code: z.ZodIssueCode.custom,
+      message: TRANSACTION_ERROR_MESSAGES.INVALID_DATE,
+      path: [path],
+    },
+  ]);
+
+const parseDayBoundary = (
+  value: string,
+  endOfDay: boolean,
+  path: "startDate" | "endDate",
+): Date => {
+  const dayOnly = value.match(dayOnlyPattern);
+  if (dayOnly) {
+    const year = Number(dayOnly[1]);
+    const month = Number(dayOnly[2]) - 1;
+    const day = Number(dayOnly[3]);
+    return endOfDay
+      ? new Date(year, month, day, 23, 59, 59, 999)
+      : new Date(year, month, day, 0, 0, 0, 0);
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    throw invalidDateError(path);
+  }
+
+  return parsed;
+};
+
+const filterQueryFields = {
+  category: optionalFilterValue,
+  type: optionalFilterValue,
+  isRecurring: optionalFilterValue,
+  description: optionalFilterValue,
+  accountId: optionalFilterValue,
+  startDate: optionalFilterValue,
+  endDate: optionalFilterValue,
+};
+
+const toListFilter = (query: {
+  category?: string;
+  type?: string;
+  isRecurring?: string;
+  description?: string;
+  accountId?: string;
+  startDate?: string;
+  endDate?: string;
+}) => {
+  const startDate = query.startDate
+    ? parseDayBoundary(query.startDate, false, "startDate")
+    : undefined;
+  const endDate = query.endDate
+    ? parseDayBoundary(query.endDate, true, "endDate")
+    : undefined;
+
+  if (startDate && endDate && startDate > endDate) {
+    throw new z.ZodError([
+      {
+        code: z.ZodIssueCode.custom,
+        message: TRANSACTION_ERROR_MESSAGES.INVALID_DATE_RANGE,
+        path: ["endDate"],
+      },
+    ]);
+  }
+
+  return {
+    ...(query.category && query.category !== TRANSACTION_FILTER_ALL
+      ? {
+          category: transactionCategorySchema.parse(query.category),
+        }
+      : {}),
+    ...(query.type && query.type !== TRANSACTION_FILTER_ALL
+      ? {
+          type: transactionTypeSchema.parse(query.type),
+        }
+      : {}),
+    ...(query.isRecurring && query.isRecurring !== TRANSACTION_FILTER_ALL
+      ? { isRecurring: query.isRecurring === "true" }
+      : {}),
+    ...(query.description ? { description: query.description } : {}),
+    ...(query.accountId ? { accountId: query.accountId } : {}),
+    ...(startDate || endDate
+      ? {
+          date: {
+            ...(startDate ? { gte: startDate } : {}),
+            ...(endDate ? { lte: endDate } : {}),
+          },
+        }
+      : {}),
+  };
+};
+
 export const filterQuerySchema = z
   .object({
-    category: optionalFilterValue,
-    type: optionalFilterValue,
-    isRecurring: optionalFilterValue,
-    description: optionalFilterValue,
-    accountId: optionalFilterValue,
+    ...filterQueryFields,
     page: optionalFilterValue,
     limit: optionalFilterValue,
   })
@@ -144,27 +237,15 @@ export const filterQuerySchema = z
     }
 
     return {
-      filter: {
-        ...(query.category && query.category !== TRANSACTION_FILTER_ALL
-          ? {
-              category: transactionCategorySchema.parse(query.category),
-            }
-          : {}),
-        ...(query.type && query.type !== TRANSACTION_FILTER_ALL
-          ? {
-              type: transactionTypeSchema.parse(query.type),
-            }
-          : {}),
-        ...(query.isRecurring && query.isRecurring !== TRANSACTION_FILTER_ALL
-          ? { isRecurring: query.isRecurring === "true" }
-          : {}),
-        ...(query.description ? { description: query.description } : {}),
-        ...(query.accountId ? { accountId: query.accountId } : {}),
-      },
+      filter: toListFilter(query),
       page,
       limit,
     };
   });
+
+export const summaryQuerySchema = z
+  .object(filterQueryFields)
+  .transform((query) => toListFilter(query));
 
 export const transactionIdParamSchema = routeParam(
   TRANSACTION_ERROR_MESSAGES.TRANSACTION_ID_REQUIRED,
@@ -177,3 +258,4 @@ export type CreateTransactionBody = z.infer<typeof createTransactionInputSchema>
 export type CreateTransactionInput = CreateTransactionBody & { userId: string };
 export type UpdateTransactionInput = z.infer<typeof updateTransactionInputSchema>;
 export type ParsedTransactionFilters = z.infer<typeof filterQuerySchema>;
+export type ParsedTransactionSummaryFilter = z.infer<typeof summaryQuerySchema>;

@@ -4,6 +4,7 @@ export const TRANSACTION_SUCCESS_MESSAGES = {
   TRANSACTION_DELETED: "Transaction deleted successfully",
   TRANSACTIONS_DELETED: "Transactions deleted successfully",
   TRANSACTIONS_FILTERED: "Filtered transactions fetched successfully",
+  TRANSACTION_SUMMARY_FETCHED: "Transaction summary fetched successfully",
   RECEIPT_PARSED: "Receipt parsed successfully",
 } as const;
 
@@ -11,6 +12,7 @@ export const TRANSACTION_ERROR_MESSAGES = {
   MISSING_REQUIRED_FIELDS: "Missing required fields",
   INVALID_AMOUNT: "Amount must be greater than 0",
   INVALID_DATE: "Invalid transaction date",
+  INVALID_DATE_RANGE: "Start date must be before end date",
   INVALID_TRANSACTION_TYPE: "Invalid transaction type",
   INVALID_TRANSACTION_CATEGORY: "Invalid transaction category",
   INVALID_RECURRING_INTERVAL: "Invalid recurring interval",
@@ -28,6 +30,7 @@ export const TRANSACTION_ERROR_MESSAGES = {
   DELETE_TRANSACTION_FAILED: "Error deleting transaction:",
   DELETE_MULTIPLE_TRANSACTIONS_FAILED: "Error deleting transactions:",
   FETCH_FILTERED_TRANSACTIONS_FAILED: "Error fetching filtered transactions:",
+  FETCH_TRANSACTION_SUMMARY_FAILED: "Error fetching transaction summary:",
   PARSE_RECEIPT_FAILED: "Error parsing receipt:",
 } as const;
 

@@ -1,9 +1,17 @@
 import { Link, useSearchParams } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
+import { endOfMonth, format, startOfMonth } from "date-fns";
+import type { DateRange } from "react-day-picker";
 import AccountTransaction from "@/components/custom/AccountTransaction";
 import TransactionGraph from "@/components/custom/TransactionGraph";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -14,14 +22,15 @@ import {
 import { useUserContext } from "@/contexts/userContext";
 import { useAskBudgetly } from "@/hooks/useAskBudgetly";
 import { useGetAllAccounts } from "@/services/accounts/query";
-import { useFilteredTransactions } from "@/services/transactions/query";
+import { useTransactionSummary } from "@/services/transactions/query";
 import { dashControl, dashSelect } from "@/lib/dashboard-chrome";
 import { CATEGORIES, getCategoryLabel } from "@/lib/categories";
 import { formatMoney, formatSignedMoney, toAmount } from "@/lib/money";
 import { cn } from "@/lib/utils";
-import { AccountType, Transaction as TransactionRecord } from "@/types";
+import { AccountType } from "@/types";
 import {
   ArrowLeftRight,
+  CalendarDays,
   Plus,
   Repeat,
   ScanLine,
@@ -35,13 +44,13 @@ import {
 type TypeFilter = "ALL" | "INCOME" | "EXPENSE";
 type RecurringFilter = "ALL" | "true" | "false";
 
-const isSameMonth = (value: string | Date, now = new Date()) => {
-  const date = new Date(value);
-  return (
-    date.getMonth() === now.getMonth() &&
-    date.getFullYear() === now.getFullYear()
-  );
-};
+const currentMonthRange = (): DateRange => ({
+  from: startOfMonth(new Date()),
+  to: endOfMonth(new Date()),
+});
+
+const toDayStamp = (value?: Date) =>
+  value ? format(value, "yyyy-MM-dd") : undefined;
 
 const Transaction = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -57,6 +66,9 @@ const Transaction = () => {
   const [type, setType] = useState<TypeFilter>("ALL");
   const [category, setCategory] = useState("ALL");
   const [isRecurring, setIsRecurring] = useState<RecurringFilter>("ALL");
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(
+    currentMonthRange,
+  );
 
   useEffect(() => {
     if (accountsLoading || !accountId) {
@@ -78,76 +90,53 @@ const Transaction = () => {
     setSearchParams(next, { replace: true });
   };
 
+  const startDate = toDayStamp(dateRange?.from);
+  const endDate = toDayStamp(dateRange?.to ?? dateRange?.from);
+
   const listFilters = useMemo(
     () => ({
       ...(accountId ? { accountId } : {}),
       ...(appliedDescription ? { description: appliedDescription } : {}),
+      ...(startDate ? { startDate } : {}),
+      ...(endDate ? { endDate } : {}),
       type,
       category,
       isRecurring,
     }),
-    [accountId, appliedDescription, category, isRecurring, type],
+    [
+      accountId,
+      appliedDescription,
+      category,
+      endDate,
+      isRecurring,
+      startDate,
+      type,
+    ],
   );
 
-  const { data: ledger } = useFilteredTransactions(
-    { ...listFilters, page: 1, limit: 200 },
-    { enabled: Boolean(userId) },
-  );
+  const { data: summaryResponse } = useTransactionSummary(listFilters, {
+    enabled: Boolean(userId),
+  });
+  const summary = summaryResponse?.data;
+  const totals = {
+    income: toAmount(summary?.income),
+    expenses: toAmount(summary?.expense),
+    net: toAmount(summary?.net),
+  };
+  const insight = summary?.topExpenseCategory
+    ? {
+        category: summary.topExpenseCategory.name,
+        share: summary.topExpenseCategory.share,
+      }
+    : null;
 
-  const monthRows: TransactionRecord[] = useMemo(() => {
-    const rows: TransactionRecord[] = ledger?.data ?? [];
-    return rows.filter((row) => isSameMonth(row.date));
-  }, [ledger?.data]);
-
-  const totals = useMemo(() => {
-    const knownCount = ledger?.pagination?.totalTransactions ?? monthRows.length;
-    const complete = knownCount <= (ledger?.data?.length ?? 0);
-
-    const income = monthRows.reduce(
-      (sum, row) =>
-        row.type === "INCOME" ? sum + toAmount(row.amount) : sum,
-      0,
-    );
-    const expenses = monthRows.reduce(
-      (sum, row) =>
-        row.type === "EXPENSE" ? sum + toAmount(row.amount) : sum,
-      0,
-    );
-
-    return {
-      complete,
-      income,
-      expenses,
-      net: income - expenses,
-    };
-  }, [ledger, monthRows]);
-
-  const insight = useMemo(() => {
-    const expenses = monthRows.filter((row) => row.type === "EXPENSE");
-    if (!expenses.length) {
-      return null;
-    }
-
-    const grouped = expenses.reduce<Record<string, number>>((acc, row) => {
-      acc[row.category] = (acc[row.category] ?? 0) + toAmount(row.amount);
-      return acc;
-    }, {});
-
-    const [topCategory, amount] = Object.entries(grouped).sort(
-      (left, right) => right[1] - left[1],
-    )[0];
-    const total = Object.values(grouped).reduce((sum, value) => sum + value, 0);
-
-    if (!topCategory || amount <= 0 || total <= 0) {
-      return null;
-    }
-
-    return {
-      category: topCategory,
-      amount,
-      share: Math.round((amount / total) * 100),
-    };
-  }, [monthRows]);
+  const rangeLabel =
+    dateRange?.from && (dateRange.to || dateRange.from)
+      ? `${format(dateRange.from, "MMM d, yyyy")} – ${format(
+          dateRange.to ?? dateRange.from,
+          "MMM d, yyyy",
+        )}`
+      : "All time";
 
   const applySearch = () => {
     setAppliedDescription(description.trim());
@@ -186,9 +175,6 @@ const Transaction = () => {
   };
 
   const balance = toAmount(selectedAccount?.balance);
-  const budget = toAmount(selectedAccount?.budget);
-  const used = toAmount(selectedAccount?.usedAmount);
-  const hasBudget = Boolean(selectedAccount?.budget);
 
   return (
     <div className="min-h-full bg-background">
@@ -239,16 +225,13 @@ const Transaction = () => {
                 <TrendingUp className="size-5" aria-hidden />
               </span>
               <div className="min-w-0">
-                <p className="text-xs text-muted-foreground">Income this month</p>
+                <p className="text-xs text-muted-foreground">Income</p>
                 <p className="mt-1 text-2xl font-semibold text-success">
                   {formatSignedMoney(totals.income, "INCOME")}
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {totals.complete
-                    ? selectedAccount
-                      ? selectedAccount.name
-                      : "All accounts"
-                    : "Based on recent transactions"}
+                  {rangeLabel}
+                  {selectedAccount ? ` · ${selectedAccount.name}` : ""}
                 </p>
               </div>
             </div>
@@ -259,16 +242,13 @@ const Transaction = () => {
                 <TrendingDown className="size-5" aria-hidden />
               </span>
               <div className="min-w-0">
-                <p className="text-xs text-muted-foreground">
-                  Expenses this month
-                </p>
+                <p className="text-xs text-muted-foreground">Expenses</p>
                 <p className="mt-1 text-2xl font-semibold text-error">
                   {formatSignedMoney(totals.expenses, "EXPENSE")}
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {hasBudget
-                    ? `${formatMoney(used)} of ${formatMoney(budget)} budget used`
-                    : "From recorded expenses"}
+                  {rangeLabel}
+                  {selectedAccount ? ` · ${selectedAccount.name}` : ""}
                 </p>
               </div>
             </div>
@@ -289,7 +269,7 @@ const Transaction = () => {
                   {formatMoney(totals.net)}
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Income minus expenses this month
+                  Income minus expenses in this range
                 </p>
               </div>
             </div>
@@ -305,15 +285,15 @@ const Transaction = () => {
                   <>
                     <p className="mt-1 text-sm font-medium text-foreground">
                       {getCategoryLabel(insight.category)} is {insight.share}% of
-                      spending this month.
+                      spending in this range.
                     </p>
                     <button
                       type="button"
                       onClick={() =>
                         openAsk(
                           selectedAccount
-                            ? `Why is ${getCategoryLabel(insight.category)} my largest expense in ${selectedAccount.name} this month?`
-                            : `Why is ${getCategoryLabel(insight.category)} my largest expense this month?`,
+                            ? `Why is ${getCategoryLabel(insight.category)} my largest expense in ${selectedAccount.name} from ${rangeLabel}?`
+                            : `Why is ${getCategoryLabel(insight.category)} my largest expense from ${rangeLabel}?`,
                         )
                       }
                       className="pointer-events-auto mt-2 text-xs font-medium text-primary hover:underline"
@@ -324,7 +304,7 @@ const Transaction = () => {
                 ) : (
                   <>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      No expenses this month yet.
+                      No expenses in this range yet.
                     </p>
                     <button
                       type="button"
@@ -416,6 +396,51 @@ const Transaction = () => {
                   <SelectItem value="false">One-time</SelectItem>
                 </SelectContent>
               </Select>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className={cn(
+                      dashSelect,
+                      "w-full justify-start lg:w-56",
+                    )}
+                  >
+                    <CalendarDays className="size-3.5" aria-hidden />
+                    <span className="truncate">{rangeLabel}</span>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="end">
+                  <Calendar
+                    mode="range"
+                    selected={dateRange}
+                    onSelect={setDateRange}
+                    defaultMonth={dateRange?.from}
+                    numberOfMonths={1}
+                    initialFocus
+                  />
+                  <div className="flex gap-2 border-t border-white/10 p-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 px-2 text-xs"
+                      onClick={() => setDateRange(currentMonthRange())}
+                    >
+                      This month
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 px-2 text-xs"
+                      onClick={() => setDateRange(undefined)}
+                    >
+                      All time
+                    </Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
               <Button type="submit" size="sm" className={cn(dashControl, "lg:hidden")}>
                 Search
               </Button>

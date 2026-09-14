@@ -57,6 +57,8 @@ export type TransactionListFilters = {
   type?: "ALL" | "INCOME" | "EXPENSE";
   category?: string;
   isRecurring?: "ALL" | "true" | "false";
+  startDate?: string;
+  endDate?: string;
 };
 
 const AccountTransaction = ({
@@ -92,7 +94,9 @@ const AccountTransaction = ({
     listFilters.accountId,
     listFilters.category,
     listFilters.description,
+    listFilters.endDate,
     listFilters.isRecurring,
+    listFilters.startDate,
     listFilters.type,
   ]);
 

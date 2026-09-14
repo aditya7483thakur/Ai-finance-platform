@@ -17,6 +17,24 @@ export const fetchFilteredTransactions = async (
   return data;
 };
 
+export const fetchTransactionSummary = async (
+  filters: Record<string, any>,
+) => {
+  const params: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(filters)) {
+    if (value === undefined || value === null || value === "" || value === "ALL") {
+      continue;
+    }
+    params[key] = value;
+  }
+
+  const { data } = await backend.get("/transactions/summary", {
+    params,
+  });
+
+  return data;
+};
+
 export const deleteTransaction = async (transactionId: string) => {
   const res = await backend.delete(
     `/transactions/delete-transaction/${transactionId}`

@@ -10,6 +10,7 @@ import {
   createTransactionInputSchema,
   deleteManyTransactionsSchema,
   filterQuerySchema,
+  summaryQuerySchema,
   transactionIdParamSchema,
   updateTransactionInputSchema,
 } from "./transaction.validators.js";
@@ -134,6 +135,28 @@ export const getFilteredTransactions = async (
       res,
       error,
       TRANSACTION_ERROR_MESSAGES.FETCH_FILTERED_TRANSACTIONS_FAILED,
+    );
+  }
+};
+
+export const getTransactionSummary = async (
+  req: AuthenticatedRequest,
+  res: Response,
+) => {
+  try {
+    const userId = requireUserId(req);
+    const filter = summaryQuerySchema.parse(req.query);
+    const result = await transactionService.getSummary(filter, userId);
+
+    return res.status(200).json({
+      message: TRANSACTION_SUCCESS_MESSAGES.TRANSACTION_SUMMARY_FETCHED,
+      data: result,
+    });
+  } catch (error) {
+    return handleControllerError(
+      res,
+      error,
+      TRANSACTION_ERROR_MESSAGES.FETCH_TRANSACTION_SUMMARY_FAILED,
     );
   }
 };
