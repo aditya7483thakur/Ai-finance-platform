@@ -9,7 +9,6 @@ export const useCreateAccount = () => {
   return useMutation({
     mutationFn: (data: CreateAccountData) => createAccount(data),
     onSuccess: (data) => {
-      console.log(data);
       toast.success(data.message);
       queryClient.invalidateQueries({
         queryKey: ["getAllAccounts"],
@@ -17,7 +16,7 @@ export const useCreateAccount = () => {
     },
     onError: (err: any) => {
       toast.error(err?.response?.data?.error);
-      console.log(err);
+      console.error(err);
     },
   });
 };
@@ -27,7 +26,6 @@ export const useUpdateAccount = () => {
   return useMutation({
     mutationFn: (data: updateAccountData) => updateAccount(data),
     onSuccess: (data) => {
-      console.log(data, "new invalidated");
       toast.success(data.message);
       queryClient.invalidateQueries({
         queryKey: ["getAllAccounts"],

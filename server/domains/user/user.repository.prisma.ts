@@ -30,28 +30,12 @@ export const userPrismaRepository: UserRepository = {
   createUser: async (data, ctx) => {
     const row = await dbOf(ctx).user.create({
       data: {
-        ...(data.id ? { id: data.id } : {}),
         email: data.email,
         name: data.name,
         imageUrl: data.imageUrl,
         password: data.password,
       },
     });
-    return toUser(row);
-  },
-  updateUserById: async (userId, data, ctx) => {
-    const row = await dbOf(ctx).user.update({
-      where: { id: userId },
-      data: {
-        email: data.email,
-        name: data.name,
-        imageUrl: data.imageUrl,
-      },
-    });
-    return toUser(row);
-  },
-  deleteUserById: async (userId, ctx) => {
-    const row = await dbOf(ctx).user.delete({ where: { id: userId } });
     return toUser(row);
   },
   findUsersForMonthlySummary: async (ctx) => {

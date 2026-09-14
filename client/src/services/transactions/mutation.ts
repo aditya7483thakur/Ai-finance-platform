@@ -13,7 +13,6 @@ export const useDeleteTransaction = () => {
   return useMutation({
     mutationFn: (transactionId: string) => deleteTransaction(transactionId),
     onSuccess: (data) => {
-      console.log(data);
       toast.success(data.message);
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
     },
@@ -29,7 +28,6 @@ export const useDeleteBulkTransactions = () => {
   return useMutation({
     mutationFn: (data: string[]) => deleteBulkTransactions(data),
     onSuccess: (data) => {
-      console.log(data);
       toast.success(data.message);
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
     },
@@ -45,7 +43,6 @@ export const useCreateTransaction = () => {
   return useMutation({
     mutationFn: (data) => createTransaction(data),
     onSuccess: (data) => {
-      console.log(data);
       toast.success(data.message);
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
     },
@@ -61,7 +58,6 @@ export const useEditTransaction = () => {
   return useMutation({
     mutationFn: (data) => editTransaction(data),
     onSuccess: (data) => {
-      console.log(data);
       toast.success(data.message);
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
     },

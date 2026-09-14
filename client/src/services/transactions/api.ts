@@ -6,7 +6,6 @@ export const fetchFilteredTransactions = async (
     params: filters,
   });
 
-  console.log(data);
   return data;
 };
 

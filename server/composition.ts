@@ -9,7 +9,6 @@ import { AuthService } from "./domains/auth/auth.service.js";
 import { CronService } from "./domains/cron/cron.service.js";
 import { GraphService } from "./domains/graph/graph.service.js";
 import { TransactionService } from "./domains/transaction/transaction.service.js";
-import { UserService } from "./domains/user/user.service.js";
 
 export const accountService = new AccountService(
   accountPrismaRepository,
@@ -18,11 +17,6 @@ export const accountService = new AccountService(
 );
 
 export const authService = new AuthService(
-  userPrismaRepository,
-  bcryptPasswordHasher,
-);
-
-export const userService = new UserService(
   userPrismaRepository,
   bcryptPasswordHasher,
 );

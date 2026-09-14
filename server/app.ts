@@ -7,7 +7,6 @@ import graphRouter from "./domains/graph/graph.routes.js";
 import accountRouter from "./domains/account/account.routes.js";
 import cronRoutes from "./domains/cron/cron.routes.js";
 import { requireCronSecret } from "./domains/cron/requireCronSecret.middleware.js";
-import userRouter from "./domains/user/user.routes.js";
 import { requireAuth } from "./domains/auth/requireAuth.middleware.js";
 
 // Initialize Express
@@ -30,7 +29,6 @@ app.get("/", (req, res) => {
 
 // Auth routes (public)
 app.use("/auth", authRouter);
-app.use("/users", userRouter);
 
 // Protected routes
 app.use("/accounts", requireAuth, accountRouter);

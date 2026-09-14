@@ -8,20 +8,11 @@ export type User = {
   updatedAt: Date;
 };
 
-export type { AuthUserPayload } from "./user.validators.js";
-
 export type CreateUserInput = {
-  id?: string;
   email: string;
   name: string;
   imageUrl: string | null;
   password: string;
-};
-
-export type UpdateUserInput = {
-  email: string;
-  name: string;
-  imageUrl: string | null;
 };
 
 export type UserForMonthlySummary = {
