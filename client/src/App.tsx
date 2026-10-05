@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Navigate, Route, Routes, useParams } from "rea
 import Home from "./pages/Home";
 import ProtectedRoute from "./ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
+import Accounts from "./pages/Accounts";
 import DashBoardLayout from "./layout/DashboardLayout";
 import Transaction from "./pages/Transaction";
 import AddTransaction from "./pages/AddTransaction";
@@ -25,6 +26,7 @@ function App() {
         <Route element={<ProtectedRoute />}>
           <Route path="/dashboard" element={<DashBoardLayout />}>
             <Route index element={<Dashboard />} />
+            <Route path="accounts" element={<Accounts />} />
             <Route path="transactions" element={<Transaction />} />
             <Route
               path="transactions/:accountId"

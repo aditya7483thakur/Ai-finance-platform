@@ -5,10 +5,6 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { useUserContext } from "@/contexts/userContext";
-import { useAskBudgetly } from "@/hooks/useAskBudgetly";
-import { getAccountAlerts } from "@/lib/account-health";
-import { useGetAllAccounts } from "@/services/accounts/query";
-import { AccountType } from "@/types";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -17,18 +13,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Bell, CalendarDays, ChevronDown, LogOut, Search } from "lucide-react";
-import { FormEvent, useEffect, useState } from "react";
+import { LogOut } from "lucide-react";
+import { useEffect } from "react";
 
 export default function Page() {
   const location = useLocation();
-  const { user, userId, logout } = useUserContext();
-  const openAsk = useAskBudgetly();
+  const { user, logout } = useUserContext();
   const navigate = useNavigate();
-  const { data: accounts } = useGetAllAccounts(userId);
-  const [search, setSearch] = useState("");
 
   useEffect(() => {
     const root = document.documentElement;
@@ -37,9 +28,6 @@ export default function Page() {
       root.classList.remove("dark");
     };
   }, []);
-
-  const accountList: AccountType[] = (accounts?.data ?? []) as AccountType[];
-  const alerts = getAccountAlerts(accountList);
 
   const handleLogout = () => {
     logout();
@@ -56,6 +44,7 @@ export default function Page() {
 
   const pageTitles: Record<string, string> = {
     "/dashboard": "Dashboard",
+    "/dashboard/accounts": "Accounts",
     "/dashboard/ask": "Ask Budgetly",
     "/dashboard/add-transaction": "Add Transaction",
     "/dashboard/transactions": "Transactions",
@@ -69,17 +58,6 @@ export default function Page() {
   }
 
   const currentTitle = getPageTitle(location.pathname);
-  const currentMonth = new Date().toLocaleString("default", {
-    month: "long",
-    year: "numeric",
-  });
-
-  const submitSearch = (event: FormEvent) => {
-    event.preventDefault();
-    const prompt = search.trim();
-    setSearch("");
-    openAsk(prompt || undefined);
-  };
 
   return (
     <div className="dark min-h-svh bg-background">
@@ -94,77 +72,6 @@ export default function Page() {
               </h1>
             </div>
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className="hidden items-center gap-1.5 rounded-lg border border-white/10 bg-white/[0.03] px-2.5 py-1.5 text-xs text-muted-foreground md:flex">
-                <CalendarDays className="size-3.5" aria-hidden />
-                <span>{currentMonth}</span>
-                <ChevronDown className="size-3 opacity-60" aria-hidden />
-              </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="text-muted-foreground sm:hidden"
-                aria-label="Ask Budgetly"
-                onClick={() => openAsk()}
-              >
-                <Search className="size-4" />
-              </Button>
-              <form onSubmit={submitSearch} className="relative hidden sm:block">
-                <Search
-                  className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground"
-                  aria-hidden
-                />
-                <Input
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                  placeholder="Search transactions, accounts..."
-                  className="h-9 w-56 rounded-lg border-white/10 bg-white/[0.03] pl-8 text-xs shadow-none lg:w-72"
-                  aria-label="Ask Budgetly"
-                />
-              </form>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="relative text-muted-foreground"
-                    aria-label="Account alerts"
-                  >
-                    <Bell className="size-4" />
-                    {alerts.length > 0 && (
-                      <span className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-error" />
-                    )}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-72">
-                  {alerts.length === 0 ? (
-                    <DropdownMenuItem disabled>
-                      No alerts right now
-                    </DropdownMenuItem>
-                  ) : (
-                    alerts.map((alert) => (
-                      <DropdownMenuItem
-                        key={`${alert.account.id}-${alert.message}`}
-                        onClick={() =>
-                          navigate(
-                            `/dashboard/transactions?accountId=${alert.account.id}`,
-                          )
-                        }
-                      >
-                        <span className="min-w-0">
-                          <span className="block truncate text-sm">
-                            {alert.message}
-                          </span>
-                          <span className="block text-xs text-muted-foreground">
-                            View {alert.account.name}
-                          </span>
-                        </span>
-                      </DropdownMenuItem>
-                    ))
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
               {user && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>

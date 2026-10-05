@@ -325,50 +325,6 @@ const Dashboard = () => {
           />
         </section>
 
-        {alerts.length > 0 && (
-          <section className="space-y-3">
-            {alerts.map((alert) => (
-              <div
-                key={`${alert.account.id}-${alert.message}`}
-                className={cn(
-                  "flex flex-col gap-3 rounded-2xl px-4 py-3 sm:flex-row sm:items-center sm:justify-between",
-                  alert.overdrawn
-                    ? "border border-error/30 bg-error/10"
-                    : "border border-warning/30 bg-warning/10",
-                )}
-              >
-                <div>
-                  <p
-                    className={cn(
-                      "flex items-center gap-2 text-sm font-medium",
-                      alert.overdrawn ? "text-error" : "text-warning",
-                    )}
-                  >
-                    <TriangleAlert className="size-4" aria-hidden />
-                    {alert.message}
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    Current balance {formatMoney(alert.account.balance)}
-                  </p>
-                </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className={dashControl}
-                  onClick={() => {
-                    setSelectedAccount(alert.account);
-                    document
-                      .getElementById("accounts")
-                      ?.scrollIntoView({ behavior: "smooth", block: "start" });
-                  }}
-                >
-                  View Account
-                </Button>
-              </div>
-            ))}
-          </section>
-        )}
-
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-5">
           <Panel className="xl:col-span-3">
             <TransactionGraph

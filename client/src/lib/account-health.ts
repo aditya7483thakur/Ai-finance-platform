@@ -102,3 +102,24 @@ export function greetingForHour(hour = new Date().getHours()) {
   if (hour < 17) return "Good afternoon";
   return "Good evening";
 }
+
+export type AccountHealth = {
+  label: "Healthy" | "At Risk" | "Overdrawn";
+  tone: "healthy" | "risk" | "overdrawn";
+};
+
+export function getAccountHealth(account: AccountType): AccountHealth {
+  const balance = toAmount(account.balance);
+  const budget = toAmount(account.budget);
+  const used = toAmount(account.usedAmount);
+
+  if (balance < 0) {
+    return { label: "Overdrawn", tone: "overdrawn" };
+  }
+
+  if (budget > 0 && used / budget >= 0.9) {
+    return { label: "At Risk", tone: "risk" };
+  }
+
+  return { label: "Healthy", tone: "healthy" };
+}

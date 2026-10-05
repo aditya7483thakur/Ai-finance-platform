@@ -63,10 +63,9 @@ export function AppSidebar() {
     },
     {
       title: "Accounts",
-      url: "/dashboard#accounts",
+      url: "/dashboard/accounts",
       icon: Wallet,
-      isActive:
-        location.pathname === "/dashboard" && location.hash === "#accounts",
+      isActive: location.pathname === "/dashboard/accounts",
     },
     {
       title: "Transactions",
