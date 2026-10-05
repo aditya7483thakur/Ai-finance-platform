@@ -5,6 +5,7 @@ import { useUserContext } from "@/contexts/userContext";
 import { useAskBudgetly } from "@/hooks/useAskBudgetly";
 import { useFetchExpenseBreakdown } from "@/services/graphs/query";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const ExpenseBreakdown = () => {
   const { userId } = useUserContext();
@@ -40,8 +41,21 @@ const ExpenseBreakdown = () => {
             This month
           </span>
         </div>
-        <div className="flex h-64 items-center justify-center text-sm text-muted-foreground">
-          Loading...
+        <div
+          className="flex flex-col gap-4 md:flex-row md:items-center"
+          aria-busy
+        >
+          <div className="flex h-52 w-full items-center justify-center md:w-1/2">
+            <Skeleton className="size-[156px] rounded-full" />
+          </div>
+          <div className="w-full space-y-3 md:w-1/2">
+            {[...Array(4)].map((_, index) => (
+              <div key={index} className="flex items-center justify-between gap-3">
+                <Skeleton className="h-3.5 w-24" />
+                <Skeleton className="h-3.5 w-12" />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );

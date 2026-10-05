@@ -84,6 +84,7 @@ const TransactionGraph = ({
   title,
   subtitle,
   accountName,
+  loading = false,
 }: {
   currentBalance?: number;
   accountId?: string;
@@ -91,6 +92,8 @@ const TransactionGraph = ({
   title?: string;
   subtitle?: string;
   accountName?: string;
+  // Lets the parent show the skeleton while it is still resolving the account.
+  loading?: boolean;
 }) => {
   const { accountId: accountIdFromParams } = useParams();
   const accountId = accountIdProp ?? accountIdFromParams;
@@ -111,6 +114,25 @@ const TransactionGraph = ({
   );
 
   const hasActivity = series.some((day) => day.income > 0 || day.expense > 0);
+
+  if (loading || (accountId && isPending)) {
+    return (
+      <section aria-busy>
+        <div className="mb-4 flex items-center justify-between">
+          <Skeleton className="h-5 w-40" />
+          <Skeleton className="h-7 w-32" />
+        </div>
+        {variant === "page" && (
+          <div className="mb-6 grid grid-cols-3 gap-4">
+            <Skeleton className="h-12" />
+            <Skeleton className="h-12" />
+            <Skeleton className="h-12" />
+          </div>
+        )}
+        <Skeleton className="h-64 w-full" />
+      </section>
+    );
+  }
 
   if (!accountId) {
     return (
@@ -138,22 +160,6 @@ const TransactionGraph = ({
           <p className="mt-1 max-w-xs text-sm text-muted-foreground">
             Income, expenses, and balance trends will show up here.
           </p>
-        </div>
-      </section>
-    );
-  }
-
-  if (isPending) {
-    return (
-      <section>
-        <div className="mb-4 flex items-center justify-between">
-          <Skeleton className="h-6 w-40" />
-          <Skeleton className="h-8 w-40" />
-        </div>
-        <div className="grid grid-cols-3 gap-4">
-          <Skeleton className="h-12" />
-          <Skeleton className="h-12" />
-          <Skeleton className="h-12" />
         </div>
       </section>
     );

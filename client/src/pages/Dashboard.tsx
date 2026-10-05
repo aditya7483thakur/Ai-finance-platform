@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const AGENT_CHIPS = [
   {
@@ -89,6 +90,7 @@ const KpiCard = ({
   sparkColor,
   spark,
   onSelect,
+  loading = false,
 }: {
   tone: KpiKey;
   active: boolean;
@@ -100,6 +102,7 @@ const KpiCard = ({
   sparkColor: string;
   spark: number[];
   onSelect: () => void;
+  loading?: boolean;
 }) => (
   <button
     type="button"
@@ -123,17 +126,25 @@ const KpiCard = ({
       <div className="min-w-0 flex-1">
         <p className="text-xs text-muted-foreground">{label}</p>
         <div className="mt-1 flex items-end justify-between gap-3">
-          <p
-            className={cn(
-              "text-2xl font-semibold tracking-tight text-foreground",
-              valueClassName,
-            )}
-          >
-            {value}
-          </p>
+          {loading ? (
+            <Skeleton className="my-0.5 h-7 w-24" />
+          ) : (
+            <p
+              className={cn(
+                "text-2xl font-semibold tracking-tight text-foreground",
+                valueClassName,
+              )}
+            >
+              {value}
+            </p>
+          )}
           <MiniSpark color={sparkColor} bars={spark} />
         </div>
-        <p className="mt-1 truncate text-xs text-muted-foreground">{hint}</p>
+        {loading ? (
+          <Skeleton className="mt-2 h-3 w-32" />
+        ) : (
+          <p className="mt-1 truncate text-xs text-muted-foreground">{hint}</p>
+        )}
       </div>
     </div>
   </button>
@@ -243,11 +254,15 @@ const Dashboard = () => {
             <h2 className="text-2xl font-semibold tracking-tight text-foreground">
               {greeting}, {firstName}
             </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {alerts.length === 0
-                ? "Your finances are looking good this month."
-                : "A few accounts need attention this month."}
-            </p>
+            {accountsLoading ? (
+              <Skeleton className="mt-2 h-4 w-64" />
+            ) : (
+              <p className="mt-1 text-sm text-muted-foreground">
+                {alerts.length === 0
+                  ? "Your finances are looking good this month."
+                  : "A few accounts need attention this month."}
+              </p>
+            )}
           </div>
           <Button size="sm" variant="outline" className={dashControl} asChild>
             <Link to="/dashboard/add-transaction">
@@ -269,6 +284,7 @@ const Dashboard = () => {
             sparkColor="#22d3ee"
             spark={[28, 46, 38, 62, 54, 78, 70]}
             onSelect={() => setActiveKpi("balance")}
+            loading={accountsLoading}
           />
           <KpiCard
             tone="spent"
@@ -284,6 +300,7 @@ const Dashboard = () => {
             sparkColor="#fb7185"
             spark={[40, 32, 58, 44, 70, 52, 84]}
             onSelect={() => setActiveKpi("spent")}
+            loading={accountsLoading}
           />
           <KpiCard
             tone="remaining"
@@ -300,6 +317,7 @@ const Dashboard = () => {
             sparkColor="#a78bfa"
             spark={[34, 50, 42, 66, 48, 72, 60]}
             onSelect={() => setActiveKpi("remaining")}
+            loading={accountsLoading}
           />
           <KpiCard
             tone="risk"
@@ -313,6 +331,7 @@ const Dashboard = () => {
                 : "All accounts look healthy"
             }
             sparkColor="#fb923c"
+            loading={accountsLoading}
             spark={[22, 36, 28, 48, 40, 64, 52]}
             onSelect={() => {
               setActiveKpi("risk");
@@ -334,6 +353,12 @@ const Dashboard = () => {
               title="Cash Flow"
               subtitle="Income vs expenses"
               accountName={selectedAccount?.name}
+              // Accounts arrive before the selected account is set by an effect;
+              // keep the skeleton up so the empty state doesn't flash.
+              loading={
+                accountsLoading ||
+                (accountList.length > 0 && !selectedAccount)
+              }
             />
           </Panel>
           <Panel className="xl:col-span-2">
@@ -387,23 +412,37 @@ const Dashboard = () => {
               </div>
               <div className="flex items-center gap-3">
                 <Gauge className="size-4 text-muted-foreground" aria-hidden />
-                <p className="text-sm font-semibold text-foreground">
-                  {health.score}
-                  <span className="text-muted-foreground"> / 100</span>
-                </p>
-                <span className="rounded-full bg-white/5 px-2 py-0.5 text-xs text-muted-foreground">
-                  {health.label}
-                </span>
+                {accountsLoading ? (
+                  <Skeleton className="h-5 w-28" />
+                ) : (
+                  <>
+                    <p className="text-sm font-semibold text-foreground">
+                      {health.score}
+                      <span className="text-muted-foreground"> / 100</span>
+                    </p>
+                    <span className="rounded-full bg-white/5 px-2 py-0.5 text-xs text-muted-foreground">
+                      {health.label}
+                    </span>
+                  </>
+                )}
               </div>
             </div>
-            <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/5">
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-error via-warning to-success"
-                style={{ width: `${Math.max(6, health.score)}%` }}
-              />
-            </div>
+            {accountsLoading ? (
+              <Skeleton className="mt-4 h-2 w-full rounded-full" />
+            ) : (
+              <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/5">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-error via-warning to-success"
+                  style={{ width: `${Math.max(6, health.score)}%` }}
+                />
+              </div>
+            )}
             <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-xs text-muted-foreground">{health.detail}</p>
+              {accountsLoading ? (
+                <Skeleton className="h-3 w-72 max-w-full" />
+              ) : (
+                <p className="text-xs text-muted-foreground">{health.detail}</p>
+              )}
               <button
                 type="button"
                 onClick={() => submitAgent("Find budget risks")}

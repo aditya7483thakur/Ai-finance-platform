@@ -24,7 +24,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState,
+  type Dispatch,
+  type SetStateAction,
+} from "react";
 import {
   Dialog,
   DialogContent,
@@ -38,10 +43,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  useDeleteBulkTransactions,
-  useDeleteTransaction,
-} from "@/services/transactions/mutation";
+import { useDeleteTransaction } from "@/services/transactions/mutation";
 import { Checkbox } from "../ui/checkbox";
 import { formatShortDate, formatSignedMoney } from "@/lib/money";
 import {
@@ -50,6 +52,7 @@ import {
   getCategoryLabel,
 } from "@/lib/categories";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export type TransactionListFilters = {
   accountId?: string;
@@ -61,31 +64,33 @@ export type TransactionListFilters = {
   endDate?: string;
 };
 
+const PAGE_SIZE = 10;
+
 const AccountTransaction = ({
   accounts,
   listFilters,
   enabled,
+  selectedTransactions,
+  setSelectedTransactions,
 }: {
   accounts: AccountType[];
   listFilters: TransactionListFilters;
   enabled: boolean;
+  // Selection is owned by the page so bulk actions can live in its toolbar.
+  selectedTransactions: Set<string>;
+  setSelectedTransactions: Dispatch<SetStateAction<Set<string>>>;
 }) => {
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
-  const [selectedTransactions, setSelectedTransactions] = useState<Set<string>>(
-    new Set(),
-  );
   const [deleteTarget, setDeleteTarget] = useState<Transaction | null>(null);
 
-  const queryFilters = { ...listFilters, page, limit: 10 };
+  const queryFilters = { ...listFilters, page, limit: PAGE_SIZE };
   const { mutate: deleteTransaction, isPending: deleting } =
     useDeleteTransaction();
   const { data: transactionData, isPending } = useFilteredTransactions(
     queryFilters,
     { enabled },
   );
-  const { mutate: bulkDelete, isPending: bulkDeleting } =
-    useDeleteBulkTransactions();
 
   useEffect(() => {
     setPage(1);
@@ -98,9 +103,15 @@ const AccountTransaction = ({
     listFilters.isRecurring,
     listFilters.startDate,
     listFilters.type,
+    setSelectedTransactions,
   ]);
 
   const rows: Transaction[] = transactionData?.data ?? [];
+  const pagination = transactionData?.pagination;
+  const rangeStart = pagination
+    ? (pagination.currentPage - 1) * pagination.pageSize + 1
+    : 0;
+  const rangeEnd = pagination ? rangeStart + rows.length - 1 : 0;
   const accountName = (id: string) =>
     accounts.find((account) => account.id === id)?.name ?? "Account";
   const allSelected =
@@ -113,15 +124,6 @@ const AccountTransaction = ({
 
     deleteTransaction(deleteTarget.id, {
       onSuccess: () => setDeleteTarget(null),
-    });
-  };
-
-  const handleBulkDelete = () => {
-    if (selectedTransactions.size === 0) return;
-    bulkDelete(Array.from(selectedTransactions), {
-      onSuccess: () => {
-        setSelectedTransactions(new Set());
-      },
     });
   };
 
@@ -149,21 +151,6 @@ const AccountTransaction = ({
 
   return (
     <section>
-      {selectedTransactions.size > 0 && (
-        <div className="mb-3 flex justify-end">
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={handleBulkDelete}
-            disabled={bulkDeleting}
-          >
-            {bulkDeleting && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
-            <Trash2 className="mr-2 h-4 w-4" />
-            Delete selected ({selectedTransactions.size})
-          </Button>
-        </div>
-      )}
-
       <div className="overflow-x-auto rounded-2xl border border-border bg-card">
         <Table>
           <TableHeader>
@@ -178,24 +165,42 @@ const AccountTransaction = ({
                 />
               </TableHead>
               <TableHead>Date</TableHead>
-              <TableHead>Description</TableHead>
+              <TableHead>Transaction</TableHead>
               <TableHead>Account</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Type</TableHead>
               <TableHead className="text-right">Amount</TableHead>
-              <TableHead className="text-center">Actions</TableHead>
+              <TableHead className="w-12">
+                <span className="sr-only">Actions</span>
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isPending ? (
-              <TableRow>
-                <TableCell
-                  colSpan={8}
-                  className="py-8 text-center text-muted-foreground"
-                >
-                  Loading...
-                </TableCell>
-              </TableRow>
+              // Skeleton rows mirror the real columns so the table doesn't jump on load.
+              [...Array(PAGE_SIZE)].map((_, index) => (
+                <TableRow key={index} aria-hidden>
+                  <TableCell>
+                    <Skeleton className="size-4 rounded" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-4 w-24" />
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <Skeleton className="size-8 shrink-0 rounded-lg" />
+                      <Skeleton className="h-4 w-32" />
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="h-4 w-16" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="ml-auto h-4 w-16" />
+                  </TableCell>
+                  <TableCell>
+                    <Skeleton className="ml-auto size-4 rounded" />
+                  </TableCell>
+                </TableRow>
+              ))
             ) : rows.length > 0 ? (
               rows.map((transaction) => {
                 const category = getCategory(transaction.category);
@@ -217,60 +222,59 @@ const AccountTransaction = ({
                     <TableCell className="whitespace-nowrap text-sm text-muted-foreground">
                       {formatShortDate(transaction.date)}
                     </TableCell>
-                    <TableCell className="max-w-[220px] text-sm font-medium text-foreground">
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <p className="truncate">
-                              {transaction.description ||
-                                getCategoryLabel(transaction.category)}
-                            </p>
-                          </TooltipTrigger>
-                          {transaction.description && (
-                            <TooltipContent className="max-w-72 text-center">
-                              <p>{transaction.description}</p>
-                            </TooltipContent>
+                    <TableCell className="max-w-[320px]">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <span
+                          className={cn(
+                            "flex size-8 shrink-0 items-center justify-center rounded-lg",
+                            getCategoryBadge(transaction.category),
                           )}
-                        </Tooltip>
-                      </TooltipProvider>
+                          aria-hidden
+                        >
+                          {Icon && <Icon className="size-4" />}
+                        </span>
+                        <div className="min-w-0">
+                          {transaction.description ? (
+                            <>
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <p className="truncate text-sm font-medium text-foreground">
+                                      {transaction.description}
+                                    </p>
+                                  </TooltipTrigger>
+                                  <TooltipContent className="max-w-72 text-center">
+                                    <p>{transaction.description}</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                              <p className="truncate text-xs text-muted-foreground">
+                                {getCategoryLabel(transaction.category)}
+                              </p>
+                            </>
+                          ) : (
+                            // No description: show the category once instead of repeating it.
+                            <p className="truncate text-sm font-medium text-foreground">
+                              {getCategoryLabel(transaction.category)}
+                            </p>
+                          )}
+                        </div>
+                      </div>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {accountName(transaction.accountId)}
-                    </TableCell>
-                    <TableCell>
-                      <span
-                        className={cn(
-                          "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium",
-                          getCategoryBadge(transaction.category),
-                        )}
-                      >
-                        {Icon && <Icon className="size-3" aria-hidden />}
-                        {getCategoryLabel(transaction.category)}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <span
-                        className={cn(
-                          "rounded-full px-2 py-0.5 text-xs font-medium",
-                          transaction.type === "INCOME"
-                            ? "bg-success/15 text-success"
-                            : "bg-error/15 text-error",
-                        )}
-                      >
-                        {transaction.type === "INCOME" ? "Income" : "Expense"}
-                      </span>
                     </TableCell>
                     <TableCell
                       className={cn(
                         "text-right text-sm font-semibold whitespace-nowrap",
                         transaction.type === "INCOME"
                           ? "text-success"
-                          : "text-error",
+                          : "text-foreground",
                       )}
                     >
                       {formatSignedMoney(transaction.amount, transaction.type)}
                     </TableCell>
-                    <TableCell className="text-center">
+                    <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <button
@@ -318,7 +322,7 @@ const AccountTransaction = ({
             ) : (
               <TableRow>
                 <TableCell
-                  colSpan={8}
+                  colSpan={6}
                   className="py-10 text-center text-muted-foreground"
                 >
                   No transactions found.
@@ -329,46 +333,53 @@ const AccountTransaction = ({
         </Table>
       </div>
 
-      <div className="mt-4 flex items-center justify-between gap-3">
-        <p className="text-xs text-muted-foreground">
-          {scheduleHint(rows)}
-          {transactionData?.pagination
-            ? `Showing page ${transactionData.pagination.currentPage} of ${transactionData.pagination.totalPages || 1}`
-            : null}
-        </p>
-        <Pagination className="mx-0 w-auto justify-end">
-          <PaginationContent>
-            <PaginationItem>
-              <PaginationPrevious
-                to="#"
-                className={page === 1 ? "pointer-events-none opacity-50" : ""}
-                onClick={(event) => {
-                  event.preventDefault();
-                  if (page === 1) return;
-                  setPage(page - 1);
-                }}
-              />
-            </PaginationItem>
-            <PaginationItem>
-              <PaginationNext
-                to="#"
-                className={
-                  page === transactionData?.pagination?.totalPages
-                    ? "pointer-events-none opacity-50"
-                    : ""
-                }
-                onClick={(event) => {
-                  event.preventDefault();
-                  if (page === transactionData?.pagination?.totalPages) {
-                    return;
-                  }
-                  setPage(page + 1);
-                }}
-              />
-            </PaginationItem>
-          </PaginationContent>
-        </Pagination>
-      </div>
+      {pagination && pagination.totalTransactions > 0 && (
+        <div className="mt-4 flex items-center justify-between gap-3">
+          <p className="text-xs text-muted-foreground">
+            {scheduleHint(rows)}
+            Showing {rangeStart}–{rangeEnd} of {pagination.totalTransactions}{" "}
+            transaction{pagination.totalTransactions === 1 ? "" : "s"}
+          </p>
+          {pagination.totalPages > 1 && (
+            <Pagination className="mx-0 w-auto justify-end">
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    to="#"
+                    aria-disabled={!pagination.hasPrevPage}
+                    tabIndex={pagination.hasPrevPage ? undefined : -1}
+                    className={
+                      pagination.hasPrevPage
+                        ? ""
+                        : "pointer-events-none opacity-30"
+                    }
+                    onClick={(event) => {
+                      event.preventDefault();
+                      if (pagination.hasPrevPage) setPage(page - 1);
+                    }}
+                  />
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationNext
+                    to="#"
+                    aria-disabled={!pagination.hasNextPage}
+                    tabIndex={pagination.hasNextPage ? undefined : -1}
+                    className={
+                      pagination.hasNextPage
+                        ? ""
+                        : "pointer-events-none opacity-30"
+                    }
+                    onClick={(event) => {
+                      event.preventDefault();
+                      if (pagination.hasNextPage) setPage(page + 1);
+                    }}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          )}
+        </div>
+      )}
 
       <Dialog
         open={Boolean(deleteTarget)}

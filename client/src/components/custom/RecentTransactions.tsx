@@ -98,7 +98,13 @@ const RecentTransactions = ({
         </div>
       </div>
 
-      {noAccounts ? (
+      {accountsLoading ? (
+        <div className="space-y-2">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full" />
+        </div>
+      ) : noAccounts ? (
         <div className="py-10 text-center">
           <p className="font-medium text-foreground">No accounts yet</p>
           <p className="mt-1 text-sm text-muted-foreground">
