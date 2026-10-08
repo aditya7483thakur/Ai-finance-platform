@@ -32,7 +32,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { dashControl, dashFieldHeight, dashSelect } from "@/lib/dashboard-chrome";
+import { dashControl, dashSelect } from "@/lib/dashboard-chrome";
 import { CATEGORIES, getCategoryLabel } from "@/lib/categories";
 import { formatMoney, formatSignedMoney, toAmount } from "@/lib/money";
 import { cn } from "@/lib/utils";
@@ -159,8 +159,8 @@ const Transaction = () => {
 
   const { data: summaryResponse, isPending: summaryLoading } =
     useTransactionSummary(listFilters, {
-    enabled: Boolean(userId),
-  });
+      enabled: Boolean(userId),
+    });
   const summary = summaryResponse?.data;
   const totals = {
     income: toAmount(summary?.income),
@@ -203,7 +203,16 @@ const Transaction = () => {
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
-            <Button size="sm" variant="outline" className={dashControl} asChild>
+            <Button
+              size="sm"
+              variant="outline"
+              // Page-header action: same type size, corner radius and solid fill as the primary button beside it.
+              className={cn(
+                dashControl,
+                "rounded-md bg-white/[0.06] px-4 text-sm text-foreground hover:bg-white/10",
+              )}
+              asChild
+            >
               <Link to="/dashboard/add-transaction">
                 <ScanLine className="size-4" aria-hidden />
                 Scan receipt
@@ -304,7 +313,9 @@ const Transaction = () => {
                 <Sparkles className="size-5" aria-hidden />
               </span>
               <div className="min-w-0 flex-1">
-                <p className="text-xs text-muted-foreground">Budgetly insight</p>
+                <p className="text-xs text-muted-foreground">
+                  Budgetly insight
+                </p>
                 {summaryLoading ? (
                   <div className="mt-2 space-y-2">
                     <Skeleton className="h-4 w-full" />
@@ -314,8 +325,8 @@ const Transaction = () => {
                 ) : insight ? (
                   <>
                     <p className="mt-1 text-sm font-medium text-foreground">
-                      {getCategoryLabel(insight.category)} is {insight.share}% of
-                      spending in this range.
+                      {getCategoryLabel(insight.category)} is {insight.share}%
+                      of spending in this range.
                     </p>
                     <button
                       type="button"
@@ -375,7 +386,7 @@ const Transaction = () => {
                 aria-selected={viewTab === tab.key}
                 onClick={() => setViewTab(tab.key)}
                 className={cn(
-                  "cursor-pointer rounded-lg px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                  "inline-flex h-10 cursor-pointer items-center rounded-lg px-4 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
                   viewTab === tab.key
                     ? "bg-primary text-white"
                     : "text-muted-foreground hover:bg-white/5 hover:text-foreground",
@@ -399,7 +410,7 @@ const Transaction = () => {
                 value={description}
                 onChange={(event) => setDescription(event.target.value)}
                 placeholder="Search transactions"
-                className={cn(dashFieldHeight, "rounded-lg border-white/10 bg-white/[0.03] pl-8 text-xs shadow-none")}
+                className="rounded-lg border-white/10 bg-white/[0.03] pl-8 text-xs shadow-none"
               />
             </div>
             <Select
@@ -407,7 +418,7 @@ const Transaction = () => {
               onValueChange={setAccountId}
               disabled={accountsLoading}
             >
-              <SelectTrigger className={cn(dashSelect, dashFieldHeight, "w-full md:w-40")}>
+              <SelectTrigger className={cn(dashSelect, "w-full md:w-40")}>
                 <SelectValue placeholder="All accounts" />
               </SelectTrigger>
               <SelectContent>
@@ -420,7 +431,7 @@ const Transaction = () => {
               </SelectContent>
             </Select>
             <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger className={cn(dashSelect, dashFieldHeight, "w-full md:w-40")}>
+              <SelectTrigger className={cn(dashSelect, "w-full md:w-40")}>
                 <SelectValue placeholder="All categories" />
               </SelectTrigger>
               <SelectContent>
@@ -437,11 +448,7 @@ const Transaction = () => {
                 <Button
                   type="button"
                   variant="outline"
-                  className={cn(
-                    dashSelect,
-                    dashFieldHeight,
-                    "w-full justify-start md:w-56",
-                  )}
+                  className={cn(dashSelect, "w-full justify-start md:w-56")}
                 >
                   <CalendarDays className="size-3.5" aria-hidden />
                   <span className="truncate">{rangeLabel}</span>
@@ -506,7 +513,11 @@ const Transaction = () => {
                 </span>
               )}
             </Button>
-            <Button type="submit" size="sm" className={cn(dashControl, "md:hidden")}>
+            <Button
+              type="submit"
+              size="sm"
+              className={cn(dashControl, "md:hidden")}
+            >
               Search
             </Button>
           </form>
@@ -529,7 +540,8 @@ const Transaction = () => {
           <DialogContent>
             <DialogHeader>
               <DialogTitle>
-                Delete {selectedCount} transaction{selectedCount === 1 ? "" : "s"}?
+                Delete {selectedCount} transaction
+                {selectedCount === 1 ? "" : "s"}?
               </DialogTitle>
               <DialogDescription>
                 This cannot be undone. Account balances will update after the
@@ -550,13 +562,14 @@ const Transaction = () => {
                 onClick={handleBulkDelete}
                 disabled={bulkDeleting}
               >
-                {bulkDeleting && <Loader2 className="mr-1 h-4 w-4 animate-spin" />}
+                {bulkDeleting && (
+                  <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                )}
                 {bulkDeleting ? "Deleting..." : "Delete"}
               </Button>
             </div>
           </DialogContent>
         </Dialog>
-
       </div>
     </div>
   );

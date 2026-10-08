@@ -264,7 +264,16 @@ const Dashboard = () => {
               </p>
             )}
           </div>
-          <Button size="sm" variant="outline" className={dashControl} asChild>
+          <Button
+            size="sm"
+            variant="outline"
+            // Page-header action: same type size, corner radius and solid fill as primary buttons.
+            className={cn(
+              dashControl,
+              "rounded-md bg-white/[0.06] px-4 text-sm text-foreground hover:bg-white/10",
+            )}
+            asChild
+          >
             <Link to="/dashboard/add-transaction">
               <Plus className="size-4" aria-hidden />
               Add Transaction
@@ -356,8 +365,7 @@ const Dashboard = () => {
               // Accounts arrive before the selected account is set by an effect;
               // keep the skeleton up so the empty state doesn't flash.
               loading={
-                accountsLoading ||
-                (accountList.length > 0 && !selectedAccount)
+                accountsLoading || (accountList.length > 0 && !selectedAccount)
               }
             />
           </Panel>

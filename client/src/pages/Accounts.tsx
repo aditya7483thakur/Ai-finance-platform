@@ -24,7 +24,7 @@ import { AccountType } from "@/types";
 import { cn } from "@/lib/utils";
 import { formatMoney, toAmount } from "@/lib/money";
 import { getAccountHealth } from "@/lib/account-health";
-import { dashControl, dashFieldHeight } from "@/lib/dashboard-chrome";
+import { dashControl } from "@/lib/dashboard-chrome";
 import { transactionsHref } from "@/lib/dashboard-chrome";
 
 import AccountCard, {
@@ -275,7 +275,7 @@ const AccountsPage = () => {
                 type="button"
                 onClick={() => setActiveTab(tab.key)}
                 className={cn(
-                  "cursor-pointer rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
+                  "inline-flex h-10 cursor-pointer items-center rounded-lg px-4 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
                   activeTab === tab.key
                     ? "bg-primary text-white"
                     : "text-muted-foreground hover:bg-white/5 hover:text-foreground",
@@ -296,11 +296,11 @@ const AccountsPage = () => {
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Search accounts..."
-                className={cn(dashControl, dashFieldHeight, "w-full pl-8 lg:w-56")}
+                className={cn(dashControl, "w-full pl-8 lg:w-56")}
               />
             </div>
             <Select value={sortKey} onValueChange={(value) => setSortKey(value as SortKey)}>
-              <SelectTrigger className={cn(dashControl, dashFieldHeight, "w-[150px]")}>
+              <SelectTrigger className={cn(dashControl, "w-[150px]")}>
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
               <SelectContent>
@@ -421,7 +421,7 @@ const AccountsPage = () => {
               <span className="max-w-[220px] text-xs text-muted-foreground">
                 Create a new account to track your spending and budget.
               </span>
-              <span className="mt-1 inline-flex items-center gap-1 rounded-lg border border-white/10 px-3 py-1.5 text-xs font-medium text-foreground">
+              <span className="mt-1 inline-flex h-10 items-center gap-1 rounded-lg border border-white/10 px-3 text-xs font-medium text-foreground">
                 <Plus className="size-3.5" aria-hidden />
                 Add Account
               </span>

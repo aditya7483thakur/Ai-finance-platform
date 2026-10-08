@@ -469,7 +469,7 @@ const AddTransaction = () => {
                         >
                           <FormControl>
                             <SelectTrigger
-                              className="w-full data-[size=default]:h-10"
+                              className="h-10 w-full"
                               disabled={accountsLoading || isError || isEdit}
                             >
                               <SelectValue
@@ -527,7 +527,7 @@ const AddTransaction = () => {
                           value={field.value || undefined}
                         >
                           <FormControl>
-                            <SelectTrigger className="w-full data-[size=default]:h-10">
+                            <SelectTrigger className="h-10 w-full">
                               <SelectValue placeholder="Select category" />
                             </SelectTrigger>
                           </FormControl>

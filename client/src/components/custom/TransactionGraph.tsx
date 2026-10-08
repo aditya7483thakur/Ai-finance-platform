@@ -190,7 +190,7 @@ const TransactionGraph = ({
       </div>
     ) : (
       <Select value={selectedRange} onValueChange={setSelectedRange}>
-        <SelectTrigger className="h-8 w-[160px] rounded-lg border-white/10 bg-white/[0.03] text-xs shadow-none">
+        <SelectTrigger className="w-[160px] rounded-lg border-white/10 bg-white/[0.03] text-xs shadow-none">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>

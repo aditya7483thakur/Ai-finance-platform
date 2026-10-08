@@ -71,7 +71,7 @@ const RecentTransactions = ({
               disabled={accountsLoading}
             >
               <SelectTrigger
-                className="h-8 rounded-full border-white/10 bg-transparent px-3 text-xs text-muted-foreground shadow-none"
+                className="rounded-full border-white/10 bg-transparent px-3 text-xs text-muted-foreground shadow-none"
                 disabled={accountsLoading}
               >
                 <SelectValue />
@@ -90,7 +90,7 @@ const RecentTransactions = ({
           {filters.accountId && (
             <Link
               to={`/dashboard/transactions?accountId=${filters.accountId}`}
-              className="inline-flex h-8 items-center rounded-full border border-white/10 px-3 text-xs text-muted-foreground hover:bg-white/5 hover:text-foreground"
+              className="inline-flex h-10 items-center rounded-full border border-white/10 px-4 text-xs text-muted-foreground hover:bg-white/5 hover:text-foreground"
             >
               View All →
             </Link>
