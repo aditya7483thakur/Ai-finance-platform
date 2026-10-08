@@ -1,10 +1,33 @@
-import { Calendar, Loader2, Sparkles } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useForm, useWatch, type Resolver } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import {
+  addDays,
+  addMonths,
+  addWeeks,
+  addYears,
+  format,
+  isSameDay,
+  subDays,
+} from "date-fns";
+import {
+  ArrowLeft,
+  CalendarDays,
+  Loader2,
+  Repeat,
+  Sparkles,
+  TrendingDown,
+  TrendingUp,
+} from "lucide-react";
+import { toast } from "sonner";
+
 import { Button } from "@/components/ui/button";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -24,672 +47,770 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
-import { format, isSameDay, subDays } from "date-fns";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import ReceiptScanner, {
+  type ExtractedReceipt,
+} from "@/components/custom/ReceiptScanner";
+import TransactionImpact from "@/components/custom/TransactionImpact";
 import {
   useCreateTransaction,
   useEditTransaction,
-  useScanReceipt,
 } from "@/services/transactions/mutation";
 import { useUserContext } from "@/contexts/userContext";
 import { useAskBudgetly } from "@/hooks/useAskBudgetly";
-import { useLocation, useNavigate } from "react-router-dom";
 import { useGetAllAccounts } from "@/services/accounts/query";
-import { AccountType } from "@/types";
-import { useEffect, useRef, useState } from "react";
+import { AccountType, Transaction } from "@/types";
 import { cn } from "@/lib/utils";
-import { formatMoney } from "@/lib/money";
-import { CATEGORIES, getCategoryLabel } from "@/lib/categories";
+import { formatMoney, toAmount } from "@/lib/money";
+import { CATEGORIES } from "@/lib/categories";
 
-export const formSchema = z
+const CATEGORY_VALUES = [
+  "SALARY",
+  "INVESTMENTS",
+  "FOOD",
+  "TRANSPORT",
+  "HOUSING",
+  "ENTERTAINMENT",
+  "TRAVEL",
+  "HEALTH",
+  "SHOPPING",
+  "MISCELLANEOUS",
+] as const;
+
+type CategoryValue = (typeof CATEGORY_VALUES)[number];
+type IntervalValue = "DAILY" | "WEEKLY" | "MONTHLY" | "YEARLY";
+
+const formSchema = z
   .object({
     type: z.enum(["INCOME", "EXPENSE"], {
       required_error: "Type is required",
     }),
     amount: z
       .string()
-      .regex(/^\d+(\.\d{1,2})?$/, "Must be a valid monetary amount")
+      .min(1, "Enter an amount")
+      .regex(/^\d+(\.\d{1,2})?$/, "Enter a valid amount, like 12.50")
+      .refine((value) => Number(value) > 0, "Amount must be more than zero")
       .transform(Number),
-
-    category: z.enum(
-      [
-        "SALARY",
-        "INVESTMENTS",
-        "FOOD",
-        "TRANSPORT",
-        "HOUSING",
-        "ENTERTAINMENT",
-        "TRAVEL",
-        "HEALTH",
-        "SHOPPING",
-        "MISCELLANEOUS",
-      ],
-      { required_error: "Category is required" },
-    ),
-
+    category: z.enum(CATEGORY_VALUES, {
+      required_error: "Pick a category",
+      invalid_type_error: "Pick a category",
+    }),
     isRecurring: z.boolean(),
     recurringInterval: z
       .enum(["DAILY", "WEEKLY", "MONTHLY", "YEARLY"])
       .optional(),
     date: z.string().nonempty("Date is required"),
     description: z.string().optional(),
-    accountId: z.string({
-      required_error: "Please select an account.",
-    }),
+    accountId: z
+      .string({ required_error: "Pick an account" })
+      .min(1, "Pick an account"),
   })
   .superRefine((data, ctx) => {
     if (data.isRecurring && !data.recurringInterval) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: "Recurring interval is required for recurring transactions",
+        message: "Choose how often it repeats",
         path: ["recurringInterval"],
       });
     }
   });
 
-type ExtractedReceipt = {
-  amount?: string;
-  category?: string;
-  date?: string;
-};
+type FormInput = z.input<typeof formSchema>;
+type FormOutput = z.output<typeof formSchema>;
+
+const INTERVALS: { value: IntervalValue; label: string; unit: string }[] = [
+  { value: "DAILY", label: "Daily", unit: "day" },
+  { value: "WEEKLY", label: "Weekly", unit: "week" },
+  { value: "MONTHLY", label: "Monthly", unit: "month" },
+  { value: "YEARLY", label: "Yearly", unit: "year" },
+];
+
+// Same rule as server/domains/transaction/transaction.helper.ts.
+const nextOccurrence = (date: Date, interval: IntervalValue) =>
+  interval === "DAILY"
+    ? addDays(date, 1)
+    : interval === "WEEKLY"
+      ? addWeeks(date, 1)
+      : interval === "MONTHLY"
+        ? addMonths(date, 1)
+        : addYears(date, 1);
 
 const toFormDate = (value: string) => {
   if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
     return new Date(`${value}T12:00:00`).toISOString();
   }
-
   const parsed = new Date(value);
   return Number.isNaN(parsed.getTime()) ? value : parsed.toISOString();
 };
 
-const formatDateButton = (value: string) => {
-  const selected = new Date(value);
-  if (Number.isNaN(selected.getTime())) {
-    return "Select date";
-  }
-
-  if (isSameDay(selected, new Date())) {
-    return `Today · ${format(selected, "MMM d")}`;
-  }
-
-  if (isSameDay(selected, subDays(new Date(), 1))) {
-    return `Yesterday · ${format(selected, "MMM d")}`;
-  }
-
-  return format(selected, "MMM d, yyyy");
+// Keep only digits and a single dot with at most two decimals.
+const sanitizeAmount = (raw: string) => {
+  const cleaned = raw.replace(/[^\d.]/g, "");
+  const [whole, ...rest] = cleaned.split(".");
+  return rest.length ? `${whole}.${rest.join("").slice(0, 2)}` : whole;
 };
+
+const Section = ({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) => (
+  <section className="space-y-4 border-t border-white/6 px-5 py-5 sm:px-6">
+    <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+      {title}
+    </h3>
+    {children}
+  </section>
+);
 
 const AddTransaction = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const isEdit = location.state?.mode === "edit";
-  const transaction = location.state?.transaction;
+  const transaction: Transaction | undefined = location.state?.transaction;
   const { userId } = useUserContext();
   const openAsk = useAskBudgetly();
   const [extracted, setExtracted] = useState<ExtractedReceipt | null>(null);
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+
+  const form = useForm<FormInput, unknown, FormOutput>({
+    // The schema turns the amount string into a number on submit.
+    resolver: zodResolver(formSchema) as unknown as Resolver<FormInput>,
     defaultValues: {
-      isRecurring: false,
       type: "EXPENSE",
+      amount: "",
+      isRecurring: false,
       date: new Date().toISOString(),
       description: "",
+      accountId: "",
     },
   });
+
   const {
     data: accounts,
     isPending: accountsLoading,
     isError,
   } = useGetAllAccounts(userId);
+  const accountList = useMemo(
+    () => (accounts?.data ?? []) as AccountType[],
+    [accounts?.data],
+  );
 
-  const { mutate: scanReceipt, isPending: isScanning } = useScanReceipt();
   const { mutate: createTransaction, isPending: creatingTransaction } =
     useCreateTransaction();
   const { mutate: editTransaction, isPending: editingTransaction } =
     useEditTransaction();
   const isSaving = creatingTransaction || editingTransaction;
-  const isRecurring = form.watch("isRecurring");
-  const selectedDate = form.watch("date");
 
-  const navigate = useNavigate();
+  const [type, amountRaw, accountId, date, isRecurring, interval] = useWatch({
+    control: form.control,
+    name: [
+      "type",
+      "amount",
+      "accountId",
+      "date",
+      "isRecurring",
+      "recurringInterval",
+    ],
+  });
+  const amount =
+    /^\d+(\.\d{1,2})?$/.test(amountRaw ?? "") && Number(amountRaw) > 0
+      ? Number(amountRaw)
+      : null;
+  const selectedAccount = accountList.find((item) => item.id === accountId);
+  const selectedDate = date ? new Date(date) : undefined;
 
-  const onSubmit = (data: any) => {
-    if (isEdit) {
-      editTransaction(
-        { ...data, transactionId: transaction.id },
-        {
-          onSuccess: () => {
-            navigate("/dashboard");
-          },
-        },
-      );
+  // Prefill when editing or duplicating.
+  useEffect(() => {
+    if (!transaction) return;
+    form.reset({
+      type: transaction.type ?? "EXPENSE",
+      amount: String(Math.abs(toAmount(transaction.amount))),
+      category: transaction.category as CategoryValue,
+      date: transaction.date
+        ? new Date(transaction.date).toISOString()
+        : new Date().toISOString(),
+      description: transaction.description ?? "",
+      isRecurring: Boolean(transaction.isRecurring),
+      recurringInterval: transaction.recurringInterval,
+      accountId: transaction.accountId ?? "",
+    });
+  }, [transaction, form]);
+
+  // With a single account there is nothing to choose.
+  useEffect(() => {
+    if (accountList.length === 1 && !form.getValues("accountId")) {
+      form.setValue("accountId", accountList[0].id, { shouldValidate: false });
+    }
+  }, [accountList, form]);
+
+  const goBack = () => {
+    if ((window.history.state?.idx ?? 0) > 0) {
+      navigate(-1);
     } else {
-      createTransaction(
-        { ...data },
-        {
-          onSuccess: () => {
-            navigate("/dashboard");
-          },
-        },
-      );
+      navigate("/dashboard/transactions");
     }
   };
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    scanReceipt(file, {
-      onSuccess: (response) => {
-        const parsed = response?.data ?? response;
-        if (!parsed || typeof parsed !== "object") {
-          return;
-        }
-
-        const nextExtracted: ExtractedReceipt = {};
-
-        if (parsed.amount != null) {
-          const amount = String(parsed.amount);
-          form.setValue("amount", amount as never, { shouldValidate: true });
-          nextExtracted.amount = amount;
-        }
-        if (parsed.type) {
-          form.setValue("type", parsed.type, { shouldValidate: true });
-        }
-        if (parsed.category) {
-          const category = String(parsed.category).toUpperCase();
-          form.setValue("category", category as never, { shouldValidate: true });
-          nextExtracted.category = category;
-        }
-        if (parsed.date) {
-          const date = toFormDate(String(parsed.date));
-          form.setValue("date", date, { shouldValidate: true });
-          nextExtracted.date = date;
-        }
-        if (parsed.description) {
-          form.setValue("description", parsed.description, {
-            shouldValidate: true,
-          });
-        }
-
-        setExtracted(
-          nextExtracted.amount || nextExtracted.category || nextExtracted.date
-            ? nextExtracted
-            : null,
-        );
-      },
-    });
-
-    e.target.value = "";
+  const onSubmit = (data: FormOutput) => {
+    const payload = {
+      ...data,
+      recurringInterval: data.isRecurring ? data.recurringInterval : undefined,
+    };
+    if (isEdit && transaction) {
+      editTransaction(
+        { ...payload, transactionId: transaction.id },
+        { onSuccess: goBack },
+      );
+    } else {
+      createTransaction(payload, { onSuccess: goBack });
+    }
   };
 
-  useEffect(() => {
-    if (!transaction) return;
+  const setType = (next: "INCOME" | "EXPENSE") => {
+    form.setValue("type", next, { shouldDirty: true });
+  };
 
-    setTimeout(() => {
-      form.setValue("amount", transaction.amount || "");
-      form.setValue("type", transaction.type || "EXPENSE");
-      form.setValue("category", transaction.category || "");
-      form.setValue("date", transaction.date || new Date().toISOString());
-      form.setValue("description", transaction.description || "");
-      if (transaction.recurringInterval) {
-        form.setValue("recurringInterval", transaction.recurringInterval);
+  const applyReceipt = (parsed: Record<string, unknown> | null) => {
+    if (!parsed) {
+      toast.error("Couldn't read that receipt. Try a clearer photo.");
+      setExtracted(null);
+      return;
+    }
+    const next: ExtractedReceipt = {};
+    if (parsed.type === "INCOME" || parsed.type === "EXPENSE") {
+      setType(parsed.type);
+    }
+    if (parsed.amount != null) {
+      const value = sanitizeAmount(String(parsed.amount));
+      form.setValue("amount", value, { shouldValidate: true });
+      next.amount = value;
+    }
+    if (parsed.category) {
+      const value = String(parsed.category).toUpperCase();
+      if ((CATEGORY_VALUES as readonly string[]).includes(value)) {
+        form.setValue("category", value as CategoryValue, {
+          shouldValidate: true,
+        });
+        next.category = value;
       }
-      form.setValue("isRecurring", transaction.isRecurring || false);
-      form.setValue("accountId", transaction.accountId || "");
-    }, 0);
-  }, [isEdit, transaction, form]);
+    }
+    if (parsed.date) {
+      const value = toFormDate(String(parsed.date));
+      form.setValue("date", value, { shouldValidate: true });
+      next.date = value;
+    }
+    if (parsed.description) {
+      form.setValue("description", String(parsed.description));
+      next.description = String(parsed.description);
+    }
+    setExtracted(Object.keys(next).length ? next : null);
+  };
+
+  const submitLabel = isEdit
+    ? "Save changes"
+    : `Add ${type === "INCOME" ? "income" : "expense"}${
+        amount != null ? ` · ${formatMoney(amount)}` : ""
+      }`;
 
   return (
-    <div className="flex justify-center bg-background px-4 py-8">
-      <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit(onSubmit)}
-          className="w-full max-w-2xl space-y-8"
-        >
-          <header>
-            <h2 className="text-2xl font-semibold text-foreground">
-              {isEdit ? "Edit Transaction" : "Add Transaction"}
+    <div className="min-h-full bg-background">
+      <div className="mx-auto max-w-[1100px] space-y-6 px-4 py-6 lg:px-6">
+        <header className="space-y-3">
+          <button
+            type="button"
+            onClick={goBack}
+            className="inline-flex items-center gap-1.5 rounded-md text-xs font-medium text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+          >
+            <ArrowLeft className="size-3.5" aria-hidden />
+            Back
+          </button>
+          <div>
+            <h2 className="text-2xl font-semibold tracking-tight text-foreground">
+              {isEdit
+                ? "Edit transaction"
+                : transaction
+                  ? "Duplicate transaction"
+                  : "Add transaction"}
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
               {isEdit
-                ? "Update the details for this income or expense."
-                : "Record an income or expense for one of your accounts."}
+                ? "Update the details. The account balance adjusts automatically."
+                : "Record income or spending, or scan a receipt to fill this in."}
             </p>
-          </header>
+          </div>
+        </header>
 
-          {!isEdit && (
-            <section className="rounded-xl border border-accent/20 bg-accent/10 p-4">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex items-start gap-2">
-                  <Sparkles className="mt-0.5 size-4 text-accent" aria-hidden />
-                  <div>
-                    <h3 className="text-sm font-semibold text-accent">
-                      Scan Receipt with AI
-                    </h3>
-                    <p className="mt-1 text-xs text-accent/80">
-                      Upload or scan a receipt and Budgetly will extract the
-                      transaction details for you.
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  type="button"
-                  className="shrink-0 bg-accent text-accent-foreground hover:bg-accent/90"
-                  disabled={isScanning}
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  {isScanning ? (
-                    <Loader2 className="size-4 animate-spin" aria-hidden />
-                  ) : (
-                    <Sparkles className="size-4" aria-hidden />
-                  )}
-                  {isScanning ? "Scanning receipt..." : "Scan Receipt"}
-                </Button>
-                <input
-                  type="file"
-                  accept="image/*"
-                  ref={fileInputRef}
-                  onChange={handleFileChange}
-                  className="sr-only"
-                  disabled={isScanning}
-                />
-              </div>
-            </section>
+        <div
+          className={cn(
+            "grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_340px]",
+            isEdit ? "lg:grid-rows-[auto_1fr]" : "lg:grid-rows-[auto_auto_1fr]",
           )}
-
-          {extracted && (
-            <div className="rounded-xl border border-accent/20 bg-card px-4 py-3">
-              <p className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-accent">
-                <Sparkles className="size-3.5" aria-hidden />
-                Extracted from receipt
-              </p>
-              <dl className="mt-3 grid grid-cols-1 gap-3 text-sm sm:grid-cols-3">
-                {extracted.amount && (
-                  <div>
-                    <dt className="text-xs text-muted-foreground">Amount</dt>
-                    <dd className="mt-0.5 font-semibold text-foreground">
-                      {formatMoney(extracted.amount)}
-                    </dd>
-                  </div>
-                )}
-                {extracted.category && (
-                  <div>
-                    <dt className="text-xs text-muted-foreground">Category</dt>
-                    <dd className="mt-0.5 font-semibold text-foreground">
-                      {getCategoryLabel(extracted.category)}
-                    </dd>
-                  </div>
-                )}
-                {extracted.date && (
-                  <div>
-                    <dt className="text-xs text-muted-foreground">Date</dt>
-                    <dd className="mt-0.5 font-semibold text-foreground">
-                      {format(new Date(extracted.date), "MMM d")}
-                    </dd>
-                  </div>
-                )}
-              </dl>
-              <p className="mt-3 text-xs text-muted-foreground">
-                Review and edit these values before you submit.
-              </p>
+        >
+          {!isEdit && (
+            <div className="lg:col-start-2 lg:row-start-1">
+              <ReceiptScanner extracted={extracted} onResult={applyReceipt} />
             </div>
           )}
 
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <FormField
-              control={form.control}
-              name="amount"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Amount</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-lg text-muted-foreground">
-                        $
-                      </span>
-                      <Input
-                        placeholder="0.00"
-                        {...field}
-                        value={field.value ?? ""}
-                        type="number"
-                        inputMode="decimal"
-                        step="0.01"
-                        min="0"
-                        className="h-14 pl-8 text-3xl font-semibold tracking-tight"
-                      />
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit(onSubmit)}
+              noValidate
+              className={cn(
+                "overflow-hidden rounded-2xl border border-border bg-card lg:col-start-1 lg:row-start-1",
+                isEdit ? "lg:row-span-2" : "lg:row-span-3",
               )}
-            />
-
-            <FormField
-              control={form.control}
-              name="accountId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Account</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    value={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger
-                        className="w-full"
-                        disabled={accountsLoading || isError || isEdit}
+            >
+              {/* Type + amount */}
+              <div className="space-y-5 px-5 py-6 sm:px-6">
+                <div
+                  role="radiogroup"
+                  aria-label="Transaction type"
+                  className="grid grid-cols-2 gap-1 rounded-xl border border-white/8 bg-white/[0.02] p-1"
+                  onKeyDown={(event) => {
+                    if (
+                      event.key === "ArrowRight" ||
+                      event.key === "ArrowLeft"
+                    ) {
+                      event.preventDefault();
+                      setType(type === "EXPENSE" ? "INCOME" : "EXPENSE");
+                    }
+                  }}
+                >
+                  {(
+                    [
+                      {
+                        value: "EXPENSE",
+                        label: "Expense",
+                        icon: TrendingDown,
+                      },
+                      { value: "INCOME", label: "Income", icon: TrendingUp },
+                    ] as const
+                  ).map((option) => {
+                    const selected = type === option.value;
+                    return (
+                      <button
+                        key={option.value}
+                        type="button"
+                        role="radio"
+                        aria-checked={selected}
+                        tabIndex={selected ? 0 : -1}
+                        onClick={() => setType(option.value)}
+                        className={cn(
+                          "flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                          selected
+                            ? option.value === "INCOME"
+                              ? "bg-success/15 text-success ring-1 ring-success/30"
+                              : "bg-white/[0.12] text-foreground ring-1 ring-white/20"
+                            : "text-muted-foreground hover:text-foreground",
+                        )}
                       >
-                        <SelectValue
-                          placeholder={
-                            accountsLoading
-                              ? "Loading accounts..."
-                              : isError
-                                ? "Failed to load accounts"
-                                : "Select account"
-                          }
-                        />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {accounts?.data?.map((item: AccountType) => (
-                        <SelectItem key={item.id} value={item.id}>
-                          {item.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                        <option.icon className="size-4" aria-hidden />
+                        {option.label}
+                      </button>
+                    );
+                  })}
+                </div>
 
-            <FormField
-              control={form.control}
-              name="category"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Category</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {CATEGORIES.map((item) => (
-                        <SelectItem key={item.value} value={item.value}>
-                          <span className="flex items-center gap-2">
-                            <item.icon className="size-4 text-muted-foreground" />
-                            {item.label}
-                          </span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Transaction Type</FormLabel>
-                  <FormControl>
-                    <div
-                      role="radiogroup"
-                      aria-label="Transaction type"
-                      className="grid grid-cols-2 gap-2"
-                      onKeyDown={(event) => {
-                        if (
-                          event.key === "ArrowRight" ||
-                          event.key === "ArrowLeft"
-                        ) {
-                          event.preventDefault();
-                          field.onChange(
-                            field.value === "EXPENSE" ? "INCOME" : "EXPENSE",
-                          );
-                        }
-                      }}
-                    >
-                      {(
-                        [
-                          { value: "EXPENSE", label: "Expense" },
-                          { value: "INCOME", label: "Income" },
-                        ] as const
-                      ).map((option) => {
-                        const selected = field.value === option.value;
-                        return (
-                          <button
-                            key={option.value}
-                            type="button"
-                            role="radio"
-                            aria-checked={selected}
-                            onClick={() => field.onChange(option.value)}
-                            className={cn(
-                              "rounded-lg border px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
-                              option.value === "EXPENSE" &&
-                                selected &&
-                                "border-error/40 bg-error/10 text-error",
-                              option.value === "INCOME" &&
-                                selected &&
-                                "border-success/40 bg-success/10 text-success",
-                              !selected &&
-                                "border-border bg-card text-muted-foreground hover:bg-muted",
-                            )}
-                          >
-                            {option.label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-
-          <FormField
-            control={form.control}
-            name="date"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Date</FormLabel>
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant="outline"
-                          className="w-full justify-start text-left font-normal sm:max-w-xs"
+                <FormField
+                  control={form.control}
+                  name="amount"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Amount</FormLabel>
+                      <div className="relative">
+                        <span
+                          className={cn(
+                            "pointer-events-none absolute top-1/2 left-3.5 -translate-y-1/2 text-xl font-semibold",
+                            type === "INCOME"
+                              ? "text-success"
+                              : "text-muted-foreground",
+                          )}
+                          aria-hidden
                         >
-                          {field.value
-                            ? formatDateButton(field.value)
-                            : "Select date"}
-                          <Calendar className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <CalendarComponent
-                        mode="single"
-                        selected={
-                          field.value ? new Date(field.value) : undefined
-                        }
-                        onSelect={(date) =>
-                          field.onChange(date ? date.toISOString() : "")
-                        }
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <div className="flex gap-2">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => field.onChange(new Date().toISOString())}
-                    >
-                      Today
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() =>
-                        field.onChange(subDays(new Date(), 1).toISOString())
-                      }
-                    >
-                      Yesterday
-                    </Button>
-                  </div>
-                </div>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                          {type === "INCOME" ? "+$" : "$"}
+                        </span>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            value={field.value ?? ""}
+                            onChange={(event) =>
+                              field.onChange(sanitizeAmount(event.target.value))
+                            }
+                            inputMode="decimal"
+                            autoComplete="off"
+                            placeholder="0.00"
+                            autoFocus={!isEdit && !transaction}
+                            className={cn(
+                              "h-14 pr-4 text-3xl font-semibold tracking-tight tabular-nums md:text-3xl",
+                              type === "INCOME" ? "pl-12" : "pl-9",
+                            )}
+                          />
+                        </FormControl>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
-          <FormField
-            control={form.control}
-            name="description"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Description</FormLabel>
-                <FormDescription>
-                  Add a note to help identify this transaction later.
-                </FormDescription>
-                <FormControl>
-                  <Input
-                    placeholder="What was this transaction for?"
-                    {...field}
+              <Section title="Details">
+                <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="accountId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Account</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value || undefined}
+                        >
+                          <FormControl>
+                            <SelectTrigger
+                              className="w-full data-[size=default]:h-10"
+                              disabled={accountsLoading || isError || isEdit}
+                            >
+                              <SelectValue
+                                placeholder={
+                                  accountsLoading
+                                    ? "Loading accounts..."
+                                    : isError
+                                      ? "Failed to load accounts"
+                                      : accountList.length === 0
+                                        ? "Create an account first"
+                                        : "Select account"
+                                }
+                              />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {accountList.map((item) => (
+                              <SelectItem key={item.id} value={item.id}>
+                                <span className="flex w-full items-center justify-between gap-6">
+                                  {item.name}
+                                  <span
+                                    className={cn(
+                                      "text-xs tabular-nums",
+                                      toAmount(item.balance) < 0
+                                        ? "text-error"
+                                        : "text-muted-foreground",
+                                    )}
+                                  >
+                                    {formatMoney(item.balance)}
+                                  </span>
+                                </span>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {isEdit && (
+                          <p className="text-xs text-muted-foreground">
+                            The account can't be changed on an existing
+                            transaction.
+                          </p>
+                        )}
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
 
-          <FormField
-            control={form.control}
-            name="isRecurring"
-            render={({ field }) => (
-              <FormItem className="rounded-xl border border-border bg-card p-4">
-                <div className="flex items-center justify-between gap-4">
-                  <div className="space-y-1">
-                    <FormLabel className="text-sm font-medium text-foreground">
-                      Recurring Transaction
-                    </FormLabel>
-                    <FormDescription>
-                      Automatically repeat this transaction on a schedule.
-                    </FormDescription>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={(checked) => {
-                        field.onChange(checked);
-                        if (checked && !form.getValues("recurringInterval")) {
-                          form.setValue("recurringInterval", "MONTHLY");
-                        }
-                      }}
-                    />
-                  </FormControl>
+                  <FormField
+                    control={form.control}
+                    name="category"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Category</FormLabel>
+                        <Select
+                          onValueChange={field.onChange}
+                          value={field.value || undefined}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="w-full data-[size=default]:h-10">
+                              <SelectValue placeholder="Select category" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {CATEGORIES.map((item) => (
+                              <SelectItem key={item.value} value={item.value}>
+                                <span className="flex items-center gap-2">
+                                  <span
+                                    className={cn(
+                                      "flex size-5 items-center justify-center rounded-md",
+                                      item.badge,
+                                    )}
+                                  >
+                                    <item.icon className="size-3" aria-hidden />
+                                  </span>
+                                  {item.label}
+                                </span>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
+
+                <FormField
+                  control={form.control}
+                  name="date"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Date</FormLabel>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                className="h-10 min-w-0 flex-1 justify-start bg-transparent font-normal sm:max-w-xs"
+                              >
+                                <CalendarDays
+                                  className="size-4 text-muted-foreground"
+                                  aria-hidden
+                                />
+                                {selectedDate
+                                  ? format(selectedDate, "EEE, MMM d, yyyy")
+                                  : "Select date"}
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <CalendarComponent
+                              mode="single"
+                              selected={selectedDate}
+                              defaultMonth={selectedDate}
+                              onSelect={(value) =>
+                                value && field.onChange(value.toISOString())
+                              }
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        {[
+                          { label: "Today", value: new Date() },
+                          { label: "Yesterday", value: subDays(new Date(), 1) },
+                        ].map((preset) => {
+                          const active = Boolean(
+                            selectedDate &&
+                            isSameDay(selectedDate, preset.value),
+                          );
+                          return (
+                            <button
+                              key={preset.label}
+                              type="button"
+                              aria-pressed={active}
+                              onClick={() =>
+                                field.onChange(preset.value.toISOString())
+                              }
+                              className={cn(
+                                "h-10 rounded-lg border px-3.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                                active
+                                  ? "border-primary/50 bg-primary/10 text-foreground"
+                                  : "border-white/10 text-muted-foreground hover:bg-white/5 hover:text-foreground",
+                              )}
+                            >
+                              {preset.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Description{" "}
+                        <span className="font-normal text-muted-foreground">
+                          (optional)
+                        </span>
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder={
+                            type === "INCOME"
+                              ? "e.g. October salary"
+                              : "e.g. Groceries at Whole Foods"
+                          }
+                          className="h-10"
+                          maxLength={120}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </Section>
+
+              <Section title="Schedule">
+                <FormField
+                  control={form.control}
+                  name="isRecurring"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex items-start gap-3">
+                          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
+                            <Repeat className="size-4" aria-hidden />
+                          </span>
+                          <div>
+                            <FormLabel className="text-sm font-medium text-foreground">
+                              Repeat this transaction
+                            </FormLabel>
+                            <p className="text-xs text-muted-foreground">
+                              Budgetly posts it for you on schedule, like rent
+                              or a salary.
+                            </p>
+                          </div>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={(checked) => {
+                              field.onChange(checked);
+                              if (
+                                checked &&
+                                !form.getValues("recurringInterval")
+                              ) {
+                                form.setValue("recurringInterval", "MONTHLY");
+                              }
+                            }}
+                          />
+                        </FormControl>
+                      </div>
+                    </FormItem>
+                  )}
+                />
 
                 {isRecurring && (
-                  <div className="mt-4 grid grid-cols-1 gap-4 border-t border-border pt-4 sm:grid-cols-3">
-                    <FormField
-                      control={form.control}
-                      name="recurringInterval"
-                      render={({ field: intervalField }) => (
-                        <FormItem>
-                          <FormLabel>Frequency</FormLabel>
-                          <Select
-                            onValueChange={intervalField.onChange}
-                            value={intervalField.value}
+                  <FormField
+                    control={form.control}
+                    name="recurringInterval"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="sr-only">Frequency</FormLabel>
+                        <FormControl>
+                          <div
+                            role="radiogroup"
+                            aria-label="Frequency"
+                            className="grid grid-cols-2 gap-1 rounded-xl border border-white/8 bg-white/[0.02] p-1 sm:grid-cols-4"
                           >
-                            <FormControl>
-                              <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Select frequency" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="DAILY">Daily</SelectItem>
-                              <SelectItem value="WEEKLY">Weekly</SelectItem>
-                              <SelectItem value="MONTHLY">Monthly</SelectItem>
-                              <SelectItem value="YEARLY">Yearly</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <div>
-                      <p className="text-sm font-medium text-foreground">
-                        Starts
-                      </p>
-                      <p className="mt-2 text-sm text-muted-foreground">
-                        {selectedDate
-                          ? formatDateButton(selectedDate)
-                          : "Transaction date"}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-foreground">Ends</p>
-                      <p className="mt-2 text-sm text-muted-foreground">Never</p>
-                    </div>
-                  </div>
+                            {INTERVALS.map((option) => (
+                              <button
+                                key={option.value}
+                                type="button"
+                                role="radio"
+                                aria-checked={field.value === option.value}
+                                onClick={() => field.onChange(option.value)}
+                                className={cn(
+                                  "rounded-lg px-3 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                                  field.value === option.value
+                                    ? "bg-white/10 text-foreground"
+                                    : "text-muted-foreground hover:text-foreground",
+                                )}
+                              >
+                                {option.label}
+                              </button>
+                            ))}
+                          </div>
+                        </FormControl>
+                        {selectedDate && interval && (
+                          <p className="text-xs text-muted-foreground">
+                            Starts {format(selectedDate, "MMM d")}, next on{" "}
+                            <span className="text-foreground">
+                              {format(
+                                nextOccurrence(selectedDate, interval),
+                                "MMM d, yyyy",
+                              )}
+                            </span>
+                            , then every{" "}
+                            {
+                              INTERVALS.find((item) => item.value === interval)
+                                ?.unit
+                            }
+                            . Turn it off any time by editing it.
+                          </p>
+                        )}
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 )}
-              </FormItem>
-            )}
-          />
+              </Section>
 
-          <div className="flex flex-col-reverse gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between">
-            <Button
-              onClick={() => navigate("/dashboard")}
-              variant="outline"
-              type="button"
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={isSaving}>
-              {isSaving && (
-                <Loader2 className="mr-1 h-4 w-4 animate-spin" aria-hidden />
-              )}
-              {isSaving
-                ? isEdit
-                  ? "Updating transaction..."
-                  : "Creating transaction..."
-                : isEdit
-                  ? "Update Transaction"
-                  : "Create Transaction"}
-            </Button>
+              <div className="flex flex-col-reverse gap-3 border-t border-white/6 bg-white/[0.015] px-5 py-4 sm:flex-row sm:items-center sm:justify-end sm:px-6">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={goBack}
+                  className="text-muted-foreground hover:bg-white/5 hover:text-foreground"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isSaving}
+                  className="h-10 min-w-44 px-5"
+                >
+                  {isSaving && (
+                    <Loader2 className="size-4 animate-spin" aria-hidden />
+                  )}
+                  {isSaving ? "Saving..." : submitLabel}
+                </Button>
+              </div>
+            </form>
+          </Form>
+
+          <div
+            className={cn(
+              "lg:col-start-2",
+              isEdit ? "lg:row-start-1" : "lg:row-start-2",
+            )}
+          >
+            <TransactionImpact
+              account={selectedAccount}
+              type={type}
+              amount={amount}
+              original={isEdit ? transaction : null}
+            />
           </div>
 
           {!isEdit && (
-            <p className="text-sm text-muted-foreground">
-              Need help?{" "}
+            <div className="self-start lg:col-start-2 lg:row-start-3">
               <button
                 type="button"
-                onClick={() =>
-                  openAsk("Add a $200 food expense yesterday")
-                }
-                className="inline-flex items-center gap-1 font-medium text-accent hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                onClick={() => openAsk("Add a $20 food expense yesterday")}
+                className="flex w-full items-start gap-3 rounded-2xl border border-white/8 p-4 text-left transition-colors hover:border-accent/30 hover:bg-accent/[0.05] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               >
-                <Sparkles className="size-3.5" aria-hidden />
-                Ask Budgetly to create this transaction
+                <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-accent/15 text-accent">
+                  <Sparkles className="size-4" aria-hidden />
+                </span>
+                <span>
+                  <span className="block text-sm font-medium text-foreground">
+                    Rather just say it?
+                  </span>
+                  <span className="mt-0.5 block text-xs text-muted-foreground">
+                    Tell Ask Budgetly "Add a $20 food expense yesterday" and it
+                    drafts the transaction for you to confirm.
+                  </span>
+                </span>
               </button>
-            </p>
+            </div>
           )}
-        </form>
-      </Form>
+        </div>
+      </div>
     </div>
   );
 };

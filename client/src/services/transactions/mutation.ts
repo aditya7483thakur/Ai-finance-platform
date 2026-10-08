@@ -43,7 +43,7 @@ export const useDeleteBulkTransactions = () => {
 export const useCreateTransaction = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data) => createTransaction(data),
+    mutationFn: (data: Record<string, unknown>) => createTransaction(data),
     onSuccess: (data) => {
       toast.success(data.message);
       queryClient.invalidateQueries({ queryKey: ["transactions"] });
@@ -59,7 +59,7 @@ export const useCreateTransaction = () => {
 export const useEditTransaction = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (data) => editTransaction(data),
+    mutationFn: (data: Record<string, unknown>) => editTransaction(data),
     onSuccess: (data) => {
       toast.success(data.message);
       queryClient.invalidateQueries({ queryKey: ["transactions"] });

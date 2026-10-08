@@ -24,7 +24,7 @@ import { AccountType } from "@/types";
 import { cn } from "@/lib/utils";
 import { formatMoney, toAmount } from "@/lib/money";
 import { getAccountHealth } from "@/lib/account-health";
-import { dashControl } from "@/lib/dashboard-chrome";
+import { dashControl, dashFieldHeight } from "@/lib/dashboard-chrome";
 import { transactionsHref } from "@/lib/dashboard-chrome";
 
 import AccountCard, {
@@ -296,11 +296,11 @@ const AccountsPage = () => {
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
                 placeholder="Search accounts..."
-                className={cn(dashControl, "w-full pl-8 lg:w-56")}
+                className={cn(dashControl, dashFieldHeight, "w-full pl-8 lg:w-56")}
               />
             </div>
             <Select value={sortKey} onValueChange={(value) => setSortKey(value as SortKey)}>
-              <SelectTrigger className={cn(dashControl, "w-[150px]")}>
+              <SelectTrigger className={cn(dashControl, dashFieldHeight, "w-[150px]")}>
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
               <SelectContent>
@@ -312,7 +312,7 @@ const AccountsPage = () => {
             <div
               role="group"
               aria-label="Account view"
-              className="hidden items-center gap-1 rounded-lg border border-white/10 p-0.5 sm:flex"
+              className="hidden h-10 items-stretch gap-1 rounded-lg border border-white/10 p-1 sm:flex"
             >
               {(
                 [
@@ -328,7 +328,7 @@ const AccountsPage = () => {
                   aria-pressed={viewMode === mode}
                   title={label}
                   className={cn(
-                    "cursor-pointer rounded-md p-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                    "flex h-full w-8 cursor-pointer items-center justify-center rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
                     viewMode === mode
                       ? "bg-white/10 text-foreground"
                       : "text-muted-foreground hover:bg-white/5 hover:text-foreground",

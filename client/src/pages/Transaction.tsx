@@ -32,7 +32,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { dashControl, dashSelect } from "@/lib/dashboard-chrome";
+import { dashControl, dashFieldHeight, dashSelect } from "@/lib/dashboard-chrome";
 import { CATEGORIES, getCategoryLabel } from "@/lib/categories";
 import { formatMoney, formatSignedMoney, toAmount } from "@/lib/money";
 import { cn } from "@/lib/utils";
@@ -399,7 +399,7 @@ const Transaction = () => {
                 value={description}
                 onChange={(event) => setDescription(event.target.value)}
                 placeholder="Search transactions"
-                className="h-8 rounded-lg border-white/10 bg-white/[0.03] pl-8 text-xs shadow-none"
+                className={cn(dashFieldHeight, "rounded-lg border-white/10 bg-white/[0.03] pl-8 text-xs shadow-none")}
               />
             </div>
             <Select
@@ -407,7 +407,7 @@ const Transaction = () => {
               onValueChange={setAccountId}
               disabled={accountsLoading}
             >
-              <SelectTrigger className={cn(dashSelect, "w-full md:w-40")}>
+              <SelectTrigger className={cn(dashSelect, dashFieldHeight, "w-full md:w-40")}>
                 <SelectValue placeholder="All accounts" />
               </SelectTrigger>
               <SelectContent>
@@ -420,7 +420,7 @@ const Transaction = () => {
               </SelectContent>
             </Select>
             <Select value={category} onValueChange={setCategory}>
-              <SelectTrigger className={cn(dashSelect, "w-full md:w-40")}>
+              <SelectTrigger className={cn(dashSelect, dashFieldHeight, "w-full md:w-40")}>
                 <SelectValue placeholder="All categories" />
               </SelectTrigger>
               <SelectContent>
@@ -439,6 +439,7 @@ const Transaction = () => {
                   variant="outline"
                   className={cn(
                     dashSelect,
+                    dashFieldHeight,
                     "w-full justify-start md:w-56",
                   )}
                 >
@@ -495,7 +496,7 @@ const Transaction = () => {
               }
               className={cn(
                 dashControl,
-                "relative size-8 shrink-0 self-end border-error/40 text-error hover:bg-error/10 hover:text-error disabled:opacity-40 md:self-auto",
+                "relative size-10 shrink-0 self-end border-error/40 text-error hover:bg-error/10 hover:text-error disabled:opacity-40 md:self-auto",
               )}
             >
               <Trash2 className="size-3.5" aria-hidden />
