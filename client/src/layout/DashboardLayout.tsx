@@ -14,20 +14,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { LogOut } from "lucide-react";
-import { useEffect } from "react";
+import { useDarkRoot } from "@/hooks/useDarkRoot";
 
 export default function Page() {
   const location = useLocation();
   const { user, logout } = useUserContext();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const root = document.documentElement;
-    root.classList.add("dark");
-    return () => {
-      root.classList.remove("dark");
-    };
-  }, []);
+  useDarkRoot();
 
   const handleLogout = () => {
     logout();

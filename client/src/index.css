@@ -222,3 +222,77 @@
   width: 2.05rem;
   height: 2.05rem;
 }
+
+/* Marketing page motion. Disabled for users who prefer reduced motion. */
+@keyframes bf-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes bf-scan {
+  from {
+    top: 6%;
+  }
+  to {
+    top: 90%;
+  }
+}
+
+@property --beam-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes bf-beam {
+  to {
+    --beam-angle: 360deg;
+  }
+}
+
+.animate-float {
+  animation: bf-float 6s ease-in-out infinite;
+}
+
+.animate-float-slow {
+  animation: bf-float 8s ease-in-out infinite;
+  animation-delay: -3s;
+}
+
+.animate-scan {
+  animation: bf-scan 2.2s ease-in-out infinite alternate;
+}
+
+/* Rotating gradient border: put content in a child with its own background. */
+.border-beam {
+  padding: 1px;
+  background: conic-gradient(
+    from var(--beam-angle),
+    rgb(255 255 255 / 8%) 0deg,
+    rgb(255 255 255 / 8%) 250deg,
+    #2679f3 300deg,
+    #6366f1 330deg,
+    rgb(255 255 255 / 8%) 360deg
+  );
+  animation: bf-beam 6s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-float,
+  .animate-float-slow,
+  .animate-scan,
+  .border-beam {
+    animation: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}

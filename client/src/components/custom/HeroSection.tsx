@@ -1,110 +1,215 @@
-import { motion } from "framer-motion";
+import { useRef } from "react";
+import {
+  motion,
+  useReducedMotion,
+  useScroll,
+  useTransform,
+} from "framer-motion";
 import { Link } from "react-router-dom";
+import {
+  ArrowRight,
+  BellRing,
+  Check,
+  ChevronRight,
+  ScanLine,
+  Sparkles,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useUserContext } from "@/contexts/userContext";
+import ProductPreview from "./ProductPreview";
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 16 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } },
+};
+
+const REASSURANCES = ["Free forever", "No bank login needed", "Set up in a minute"];
 
 const HeroSection = () => {
+  const { isSignedIn } = useUserContext();
+  const reduceMotion = useReducedMotion();
+  const previewRef = useRef<HTMLDivElement>(null);
+
+  // The preview starts tilted back and flattens as it scrolls into view.
+  const { scrollYProgress } = useScroll({
+    target: previewRef,
+    offset: ["start end", "start 25%"],
+  });
+  const rotateX = useTransform(scrollYProgress, [0, 1], [reduceMotion ? 0 : 22, 0]);
+  const scale = useTransform(scrollYProgress, [0, 1], [reduceMotion ? 1 : 0.94, 1]);
+
   return (
-    <>
-      {/* Hero Section */}
-      <section className="bg-gradient-to-b text-center py-12 px-4 md:px-20 lg:px-40">
-        {/* Animated Tagline */}
-        <motion.div
-          className="mb-4"
-          initial={{ y: 50, opacity: 0 }}
-          whileInView={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.5, duration: 0.8 }}
-          viewport={{ once: true }}
+    <section className="relative overflow-hidden pt-32 pb-24 sm:pt-40">
+      {/* Glow + grid backdrop */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-0 h-[900px]"
+        style={{
+          background:
+            "radial-gradient(55% 45% at 50% 0%, rgb(38 121 243 / 26%) 0%, rgb(99 102 241 / 10%) 45%, transparent 75%)",
+        }}
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 opacity-40 [mask-image:radial-gradient(65%_50%_at_50%_0%,black,transparent)]"
+        style={{
+          backgroundImage:
+            "linear-gradient(rgb(255 255 255 / 5%) 1px, transparent 1px), linear-gradient(90deg, rgb(255 255 255 / 5%) 1px, transparent 1px)",
+          backgroundSize: "56px 56px",
+        }}
+      />
+
+      <motion.div
+        className="relative mx-auto max-w-4xl px-4 text-center sm:px-6"
+        initial="hidden"
+        animate="show"
+        transition={{ staggerChildren: 0.08 }}
+      >
+        <motion.a
+          variants={fadeUp}
+          href="#ask"
+          className="group inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.03] py-1 pr-3 pl-1 text-xs text-muted-foreground transition-colors hover:border-white/20 hover:text-foreground"
         >
-          <span className="inline-block bg-muted rounded-full px-3 py-1 text-sm">
-            The Smarter Way to Manage Money!
+          <span className="inline-flex items-center gap-1 rounded-full bg-accent/15 px-2 py-0.5 font-medium text-accent">
+            <Sparkles className="size-3" aria-hidden />
+            AI
           </span>
-        </motion.div>
+          Meet Ask Budgetly, your money assistant
+          <ChevronRight
+            className="size-3.5 transition-transform group-hover:translate-x-0.5"
+            aria-hidden
+          />
+        </motion.a>
 
-        {/* Subtitle */}
-        <motion.h2
-          className="text-lg text-primary font-medium mb-2"
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6, duration: 0.8 }}
-          viewport={{ once: true }}
-        >
-          Budgetly
-        </motion.h2>
-
-        {/* Main Heading */}
         <motion.h1
-          className="text-4xl md:text-[2.5rem] font-extrabold mb-4"
-          initial={{ opacity: 0, y: 50 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.7, duration: 0.8 }}
-          viewport={{ once: true }}
+          variants={fadeUp}
+          className="mt-7 text-5xl leading-[1.05] font-semibold tracking-tight text-balance text-foreground sm:text-7xl"
         >
-          Turn Your <span className="text-primary"> Finances</span>
-          <br />
-          from <span className="text-primary"> Chaos </span> to{" "}
-          <span className="text-primary"> Control</span>!
+          Know where your money goes,{" "}
+          <span className="bg-gradient-to-r from-primary via-sky-300 to-accent bg-clip-text text-transparent">
+            before it's gone
+          </span>
         </motion.h1>
 
-        {/* Description */}
         <motion.p
-          className="text-muted-foreground mb-6 max-w-2xl mx-auto "
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          transition={{ delay: 0.9, duration: 0.8 }}
-          viewport={{ once: true }}
+          variants={fadeUp}
+          className="mx-auto mt-6 max-w-xl text-base text-pretty text-muted-foreground sm:text-lg"
         >
-          Track expenses, set budgets, and gain financial clarity—instantly.
-          <br />
-          Because managing money shouldn’t be complicated.
+          Budgets for every goal, receipts scanned by AI, and an assistant that
+          tells you what changed and what to do about it.
         </motion.p>
 
-        {/* CTA Section */}
         <motion.div
-          className="flex justify-center gap-4 mb-6"
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          transition={{ delay: 1.1, duration: 0.8 }}
-          viewport={{ once: true }}
+          variants={fadeUp}
+          className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row"
         >
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            transition={{ duration: 0.3 }}
+          <Button
+            size="lg"
+            className="h-11 w-full px-6 shadow-[0_8px_30px_-6px_rgb(38_121_243/0.6)] sm:w-auto"
+            asChild
           >
-            <Link
-              to="/sign-up"
-              className="bg-primary text-white px-6 py-2 rounded-md shadow hover:bg-primary/90 transition-all duration-200 block"
-            >
-              Get Started →
+            <Link to={isSignedIn ? "/dashboard" : "/sign-up"}>
+              {isSignedIn ? "Open dashboard" : "Start budgeting free"}
+              <ArrowRight className="size-4" aria-hidden />
             </Link>
-          </motion.div>
-
-          <motion.a
-            href="https://github.com/aditya7483thakur/Ai-finance-platform"
-            target="_blank"
-            className="px-6 py-2 border border-primary text-primary rounded-md hover:bg-primary/10 transition-all duration-200"
-            whileHover={{ scale: 1.05 }}
-            transition={{ duration: 0.3 }}
+          </Button>
+          <Button
+            size="lg"
+            variant="outline"
+            className="h-11 w-full border-white/10 bg-white/[0.02] px-6 text-foreground hover:bg-white/5 sm:w-auto"
+            asChild
           >
-            Learn More
-          </motion.a>
+            <a href="#features">Explore features</a>
+          </Button>
         </motion.div>
-      </section>
 
-      {/* Hero Image */}
-      <motion.div
-        className="p-9 flex justify-center items-center"
-        initial={{ opacity: 0, scale: 0 }}
-        whileInView={{ opacity: 1, scale: 1 }}
-        transition={{ delay: 1.3, duration: 0.8 }}
-        viewport={{ once: true }}
-      >
-        <motion.img
-          src="/transactions.png"
-          alt="Screenshot of Budgetly dashboard"
-          className="w-full max-w-4xl rounded-xl shadow-lg transition-transform hover:scale-105 duration-300"
-          loading="lazy"
-        />
+        <motion.ul
+          variants={fadeUp}
+          className="mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs text-muted-foreground"
+        >
+          {REASSURANCES.map((item) => (
+            <li key={item} className="inline-flex items-center gap-1.5">
+              <Check className="size-3.5 text-success" aria-hidden />
+              {item}
+            </li>
+          ))}
+        </motion.ul>
       </motion.div>
-    </>
+
+      <div
+        ref={previewRef}
+        className="relative mx-auto mt-16 max-w-6xl px-4 [perspective:2000px] sm:mt-20 sm:px-6"
+      >
+        <motion.div
+          style={{ rotateX, scale, transformOrigin: "50% 0%" }}
+          initial={{ opacity: 0, y: 40 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35, duration: 0.8, ease: "easeOut" }}
+          className="relative"
+        >
+          <ProductPreview />
+
+          {/* Floating UI cards around the preview */}
+          <div
+            aria-hidden
+            className="animate-float absolute -top-7 right-6 hidden w-60 rounded-xl border border-sky-400/25 bg-popover/90 p-3 shadow-2xl backdrop-blur-md lg:block xl:-right-8"
+          >
+            <div className="flex items-center gap-2.5">
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-sky-400/15 text-sky-300">
+                <ScanLine className="size-4" />
+              </span>
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-foreground">
+                  Receipt scanned
+                </p>
+                <p className="truncate text-[11px] text-muted-foreground">
+                  Whole Foods · $84.20 · Food
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div
+            aria-hidden
+            className="animate-float-slow absolute -right-2 -bottom-10 hidden w-64 rounded-xl border border-orange-400/25 bg-popover/90 p-3 shadow-2xl backdrop-blur-md lg:block xl:-right-8"
+          >
+            <div className="flex items-start gap-2.5">
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-orange-400/15 text-orange-300">
+                <BellRing className="size-4" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-semibold text-foreground">
+                  Travel is at 92% of budget
+                </p>
+                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/8">
+                  <div className="h-full w-[92%] rounded-full bg-gradient-to-r from-warning to-orange-400" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div
+            aria-hidden
+            className="animate-float absolute -bottom-14 -left-2 hidden w-72 rounded-xl border border-accent/30 bg-popover/90 p-3.5 shadow-2xl backdrop-blur-md sm:block xl:-left-8"
+          >
+            <div className="flex items-start gap-2.5">
+              <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-accent/15 text-accent">
+                <Sparkles className="size-4" />
+              </span>
+              <div>
+                <p className="text-[11px] font-medium text-muted-foreground">
+                  Ask Budgetly
+                </p>
+                <p className="mt-0.5 text-xs leading-relaxed text-foreground">
+                  Food is 38% of your spending this month, $60 more than last
+                  month.
+                </p>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    </section>
   );
 };
 

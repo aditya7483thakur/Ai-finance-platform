@@ -1,92 +1,124 @@
-import Footer from "@/components/custom/Footer";
-import Navbar from "@/components/custom/Navbar";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Link, useNavigate } from "react-router-dom";
+import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import AuthLayout from "@/components/custom/AuthLayout";
+import PasswordInput from "@/components/custom/PasswordInput";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { useUserContext } from "@/contexts/userContext";
 import { useSignIn } from "@/services/auth/mutation";
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { toast } from "sonner";
+
+const schema = z.object({
+  email: z
+    .string()
+    .trim()
+    .min(1, "Enter your email")
+    .email("Enter a valid email address"),
+  password: z.string().min(1, "Enter your password"),
+});
+
+const inputClass = "h-10 bg-white/[0.03]";
 
 const SignInPage = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const navigate = useNavigate();
   const { login } = useUserContext();
   const signInMutation = useSignIn();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const form = useForm<z.infer<typeof schema>>({
+    resolver: zodResolver(schema),
+    defaultValues: { email: "", password: "" },
+  });
 
-    if (!email || !password) {
-      toast.error("Please fill in all fields");
-      return;
-    }
-
-    signInMutation.mutate(
-      { email, password },
-      {
-        onSuccess: (data) => {
-          login(data.token, data.user);
-          toast.success("Signed in successfully!");
-          navigate("/dashboard");
-        },
-        onError: (error: unknown) => {
-          const err = error as { response?: { data?: { error?: string } } };
-          toast.error(err.response?.data?.error || "Invalid email or password");
-        },
-      }
-    );
+  const onSubmit = (values: z.infer<typeof schema>) => {
+    signInMutation.mutate(values, {
+      onSuccess: (data) => {
+        login(data.token, data.user);
+        toast.success("Signed in successfully!");
+        navigate("/dashboard");
+      },
+      onError: (error: unknown) => {
+        const err = error as { response?: { data?: { error?: string } } };
+        toast.error(err.response?.data?.error || "Invalid email or password");
+      },
+    });
   };
 
   return (
-    <>
-      <Navbar />
-      <div className="flex min-h-screen items-center bg-gradient-to-r from-white to-sky-100 justify-center">
-        <div className="w-full max-w-md p-8 bg-white rounded-xl shadow-lg">
-          <h2 className="text-2xl font-bold text-center mb-6">Welcome Back</h2>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={signInMutation.isPending}
-            >
-              {signInMutation.isPending ? "Signing In..." : "Sign In"}
-            </Button>
-          </form>
-          <p className="mt-4 text-center text-sm text-gray-600">
-            Don't have an account?{" "}
-            <Link to="/sign-up" className="text-primary hover:underline">
-              Sign Up
-            </Link>
-          </p>
-        </div>
-      </div>
-      <Footer />
-    </>
+    <AuthLayout
+      title="Welcome back"
+      subtitle="Sign in to see your accounts and budgets."
+      footer={
+        <>
+          New to Budgetly?{" "}
+          <Link to="/sign-up" className="font-medium text-primary hover:underline">
+            Create an account
+          </Link>
+        </>
+      }
+    >
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4" noValidate>
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Email</FormLabel>
+                <FormControl>
+                  <Input
+                    type="email"
+                    autoComplete="email"
+                    placeholder="you@example.com"
+                    className={inputClass}
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Password</FormLabel>
+                <FormControl>
+                  <PasswordInput
+                    autoComplete="current-password"
+                    placeholder="Your password"
+                    className={inputClass}
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <Button
+            type="submit"
+            className="mt-2 h-10 w-full"
+            disabled={signInMutation.isPending}
+          >
+            {signInMutation.isPending && (
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+            )}
+            {signInMutation.isPending ? "Signing in..." : "Sign in"}
+          </Button>
+        </form>
+      </Form>
+    </AuthLayout>
   );
 };
 
