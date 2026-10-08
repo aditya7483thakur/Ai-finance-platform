@@ -13,7 +13,6 @@ import {
   subDays,
 } from "date-fns";
 import {
-  ArrowLeft,
   CalendarDays,
   Loader2,
   Repeat,
@@ -315,24 +314,16 @@ const AddTransaction = () => {
 
   return (
     <div className="min-h-full bg-background">
-      <div className="mx-auto max-w-[1100px] space-y-6 px-4 py-6 lg:px-6">
-        <header className="space-y-3">
-          <button
-            type="button"
-            onClick={goBack}
-            className="inline-flex items-center gap-1.5 rounded-md text-xs font-medium text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
-          >
-            <ArrowLeft className="size-3.5" aria-hidden />
-            Back
-          </button>
+      <div className="mx-auto max-w-[1400px] space-y-5 px-4 py-6 lg:px-6">
+        <header>
           <div>
-            <h2 className="text-2xl font-semibold tracking-tight text-foreground">
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
               {isEdit
                 ? "Edit transaction"
                 : transaction
                   ? "Duplicate transaction"
                   : "Add transaction"}
-            </h2>
+            </h1>
             <p className="mt-1 text-sm text-muted-foreground">
               {isEdit
                 ? "Update the details. The account balance adjusts automatically."
@@ -343,7 +334,7 @@ const AddTransaction = () => {
 
         <div
           className={cn(
-            "grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_340px]",
+            "grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_380px]",
             isEdit ? "lg:grid-rows-[auto_1fr]" : "lg:grid-rows-[auto_auto_1fr]",
           )}
         >

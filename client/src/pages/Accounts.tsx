@@ -215,9 +215,9 @@ const AccountsPage = () => {
       <div className="mx-auto max-w-[1400px] space-y-5 px-4 py-6 lg:px-6">
         <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 className="text-2xl font-semibold tracking-tight text-foreground">
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
               Accounts
-            </h2>
+            </h1>
             <p className="mt-1 text-sm text-muted-foreground">
               Manage your accounts, track balances, and stay on top of your budgets.
             </p>

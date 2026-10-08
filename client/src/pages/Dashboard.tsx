@@ -251,9 +251,9 @@ const Dashboard = () => {
       <div className="mx-auto max-w-[1400px] space-y-5 px-4 py-6 lg:px-6">
         <header className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <h2 className="text-2xl font-semibold tracking-tight text-foreground">
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
               {greeting}, {firstName}
-            </h2>
+            </h1>
             {accountsLoading ? (
               <Skeleton className="mt-2 h-4 w-64" />
             ) : (

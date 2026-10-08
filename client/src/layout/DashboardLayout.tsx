@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { LogOut } from "lucide-react";
 import { useDarkRoot } from "@/hooks/useDarkRoot";
+import { useEffect } from "react";
 
 export default function Page() {
   const location = useLocation();
@@ -53,18 +54,22 @@ export default function Page() {
 
   const currentTitle = getPageTitle(location.pathname);
 
+  // Each page shows its own heading, so the top bar doesn't repeat it;
+  // the title goes to the browser tab instead.
+  useEffect(() => {
+    document.title = `${currentTitle} · Budgetly`;
+    return () => {
+      document.title = "Budgetly";
+    };
+  }, [currentTitle]);
+
   return (
     <div className="dark min-h-svh bg-background">
       <SidebarProvider>
         <AppSidebar />
         <SidebarInset className="bg-background">
           <header className="sticky top-0 z-50 flex h-16 shrink-0 items-center justify-between gap-3 border-b border-border bg-background/90 px-4 backdrop-blur">
-            <div className="flex min-w-0 items-center gap-2">
-              <SidebarTrigger className="-ml-1 text-muted-foreground" />
-              <h1 className="truncate text-sm font-medium text-foreground">
-                {currentTitle}
-              </h1>
-            </div>
+            <SidebarTrigger className="-ml-1 text-muted-foreground" />
             <div className="flex items-center gap-2 sm:gap-3">
               {user && (
                 <DropdownMenu>

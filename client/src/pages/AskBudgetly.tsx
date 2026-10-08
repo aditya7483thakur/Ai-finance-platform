@@ -246,33 +246,30 @@ const AskBudgetly = () => {
   return (
     <div className="flex min-h-[calc(100vh-4rem)] flex-col bg-background">
       <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-4 pb-6 pt-6">
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <div>
-            <h2 className="text-xl font-semibold text-foreground">Ask Budgetly</h2>
-            <p className="text-sm text-muted-foreground">Your AI financial assistant</p>
+        {/* The empty state introduces the page; once a conversation starts,
+            only the action to reset it is needed. */}
+        {!isEmpty && (
+          <div className="mb-4 flex items-center justify-end">
+            <h1 className="sr-only">Ask Budgetly</h1>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={clearConversation}
+            >
+              New Conversation
+            </Button>
           </div>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={clearConversation}
-            disabled={isEmpty}
-          >
-            New Conversation
-          </Button>
-        </div>
+        )}
 
         <div ref={threadRef} className="min-h-0 flex-1 space-y-5 overflow-y-auto pb-4">
           {isEmpty && (
             <div className="flex flex-col items-center px-4 py-16 text-center">
               <Sparkles className="size-6 text-accent" aria-hidden />
-              <h3 className="mt-4 text-2xl font-semibold text-foreground">
+              <h1 className="mt-4 text-2xl font-semibold text-foreground">
                 Ask Budgetly
-              </h3>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Your AI financial workspace
-              </p>
-              <p className="mt-3 max-w-sm text-sm text-muted-foreground">
+              </h1>
+              <p className="mt-2 max-w-sm text-sm text-muted-foreground">
                 Ask questions about your finances, analyze spending, or simulate
                 decisions.
               </p>
