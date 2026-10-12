@@ -7,7 +7,6 @@ import App from "./App.tsx";
 applyColorVariables();
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { UserProvider } from "./contexts/userContext.tsx";
-import { AgentProvider } from "./contexts/agentContext.tsx";
 import { Toaster } from "./components/ui/sonner.tsx";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 
@@ -17,18 +16,16 @@ createRoot(document.getElementById("root")!).render(
     <QueryClientProvider client={queryClient}>
       <ReactQueryDevtools initialIsOpen={false} />
       <UserProvider>
-        <AgentProvider>
-          <App />
-          <Toaster
-            richColors
-            position="top-right"
-            visibleToasts={3}
-            duration={2000}
-            closeButton
-            expand={true}
-            theme="light"
-          />
-        </AgentProvider>
+        <App />
+        <Toaster
+          richColors
+          position="top-right"
+          visibleToasts={3}
+          duration={2000}
+          closeButton
+          expand={true}
+          theme="light"
+        />
       </UserProvider>
     </QueryClientProvider>
   </StrictMode>
