@@ -8,41 +8,70 @@ import {
   type GraphGroupedTransactionRow,
 } from "./graph.types.js";
 
-export const getDateRangeByFilter = (filter: GraphFilter): DateRange => {
-  const today = new Date();
-  today.setHours(23, 59, 59, 999);
+const MINUTE_MS = 60_000;
 
-  switch (filter) {
-    case GraphFilter.LAST_7_DAYS: {
-      const startDate = new Date(today);
-      startDate.setDate(today.getDate() - 6);
-      startDate.setHours(0, 0, 0, 0);
-      return { startDate, endDate: today };
-    }
-    case GraphFilter.LAST_MONTH: {
-      const startDate = new Date(today);
-      startDate.setMonth(today.getMonth() - 1);
-      startDate.setHours(0, 0, 0, 0);
-      return { startDate, endDate: today };
-    }
-    case GraphFilter.LAST_6_MONTHS: {
-      const startDate = new Date(today);
-      startDate.setMonth(today.getMonth() - 5, 1);
-      startDate.setHours(0, 0, 0, 0);
-      return { startDate, endDate: today };
-    }
-  }
+// Calendar days are handled as Date objects at UTC midnight, so day maths
+// (setUTCDate, setUTCMonth) never depends on the server's timezone.
+const dayKey = (day: Date): string => day.toISOString().slice(0, 10);
+
+// The client's calendar day that an instant falls on. offsetMinutes is
+// Date#getTimezoneOffset() from the client (IST = -330, so +5:30 is added).
+export const toClientDay = (instant: Date, offsetMinutes: number): Date => {
+  const shifted = new Date(instant.getTime() - offsetMinutes * MINUTE_MS);
+  return new Date(
+    Date.UTC(
+      shifted.getUTCFullYear(),
+      shifted.getUTCMonth(),
+      shifted.getUTCDate(),
+    ),
+  );
 };
 
-const buildDateKey = (date: Date): string => date.toISOString().split("T")[0];
+// The instant the client's calendar day starts.
+const clientDayStart = (day: Date, offsetMinutes: number): Date =>
+  new Date(day.getTime() + offsetMinutes * MINUTE_MS);
+
+export const getDateRangeByFilter = (
+  filter: GraphFilter,
+  offsetMinutes: number,
+  now: Date = new Date(),
+): DateRange => {
+  const endDay = toClientDay(now, offsetMinutes);
+  const startDay = new Date(endDay);
+
+  switch (filter) {
+    case GraphFilter.LAST_7_DAYS:
+      startDay.setUTCDate(startDay.getUTCDate() - 6);
+      break;
+    case GraphFilter.LAST_MONTH:
+      startDay.setUTCMonth(startDay.getUTCMonth() - 1);
+      break;
+    case GraphFilter.LAST_6_MONTHS:
+      startDay.setUTCMonth(startDay.getUTCMonth() - 5, 1);
+      break;
+  }
+
+  const dayAfterEnd = new Date(endDay);
+  dayAfterEnd.setUTCDate(dayAfterEnd.getUTCDate() + 1);
+
+  return {
+    startDate: clientDayStart(startDay, offsetMinutes),
+    // Last millisecond of the client's "today".
+    endDate: new Date(clientDayStart(dayAfterEnd, offsetMinutes).getTime() - 1),
+    startDay,
+    endDay,
+  };
+};
 
 export const buildDailySummaryMap = (
   rows: GraphGroupedTransactionRow[],
+  offsetMinutes: number,
 ): Record<string, DailySummaryAmounts> => {
   const totals: Record<string, { income: Money; expense: Money }> = {};
 
   for (const row of rows) {
-    const dateKey = buildDateKey(row.date);
+    // Bucket by the client's calendar day, the same keys the series uses.
+    const dateKey = dayKey(toClientDay(row.date, offsetMinutes));
     if (!totals[dateKey]) {
       totals[dateKey] = { income: Money.zero(), expense: Money.zero() };
     }
@@ -67,22 +96,22 @@ export const buildDailySummaryMap = (
 };
 
 export const buildCompleteDailySeries = (
-  startDate: Date,
-  endDate: Date,
+  startDay: Date,
+  endDay: Date,
   summaryMap: Record<string, DailySummaryAmounts>,
 ): DailyTransactionSummaryItem[] => {
   const result: DailyTransactionSummaryItem[] = [];
-  const currentDate = new Date(startDate);
+  const currentDay = new Date(startDay);
 
-  while (currentDate <= endDate) {
-    const dateKey = buildDateKey(currentDate);
+  while (currentDay <= endDay) {
+    const dateKey = dayKey(currentDay);
     result.push({
       date: dateKey,
       income: summaryMap[dateKey]?.income ?? 0,
       expense: summaryMap[dateKey]?.expense ?? 0,
     });
 
-    currentDate.setDate(currentDate.getDate() + 1);
+    currentDay.setUTCDate(currentDay.getUTCDate() + 1);
   }
 
   return result;

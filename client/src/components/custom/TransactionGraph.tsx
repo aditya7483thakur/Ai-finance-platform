@@ -65,8 +65,10 @@ const buildBalanceSeries = (
   return series;
 };
 
+// Day keys are "yyyy-MM-dd" calendar days. Parse them as local midnight;
+// new Date("2026-10-12") would mean UTC midnight and show Oct 11 west of UTC.
 const formatTick = (value: string) =>
-  new Date(value).toLocaleDateString("en-US", {
+  new Date(`${value}T00:00:00`).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
   });

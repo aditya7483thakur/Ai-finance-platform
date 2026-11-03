@@ -14,6 +14,7 @@ export const GRAPH_ERROR_MESSAGES = {
   USER_ID_REQUIRED: "Valid userId is required",
   FILTER_REQUIRED: "Valid filter is required",
   INVALID_FILTER_OPTION: "Invalid filter option",
+  INVALID_TZ_OFFSET: "tzOffset must be a whole number of minutes between -840 and 840",
   FETCH_TRANSACTION_SUMMARY_FAILED: "Error fetching transaction summary:",
   FETCH_CATEGORY_EXPENSES_FAILED: "Error fetching category expenses:",
 } as const;

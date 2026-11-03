@@ -11,6 +11,14 @@ export const transactionSummaryQuerySchema = z.object({
   filter: requiredQueryString(GRAPH_ERROR_MESSAGES.FILTER_REQUIRED).pipe(
     graphFilterSchema,
   ),
+  // The client's Date#getTimezoneOffset() (minutes; IST is -330). Days on
+  // the chart are the client's calendar days. Falls back to the server's.
+  tzOffset: z.coerce
+    .number({ invalid_type_error: GRAPH_ERROR_MESSAGES.INVALID_TZ_OFFSET })
+    .int(GRAPH_ERROR_MESSAGES.INVALID_TZ_OFFSET)
+    .min(-840, GRAPH_ERROR_MESSAGES.INVALID_TZ_OFFSET)
+    .max(840, GRAPH_ERROR_MESSAGES.INVALID_TZ_OFFSET)
+    .optional(),
 });
 
 export type TransactionSummaryQueryInput = z.infer<

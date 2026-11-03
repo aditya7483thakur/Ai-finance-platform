@@ -7,8 +7,12 @@ export { GraphFilter };
 export type { TransactionSummaryQueryInput };
 
 export type DateRange = {
+  // Exact instants bounding the query.
   startDate: Date;
   endDate: Date;
+  // The same range as client calendar days (UTC midnight stands for the day).
+  startDay: Date;
+  endDay: Date;
 };
 
 export type DailySummaryAmounts = {

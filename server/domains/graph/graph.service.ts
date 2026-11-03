@@ -18,7 +18,11 @@ export class GraphService {
   async getTransactionSummary(
     input: TransactionSummaryQueryInput,
   ): Promise<TransactionSummaryResult> {
-    const { startDate, endDate } = getDateRangeByFilter(input.filter);
+    const offsetMinutes = input.tzOffset ?? new Date().getTimezoneOffset();
+    const { startDate, endDate, startDay, endDay } = getDateRangeByFilter(
+      input.filter,
+      offsetMinutes,
+    );
 
     const rows = await this.transactions.getGroupedTransactions({
       userId: input.userId,
@@ -35,9 +39,9 @@ export class GraphService {
       amount: row.amount,
     }));
 
-    const summaryMap = buildDailySummaryMap(mappedRows);
+    const summaryMap = buildDailySummaryMap(mappedRows, offsetMinutes);
 
-    const summary = buildCompleteDailySeries(startDate, endDate, summaryMap);
+    const summary = buildCompleteDailySeries(startDay, endDay, summaryMap);
 
     const totals = summary.reduce(
       (acc, day) => ({

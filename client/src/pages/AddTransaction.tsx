@@ -454,8 +454,14 @@ const AddTransaction = () => {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Account</FormLabel>
+                        {/* Radix's hidden native <select> reports "" when the
+                            value lands before its option exists (e.g. accounts
+                            still loading during edit prefill), which would wipe
+                            the field. No option is empty, so ignore "". */}
                         <Select
-                          onValueChange={field.onChange}
+                          onValueChange={(value) =>
+                            value && field.onChange(value)
+                          }
                           value={field.value || undefined}
                         >
                           <FormControl>
@@ -514,7 +520,9 @@ const AddTransaction = () => {
                       <FormItem>
                         <FormLabel>Category</FormLabel>
                         <Select
-                          onValueChange={field.onChange}
+                          onValueChange={(value) =>
+                            value && field.onChange(value)
+                          }
                           value={field.value || undefined}
                         >
                           <FormControl>
